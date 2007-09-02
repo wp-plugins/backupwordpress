@@ -17,7 +17,7 @@ EasyMode:
 	
 + Switch between EasyMode and AdvancedMode
 + Database backup as well as directory structure including uploaded files, plugins, etc.
-+ Set up Mail notofication on new backups
++ Set up Mail notification on new backups
 + Trigger backup manually
 + Set basic schedules for your backups
 + restore backups
