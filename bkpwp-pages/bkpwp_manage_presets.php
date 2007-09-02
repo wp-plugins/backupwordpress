@@ -128,7 +128,7 @@ $presets = $backups->bkpwp_get_presets();
 		}
 		
 		function is_loading(divid) {
-			document.getElementById(divid).innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/BackUpWP/images/loading.gif' />";
+			document.getElementById(divid).innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwp/images/loading.gif' />";
 		}
 		<!-- displays a loading text information while doing ajax requests -->	
 		function bkpwp_js_loading(str) {

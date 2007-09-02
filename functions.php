@@ -85,7 +85,7 @@ $options = new BKPWP_OPTIONS();
 }
 		
 function bkpwp_latest_activity() {
-	echo "<h3>".__("BackUpWordPress","bkpwp")." <a href=\"admin.php?page=BackUpWP/bkpwp.php\">&raquo;</a></h3>";
+	echo "<h3>".__("BackUpWordPress","bkpwp")." <a href=\"admin.php?page=backupwp/bkpwp.php\">&raquo;</a></h3>";
 	echo "<p><a href=\"http://wordpress.designpraxis.at/\">".__("Check for a new version of BackUpWordPress!","bkpwp")."</a></p>";
 	echo "<p><b>".__("Latest Backups","bkpwp")."</b>:</p>";
 	$backup = new BKPWP_MANAGE();
@@ -99,7 +99,7 @@ function bkpwp_latest_activity() {
 			}
 			$info = new BKPWP_BACKUP_ARCHIVE();
 			$info = $info->bkpwp_view_backup_info(base64_encode($f['file']),1);
-			echo "<li><a href=\"admin.php?page=BackUpWP/bkpwp.php&amp;bkpwp_download=".base64_encode($f['file'])."\"><img src=\"".get_bloginfo("wpurl")."/wp-content/plugins/BackUpWP/images/disk.png\" alt=\"download\" title=\"Download Backup\" /></a> ";
+			echo "<li><a href=\"admin.php?page=backupwp/bkpwp.php&amp;bkpwp_download=".base64_encode($f['file'])."\"><img src=\"".get_bloginfo("wpurl")."/wp-content/plugins/backupwp/images/disk.png\" alt=\"download\" title=\"Download Backup\" /></a> ";
 			echo date(get_option('date_format'),filemtime($f['file']))." ".date("H:i",filemtime($f['file']));
 			echo ": ";
 			echo "<b>".$info['filesize']."</b> ";
