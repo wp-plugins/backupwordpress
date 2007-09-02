@@ -2,15 +2,15 @@
 /*
 Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
-Description: Manage <a href="admin.php?page=BackUpWP/bkpwp.php">WordPress Backups</a>. Alpha Release. Please help testing and give me feedback under . Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
+Description: Manage <a href="admin.php?page=backupwp/bkpwp.php">WordPress Backups</a>. Alpha Release. Please help testing and give me feedback under . Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.4
+Version: 0.1beta
 Author URI: http://wordpress.designpraxis.at
 */
 
 /*
 Notes:
-BackUpWP\Archive\Writer\Tar.php has been debugged around line 80 to handle long filenames according to http://pear.php.net/bugs/bug.php?id=10144&edit=3
+backupwp\Archive\Writer\Tar.php has been debugged around line 80 to handle long filenames according to http://pear.php.net/bugs/bug.php?id=10144&edit=3
 */
 
 /*  Copyright 2007  Roland Rust  (email : wordpress@designpraxis.at)
@@ -30,7 +30,7 @@ BackUpWP\Archive\Writer\Tar.php has been debugged around line 80 to handle long 
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 //return;
-$GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/BackUpWP/";
+$GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/backupwp/";
 
 // get the functions
 require_once($GLOBALS['bkpwp_plugin_path']."functions.php");
@@ -45,8 +45,8 @@ require_once($GLOBALS['bkpwp_plugin_path']."bkpwp-classes/schedule.php");
 require_once($GLOBALS['bkpwp_plugin_path']."functions-interface.php");
 
 // Plugin activation and deactivation e.g.: set 'manage bkpwp' capabilities to admin
-add_action('activate_BackUpWP/bkpwp.php', 'bkpwp_activate');
-add_action('deactivate_BackUpWP/bkpwp.php', 'bkpwp_exit');
+add_action('activate_backupwp/bkpwp.php', 'bkpwp_activate');
+add_action('deactivate_backupwp/bkpwp.php', 'bkpwp_exit');
 	
 // set up ajax stuff on init, to prevent header oputput
 add_action('init', 'bkpwp_download_files');

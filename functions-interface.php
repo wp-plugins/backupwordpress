@@ -111,7 +111,7 @@ function bkpwp_load_css_and_js() {
 	<!-- displays a loading animation while doing ajax requests -->
 	function is_loading(divid) {
 		document.getElementById(divid).style.display = 'block';
-		document.getElementById(divid).innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/BackUpWP/images/loading.gif' />";
+		document.getElementById(divid).innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwp/images/loading.gif' />";
 	}	
 	</script>
 
