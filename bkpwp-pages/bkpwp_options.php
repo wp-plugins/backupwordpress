@@ -148,7 +148,7 @@ $bkpwppath = get_option("bkpwppath");
 		function loading_shownobfiles() {
 			document.getElementById('bkpwp_actions').style.display="block";
 			document.getElementById('bkpwp_action_title').innerHTML="<br /><?php _e("Files &amp; Folders that will NOT (!) be included in the Backup when using ","bkpwp"); echo $_REQUEST['excludelist_to_change']; ?><br /><br />";
-			document.getElementById('bkpwp_action_buffer').innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwp/images/loading.gif' />";
+			document.getElementById('bkpwp_action_buffer').innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' />";
 		}
 		</script>
 		<div id="bkpwp_actions" style="display:none;">

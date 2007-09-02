@@ -83,7 +83,7 @@ class BKPWP_BACKUP_ARCHIVE {
 		</td>
 		<td style="text-align: center;">
 		<?php
-		echo " <a href=\"admin.php?page=backupwp/bkpwp.php&amp;bkpwp_download=".base64_encode($f['file'])."\">".__("download","bkpwp")."</a>";
+		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_download=".base64_encode($f['file'])."\">".__("download","bkpwp")."</a>";
 		?>
 		</td>
 		<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
@@ -98,19 +98,19 @@ class BKPWP_BACKUP_ARCHIVE {
 		</td>
 		<td style="text-align: center;">
 		<?php
-		echo " <a href=\"admin.php?page=backupwp/bkpwp.php&amp;bkpwp_mail=".base64_encode($f['file'])."\">".__("mail","bkpwp")."</a>";
+		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_mail=".base64_encode($f['file'])."\">".__("mail","bkpwp")."</a>";
 		?>
 		</td>
 		<?php } ?>
 		<td style="text-align: center;">
 		<?php
-		echo " <a href=\"admin.php?page=backupwp/bkpwp.php&amp;bkpwp_restore=".base64_encode($f['file'])."\">".__("restore","bkpwp")."</a>";
+		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_restore=".base64_encode($f['file'])."\">".__("restore","bkpwp")."</a>";
 		?>
 		</td>
 		<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
 		<td style="text-align: center;">
 		<?php
-		echo " <a href=\"admin.php?page=backupwp/bkpwp.php&amp;bkpwp_delete=".base64_encode($f['file'])."\">".__("delete","bkpwp")."</a>";
+		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_delete=".base64_encode($f['file'])."\">".__("delete","bkpwp")."</a>";
 		?>
 		</td>
 		<?php } ?>
@@ -821,7 +821,7 @@ class BKPWP_MANAGE {
 
 
 require(ABSPATH."wp-includes/class-phpmailer.php");
-class backupwpMailer extends PHPMailer {
+class backupwordpressMailer extends PHPMailer {
     // Set default variables for all new objects
     //var $From     = $GLOBALS['userdata']->user_email;
     var $FromName = "BackUpWordPress";
@@ -846,7 +846,7 @@ function bkpwp_mail_now($file="", $bkpwpinfo="") {
 	ob_end_clean();
 	
 	// Instantiate your new class
-	$mail = new backupwpMailer;
+	$mail = new backupwordpressMailer;
 	$mail->IsHTML(true);
 	
 	// Now you only need to add the necessary stuff
