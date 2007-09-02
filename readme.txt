@@ -13,7 +13,8 @@ BackUpWordPress is a Backup & Recovery Suite for your WordPress website. This Pl
 
 Features:
 
-EasyMode
+EasyMode:
+	
 + Switch between EasyMode and AdvancedMode
 + Database backup as well as directory structure including uploaded files, plugins, etc.
 + Set up Mail notofication on new backups
@@ -24,7 +25,8 @@ EasyMode
 + Help page
 + Language Support for english and german(deutsch)
 
-more option in AdvancedMode
+more option in AdvancedMode:
+	
 + Set and manage custom schedules
 + Check disk space
 + View backup Logs
