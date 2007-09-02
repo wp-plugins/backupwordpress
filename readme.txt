@@ -57,4 +57,4 @@ BackUpWordPress utilizes several Open Source Tools:
 + [PEAR](http://pear.php.net/package/PEAR/)
 + [FILE_ARCHIVE](http://pear.php.net/package/File_Archive) for compression/decompression
 + [bigdump](http://www.ozerov.de/bigdump.php) for staggered sql import
-+ [Sajax] (http://www.modernmethod.com/sajax/) for ajax support
++ [Sajax](http://www.modernmethod.com/sajax/) for ajax support
