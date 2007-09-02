@@ -810,7 +810,7 @@ class BKPWP_MANAGE {
 	      }
 	      closedir($handle);
 	  }
-
+	if (count($files) < 1) { return; }
 	foreach ($files as $key => $row) {
 	$filename[$key]  = $row['filename'];
 	}
