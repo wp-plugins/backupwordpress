@@ -28,7 +28,7 @@ function bkpwp_restore() {
 		<?php
 		if (!eregi("-sql.tar.gz",base64_decode($_REQUEST['bkpwp_restore']))) {
 		?>
-		<a href="admin.php?page=backupwp/bkpwp.php&amp;bkpwp_download=<?php echo $_REQUEST['bkpwp_restore']; ?>"><?php _e("Download the Backup Archive for Files Recovery","bkpwp"); ?> &raquo;</a>
+		<a href="admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_download=<?php echo $_REQUEST['bkpwp_restore']; ?>"><?php _e("Download the Backup Archive for Files Recovery","bkpwp"); ?> &raquo;</a>
 		<?php
 		}
 		?>
@@ -73,7 +73,7 @@ function bkpwp_restore() {
 		 //restore with bigdump
 		 ?>
 		 <p><b><?php _e("Please do not reload the page until bigdump has done its job!","bkpwp"); ?></b></p>
-		 <iframe width="100%" height="500" style="border:none;" src="<?php echo get_bloginfo("wpurl")."/wp-content/plugins/backupwp/bigdump/bigdump.php?start=1&fn=bkpwp_restore.sql&foffset=0&totalqueries=0"; ?>"></iframe>
+		 <iframe width="100%" height="500" style="border:none;" src="<?php echo get_bloginfo("wpurl")."/wp-content/plugins/backupwordpress/bigdump/bigdump.php?start=1&fn=bkpwp_restore.sql&foffset=0&totalqueries=0"; ?>"></iframe>
 		 <?php
 		 exit;
 	  }
@@ -245,7 +245,7 @@ if (count($backup_archives) < 1) {
 			preset = "full backup";
 		<?php } ?>
 		document.getElementById('bkpwp_manage_backups_newrow').style.display="table-row";
-		document.getElementById('bkpwp_manage_backups_newrow').innerHTML="<th scope=\"row\"><?php echo date(get_option('date_format'))." ".date("H:i"); ?></th><td colspan=\"<?php if (!$backups->options->bkpwp_easy_mode()) { echo "8"; } else { echo "3"; } ?>\"><img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwp/images/loading.gif' /> <?php _e("Creating backup. Please wait."); ?></td>";
+		document.getElementById('bkpwp_manage_backups_newrow').innerHTML="<th scope=\"row\"><?php echo date(get_option('date_format'))." ".date("H:i"); ?></th><td colspan=\"<?php if (!$backups->options->bkpwp_easy_mode()) { echo "8"; } else { echo "3"; } ?>\"><img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' /> <?php _e("Creating backup. Please wait."); ?></td>";
 		sajax_target_id = 'bkpwp_manage_backups_newrow';
 		x_bkpwp_ajax_create(preset,'');
 	}
