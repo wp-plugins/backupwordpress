@@ -310,6 +310,7 @@ class BKPWP_BACKUP {
 			$sql_file .= "# --------------------------------------------------------\n";
 			$sql_file .= "# Table: " . $this->bkpwp_backquote($curr_table) . "\n";
 			$sql_file .= "# --------------------------------------------------------\n";
+			$sql_file .= $this->bkpwp_make_sql($curr_table,$log);
 	}
 	$cachefp = fopen($path."/".$file_name, "w");
 	fwrite($cachefp, $sql_file);
@@ -594,18 +595,9 @@ class BKPWP_BACKUP {
     }
     
     function bkpwp_delete_old() {
-    	$dir = get_option("bkpwppath");
+    	$backups = new BKPWP_MANAGE();
 	$unlinkcount = 0;
-    	if ($handle = opendir($dir)) {
-    	      while (false !== ($file = readdir($handle))) {
-    		    if (($file != ".") && ($file != "..") && !is_dir($dir."/".$file)) {
-    			    $files[] = array("file" => $dir."/".$file,
-    						"filename" => $file);
-    		    }
-    	      }
-    	      closedir($handle);
-    	  }
-    	$files = array_reverse($files);
+	$files = $backups->bkpwp_get_backups();
     	if (count($files) <= get_option('bkpwp_max_backups')) {
     		return;
     	} else {

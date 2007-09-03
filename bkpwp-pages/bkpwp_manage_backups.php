@@ -306,7 +306,6 @@ if (count($backup_archives) < 1) {
 	if (!empty($_REQUEST['bkpwp_restore'])) {
 		 bkpwp_restore();
 	}
-	
 	?>
 		
 	  	<br /><br />

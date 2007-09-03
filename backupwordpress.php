@@ -4,13 +4,24 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
 Description: Manage <a href="admin.php?page=backupwordpress/backupwordpress.php">WordPress Backups</a>. Beta Release. Please help testing and give me feedback under the comments section of <a href="http://wordpress.designpraxis.at/plugins/backupwordpress/">the Plugin page</a>. Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.1beta
+Version: 0.1.2
 Author URI: http://wordpress.designpraxis.at
 */
 
 /*
 Notes:
 backupwordpress\Archive\Writer\Tar.php has been debugged around line 80 to handle long filenames according to http://pear.php.net/bugs/bug.php?id=10144&edit=3
+*/
+
+/*
+
+Changelog:
+
+Changes in 0.1.2:
+	- bug fixed: Backup-Now doesn't call Sajax
+	- bkpwp_delete_old() refactored
+	- bug fixed: table data is not dumped
+
 */
 
 /*  Copyright 2007  Roland Rust  (email : wordpress@designpraxis.at)
@@ -58,10 +69,10 @@ add_filter('cron_schedules', 'bkpwp_more_reccurences');
 
 add_action('bkpwp_schedule_bkpwp_hook','bkpwp_schedule_bkpwp');
 
-if (eregi("bkpwp",$_REQUEST['page'])) {
+if (eregi("backupwordpress",$_REQUEST['page'])) {
 add_action('admin_head', 'bkpwp_sajax_js');
 }
-if (eregi("bkpwp",$_REQUEST['page']) || $_SERVER['REQUEST_URI'] == "/wp-admin/index.php") {
+if (eregi("backupwordpress",$_REQUEST['page']) || $_SERVER['REQUEST_URI'] == "/wp-admin/index.php") {
 add_action('admin_head', 'bkpwp_load_css_and_js');
 }
 
