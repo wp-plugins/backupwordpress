@@ -1,5 +1,4 @@
 <?php
-
 function bkpwp_schedulelist($bkpwppath) {
 	//delete_option("cron");
 	echo "<h2>".__("Manage Backup Schedules","bkpwp")."</h2>";
@@ -12,10 +11,6 @@ function bkpwp_schedulelist($bkpwppath) {
 	  </fieldset>
 	</form>
 	<?php
-	$crons = get_option("cron");
-	if (!is_array($crons)) {
-		return;
-	}
 	$schedules = get_option("bkpwp_schedules");
 	?>
 	<table class="widefat">
@@ -42,7 +37,7 @@ function bkpwp_schedulelist($bkpwppath) {
 				if (!empty($options['lastrun'])) {
 					echo date(get_option('date_format'),strtotime($options['lastrun']))." ".date("H:i",strtotime($options['lastrun']));
 				} else {
-					__("Not Yet","bkpwp");
+					_e("Not Yet","bkpwp");
 				}
 				?></th>
 				<td>
@@ -55,6 +50,7 @@ function bkpwp_schedulelist($bkpwppath) {
 				<td>
 				<?php 
 				$now = time();
+				echo $now+120;
 				$d = $timestamp - $now;
 				if (!empty($timestamp)) { ?>
 					<div id="countdowncontainer<?php echo $timestamp; ?>"></div>
@@ -169,7 +165,11 @@ function bkpwp_schedulelist($bkpwppath) {
 		<?php
 	 }
 	 if (!empty($_REQUEST['bkpwp_reset_schedules'])) {
-		wp_clear_scheduled_hook("bkpwp_schedule_bkpwp_hook");
+	 	// for some reason wp_clear_scheduled_hook("bkpwp_schedule_bkpwp_hook") doesn't work
+		//wp_clear_scheduled_hook("bkpwp_schedule_bkpwp_hook");
+	 	$schedule = new BKPWP_SCHEDULE();	
+	   	$schedule->bkpwp_unset_schedules();
+		
 		delete_option("bkpwp_schedules");
 		$options = new BKPWP_OPTIONS();
 		$options->bkpwp_default_schedules();

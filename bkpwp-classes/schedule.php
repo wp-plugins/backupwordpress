@@ -16,6 +16,18 @@ class BKPWP_SCHEDULE {
 	   }
     }	
     
+    function bkpwp_update_schedule($options) {
+	   $schedules = get_option("bkpwp_schedules");
+	   $newschedules = array();
+	   foreach($schedules as $s) {
+		if ($s['created'] == $options['created']) {
+			$s = $options;
+		}
+	   	$newschedules = $s;
+	   }
+	   update_option("bkpwp_schedules",$newschedules);
+    }
+    
     function bkpwp_delete_schedule_by_created($created) {
 	   $schedules = get_option("bkpwp_schedules");
 	   $newschedules = array();
@@ -34,6 +46,24 @@ class BKPWP_SCHEDULE {
 	   if (empty($ret)) { return false; }
 	   return $ret;
     }
+    
+    
+    function bkpwp_unset_schedules() {
+	$crons = get_option("cron");
+	if (is_array($crons)) {
+		foreach($crons as $timestamp => $cron) {
+			if (!is_array($cron)) { continue; }
+			foreach($cron as $hook => $options) {
+				if($hook == "bkpwp_schedule_bkpwp_hook") {
+					foreach ($options as $key=>$value) {
+					wp_unschedule_event($timestamp,$hook,$value['args']);
+					}
+				}
+			}
+		}
+	}
+    }
+    
     
     function bkpwp_toggle_schedule($created) {
 	   $schedules = get_option("bkpwp_schedules");

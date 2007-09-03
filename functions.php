@@ -250,7 +250,7 @@ function bkpwp_more_reccurences($recc) {
 }
 
 function bkpwp_schedule_bkpwp($options) {
-	
+
 	$backup = new BKPWP_BACKUP();
 	$backup->preset = new BKPWP_MANAGE();
 	$preset = $backup->preset->bkpwp_get_preset($options);
