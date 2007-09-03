@@ -347,17 +347,19 @@ if (count($backup_archives) < 1) {
 			</tr>
 			<?php
 			$i=0;
-			foreach ($backup_archives as $f) {
-				if (!file_exists($f['file'])) {
-					continue;
+			if (is_array($backup_archives)) {
+				foreach ($backup_archives as $f) {
+					if (!file_exists($f['file'])) {
+						continue;
+					}
+					if ($i > $backups->bkpwp_max_views()) {
+						break;
+					}
+					if ($alternate == "") { $alternate = "alternate"; } else { $alternate = ""; }
+					$backup = new BKPWP_BACKUP_ARCHIVE();
+					$backup->bkpwp_get_backup_row($f,$alternate);
+					$i++;
 				}
-				if ($i > $backups->bkpwp_max_views()) {
-					break;
-				}
-				if ($alternate == "") { $alternate = "alternate"; } else { $alternate = ""; }
-				$backup = new BKPWP_BACKUP_ARCHIVE();
-				$backup->bkpwp_get_backup_row($f,$alternate);
-				$i++;
 			}
 			?>
 		</tbody>
