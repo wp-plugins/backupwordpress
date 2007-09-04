@@ -127,7 +127,10 @@ function bkpwp_delete() {
 	<form name="form1" method="post" action="">
 	<input type="hidden" name="bkpwp_delete" value="<?php echo $_REQUEST['bkpwp_delete']; ?>" />
 	<p style="text-align:left" class="submit">
-	<input type="submit" name="bkpwp_delete_now" value="<?php _e("delete","bkpwp"); ?> &raquo;" />
+	<input type="submit" name="bkpwp_delete_now" id="bkpwp_delete_submit" value="<?php _e("delete","bkpwp"); ?> &raquo;" />
+	<script type="text/javascript">
+	 document.getElementById('bkpwp_delete_submit').focus();
+	</script>
 	</p>
 	</form>
 	</p><br />

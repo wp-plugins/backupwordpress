@@ -50,7 +50,6 @@ function bkpwp_schedulelist($bkpwppath) {
 				<td>
 				<?php 
 				$now = time();
-				echo $now+120;
 				$d = $timestamp - $now;
 				if (!empty($timestamp)) { ?>
 					<div id="countdowncontainer<?php echo $timestamp; ?>"></div>

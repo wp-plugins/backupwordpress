@@ -4,18 +4,26 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
 Description: Manage <a href="admin.php?page=backupwordpress/backupwordpress.php">WordPress Backups</a>. Beta Release. Please help testing and give me feedback under the comments section of <a href="http://wordpress.designpraxis.at/plugins/backupwordpress/">the Plugin page</a>. Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.1.3
+Version: 0.1.4
 Author URI: http://wordpress.designpraxis.at
 */
 
 /*
 Notes:
 backupwordpress\Archive\Writer\Tar.php has been debugged around line 80 to handle long filenames according to http://pear.php.net/bugs/bug.php?id=10144&edit=3
+
+Whishlist:
+	- staggered export od files and sql.
+	- custom schedules
 */
 
 /*
 
 Changelog:
+	
+Changes in 0.1.4:
+	- @set_time_limit(0) in functions.php line 277 supresses the 'Cannot set time limit in safe mode' warning
+	- dialoques streamlined: e.g. when you click "delete" on a backup archive, you just need to hit enter to delete it
 	
 Changes in 0.1.3:
 	- ajax problems fixed

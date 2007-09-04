@@ -274,7 +274,7 @@ function bkpwp_send_file($path) {
 
     //to prevent long file from getting cut off from     //max_execution_time
 
-    set_time_limit(0);
+    @set_time_limit(0);
 
     $name=basename($path);
 
