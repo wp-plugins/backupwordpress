@@ -73,7 +73,7 @@ class BKPWP_OPTIONS {
 				  } else {
 					$this->bkpwp_update_option("bkpwppath",$_REQUEST['bkpwppath']);
 					$msg = __("Directory did not exist but this script was able to create it.","bkpwp");
-					bkpwp_display_message($msg);
+					bkpwp_display_message($msg." <a href=\"admin.php?page=".$_REQUEST['page']."\">".__("Continue","bkpwp")." &raquo;</a>");
 				  }
 			  } elseif (!is_writable($_REQUEST['bkpwppath'])) {
 				$this->bkpwp_delete_option("bkpwppath");
