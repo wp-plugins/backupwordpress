@@ -50,7 +50,6 @@ class BKPWP_BACKUP_ARCHIVE {
 	$backup->options = new BKPWP_OPTIONS();
 	$info = new BKPWP_BACKUP_ARCHIVE();
 	$info = $info->bkpwp_view_backup_info(base64_encode($f['file']),1);
-	//if (!file_exists($f['file'])) { return; }
 	$type = $backup->options->bkpwp_get_backup_type($f['filename']);
 	if ($alternate != "new_row") {
 	?>
@@ -86,33 +85,37 @@ class BKPWP_BACKUP_ARCHIVE {
 		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_download=".base64_encode($f['file'])."\">".__("download","bkpwp")."</a>";
 		?>
 		</td>
-		<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
 		<td style="text-align: center;">
-		<?php
-		echo " <a href=\"javascript:void(0)\"
-		onclick=\"bkpwp_js_loading('".__("View Backup Information","bkpwp")."'); 
-		sajax_target_id = 'bkpwp_action_buffer'; 
-		x_bkpwp_ajax_view_backup('".base64_encode($f['file'])."',''); 
-		sajax_target_id = '';\">".__("view","bkpwp")."</a>";
-		?>
-		</td>
-		<td style="text-align: center;">
-		<?php
-		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_mail=".base64_encode($f['file'])."\">".__("mail","bkpwp")."</a>";
-		?>
-		</td>
-		<?php } ?>
-		<td style="text-align: center;">
-		<?php
-		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_restore=".base64_encode($f['file'])."\">".__("restore","bkpwp")."</a>";
-		?>
-		</td>
-		<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
-		<td style="text-align: center;">
-		<?php
-		echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_delete=".base64_encode($f['file'])."\">".__("delete","bkpwp")."</a>";
-		?>
-		</td>
+		<?php if (!is_dir($f['file'])) { ?>
+			<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
+				<?php
+				echo " <a href=\"javascript:void(0)\"
+				onclick=\"bkpwp_js_loading('".__("View Backup Information","bkpwp")."'); 
+				sajax_target_id = 'bkpwp_action_buffer'; 
+				x_bkpwp_ajax_view_backup('".base64_encode($f['file'])."',''); 
+				sajax_target_id = '';\">".__("view","bkpwp")."</a>";
+				?>
+				</td>
+				<td style="text-align: center;">
+				<?php
+				echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_mail=".base64_encode($f['file'])."\">".__("mail","bkpwp")."</a>";
+				?>
+				</td>
+			<?php } ?>
+			<td style="text-align: center;">
+			<?php
+			echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_restore=".base64_encode($f['file'])."\">".__("restore","bkpwp")."</a>";
+			?>
+			</td>
+			<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
+				<td style="text-align: center;">
+				<?php
+				echo " <a href=\"admin.php?page=backupwordpress/backupwordpress.php&amp;bkpwp_delete=".base64_encode($f['file'])."\">".__("delete","bkpwp")."</a>";
+				?>
+				</td>
+			<?php } ?>
+		<?php } else { ?>
+		<?php echo "".__("Your Backup is bein processed.","bkpwp").""; ?>
 		<?php } ?>
 		<?php
 		if ($alternate != "new_row") {
@@ -493,6 +496,7 @@ class BKPWP_BACKUP {
 		$dir = bkpwp_conform_dir(ABSPATH);
 		$files = $options->bkpwp_ls($dir);
 		$files_copied = 0;
+		$batch = 0;
 		$subdirs_created = 0;
 		$i=1; // the sql at least
 		foreach ($files as $f) {
@@ -505,29 +509,38 @@ class BKPWP_BACKUP {
 					$subdirs_created++;
 				}
 			} elseif(file_exists($f)) {
-				if (!copy($f,$wordpress_files.bkpwp_conform_dir($f, true))) {
-					if (!file_exists($wordpress_files.bkpwp_conform_dir($f, true))) {
-						$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to copy file","bkpwp").": ".$f;
-					}
+				// where did we leave?
+				if (!empty($status) && empty($continue_backup)) {
+					$statusarr = get_option("bkpwp_status");
+					if ($statusarr['point'] == $f) {
+						$continue_backup = 1;
+						continue;
 					} else {
-					// continue unfinished backup
-					if (!empty($status) && empty($continue_backup)) {
-						$statusarr = get_option("bkpwp_status");
-						if ($statusarr['point'] == $f) {
-							$continue_backup = 1;
-							continue;
-						} else {
-							continue;
-						}
+						continue;
 					}
-					$this->bkpwp_set_status($datestamp,'file',$f);
-					$files_copied++;
-					
-					//test
-// 					if (empty($status) && ($files_copied == 135)) {	
-// 						sleep(200);
-// 					}
 				}
+				
+				// set a marker ever 100 
+				if ($batch == 100) { 
+					$this->bkpwp_set_status($datestamp,'file',$f);
+					$batch = 0;
+				}
+				$files_copied++;
+				if (file_exists($wordpress_files.bkpwp_conform_dir($f, true))) {
+					unlink($wordpress_files.bkpwp_conform_dir($f, true));
+				}
+				// now copy...
+				if (!copy($f,$wordpress_files.bkpwp_conform_dir($f, true))) {
+					$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to copy file","bkpwp").": ".$f;
+				}
+				$batch++;
+				//test
+				/*
+				if (empty($status) && ($files_copied == 135)) {	
+					sleep(200);
+				}
+				*/
+
 			}
 			$i++;
 		}
@@ -539,7 +552,7 @@ class BKPWP_BACKUP {
 	$archive_backup->setOption("tmpDirectory",get_option("bkpwppath"));
 	$archive_backup->extract($backup_tmp_dir,File_Archive::toArchive($backup_filename, File_Archive::toFiles()));
 	if (!file_exists($backup_filename)) {
-		return __("Failed to create backup archive","bkpwp");
+		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to create backup archive","bkpwp")." ".$backup_filename;
 	} else {
 		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Archive File created/compressed successfully:","bkpwp")." ".$backup_filename;
 	}
