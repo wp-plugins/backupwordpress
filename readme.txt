@@ -21,6 +21,8 @@ EasyMode:
 + Trigger backup manually
 + Set basic schedules for your backups
 + restore backups
++ staggered SQL import when restoring
++ automatically continue unfinished backups in background
 + download backups
 + Help page
 + Language Support for english and german(deutsch)

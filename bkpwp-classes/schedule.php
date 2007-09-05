@@ -104,8 +104,7 @@ class BKPWP_SCHEDULE {
 				  "created" => date("Y-m-d-H-i-s"));
 		$schedules[] = $test;	  
 	if (!wp_next_scheduled('bkpwp_schedule_bkpwp_hook', $test)) {
-		//wp_schedule_single_event(time()+30, 'bkpwp_schedule_bkpwp_hook', $test);
-		wp_schedule_event(time()+30, 'bkpwp_30secs', 'bkpwp_schedule_bkpwp_hook',$test);
+		wp_schedule_single_event(time()+30, 'bkpwp_schedule_bkpwp_hook', $test);
 		update_option("bkpwp_schedules",$schedules);
 	   return true;
 	} else {

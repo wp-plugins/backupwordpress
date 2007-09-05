@@ -132,7 +132,7 @@ class BKPWP_BACKUP {
     function bkpwp_backquote($a_name)
     {
     	/*
-    		Add backqouotes to tables and db-names in
+    		Add backquotes to tables and db-names in
     		SQL queries. Taken from phpMyAdmin.
     	*/
         if (!empty($a_name) && $a_name != '*') {
@@ -151,7 +151,7 @@ class BKPWP_BACKUP {
         }
     } // function backquote($a_name, $do_it = TRUE)
     
-    function bkpwp_make_sql($table,$log)
+    function bkpwp_make_sql($path,$sql_file,$table,$status,$log)
     {
     	/*
     		Reads the Database table in $table and creates
@@ -161,40 +161,40 @@ class BKPWP_BACKUP {
     		Website: http://restkultur.ch/personal/wolf/scripts/db_backup/
     	*/
     
-    		$sql_statements  = "";
+    		$sql_file  = "";
     
     		// Add SQL statement to drop existing table
-    		$sql_statements .= "\n";
-    		$sql_statements .= "\n";
-    		$sql_statements .= "#\n";
-    		$sql_statements .= "# Delete any existing table " . $this->bkpwp_backquote($table) . "\n";
-    		$sql_statements .= "#\n";
-    		$sql_statements .= "\n";
-    		$sql_statements .= "DROP TABLE IF EXISTS " . $this->bkpwp_backquote($table) . ";\n";
+    		$sql_file .= "\n";
+    		$sql_file .= "\n";
+    		$sql_file .= "#\n";
+    		$sql_file .= "# Delete any existing table " . $this->bkpwp_backquote($table) . "\n";
+    		$sql_file .= "#\n";
+    		$sql_file .= "\n";
+    		$sql_file .= "DROP TABLE IF EXISTS " . $this->bkpwp_backquote($table) . ";\n";
     
     		// Table structure
     
     		// Comment in SQL-file
-    		$sql_statements .= "\n";
-    		$sql_statements .= "\n";
-    		$sql_statements .= "#\n";
-    		$sql_statements .= "# Table structure of table " . $this->bkpwp_backquote($table) . "\n";
-    		$sql_statements .= "#\n";
-    		$sql_statements .= "\n";
+    		$sql_file .= "\n";
+    		$sql_file .= "\n";
+    		$sql_file .= "#\n";
+    		$sql_file .= "# Table structure of table " . $this->bkpwp_backquote($table) . "\n";
+    		$sql_file .= "#\n";
+    		$sql_file .= "\n";
     
     		// Get table structure
     		$query = "SHOW CREATE TABLE " . $this->bkpwp_backquote($table);
     		$result = mysql_query($query, $GLOBALS["db_connect"]);
     		if ($result == FALSE) {
 			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Error getting table structure of ","bkpwp").$table."! ".mysql_errno() . ": " . mysql_error()." ".$this->bkpwp_logtimestamp();
-			$this->bkpwp_write_log($log);
+			$this->bkpwp_write_log($log); unset($log['logfile']);
     		} else {
     			if (mysql_num_rows($result) > 0) {
     				$sql_create_arr = mysql_fetch_array($result);
-    				$sql_statements .= $sql_create_arr[1];
+    				$sql_file .= $sql_create_arr[1];
     			}
     			mysql_free_result($result);
-    			$sql_statements .= " ;";
+    			$sql_file .= " ;";
     		} // ($result == FALSE)
     
     		// Table data contents
@@ -204,18 +204,18 @@ class BKPWP_BACKUP {
     		$result = mysql_query($query, $GLOBALS["db_connect"]);
     		if ($result == FALSE) {
 			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Error getting records of ","bkpwp").$table."! ".mysql_errno() . ": " . mysql_error()." ".$this->bkpwp_logtimestamp();
-			$this->bkpwp_write_log($log);
+			$this->bkpwp_write_log($log); unset($log['logfile']);
     		} else {
     			$fields_cnt = mysql_num_fields($result);
     			$rows_cnt   = mysql_num_rows($result);
     		} // if ($result == FALSE)
     
     		// Comment in SQL-file
-    		$sql_statements .= "\n";
-    		$sql_statements .= "\n";
-    		$sql_statements .= "#\n";
-    		$sql_statements .= "# Data contents of table " . $table . " (" . $rows_cnt . " records)\n";
-    		$sql_statements .= "#\n";
+    		$sql_file .= "\n";
+    		$sql_file .= "\n";
+    		$sql_file .= "#\n";
+    		$sql_file .= "# Data contents of table " . $table . " (" . $rows_cnt . " records)\n";
+    		$sql_file .= "#\n";
     
     		// Checks whether the field is an integer or not
     		for ($j = 0; $j < $fields_cnt; $j++) {
@@ -234,8 +234,29 @@ class BKPWP_BACKUP {
     		$search			= array("\x00", "\x0a", "\x0d", "\x1a"); 	//\x08\\x09, not required
     		$replace		= array('\0', '\n', '\r', '\Z');
     		$current_row	= 0;
+		$batch_write = 0;
     		while ($row = mysql_fetch_row($result)) {
     			$current_row++;
+			
+			//test
+// 			if (empty($status) && ($table == "crawlt_ip_data") && ($current_row == 287)) {
+// 			  sleep(200);
+// 			}
+			
+			// if we have to continue an unfinished backup
+			if (!empty($status) && empty($continue_backup)) {
+				$statusarr = get_option("bkpwp_status");
+				if ($statusarr['type'] == "sqltable_row") {
+					if ($statusarr['point'] == $table."-".$current_row) {
+						$continue_backup = 1;
+						continue;
+					} else {
+						continue;
+					}
+				}
+			}
+			
+			// build the statement
     			for ($j = 0; $j < $fields_cnt; $j++) {
     				if (!isset($row[$j])) {
     					$values[]     = 'NULL';
@@ -251,18 +272,37 @@ class BKPWP_BACKUP {
     					$values[]     = "''";
     				} // if (!isset($row[$j]))
     			} // for ($j = 0; $j < $fields_cnt; $j++)
-    			$sql_statements .= " \n" . $entries . implode(', ', $values) . ') ;';
+    			$sql_file .= " \n" . $entries . implode(', ', $values) . ') ;';
+			
+				
+			// write the rows in batches of 100
+			if ($batch_write == 100) {
+				$batch_write = 0;
+				$this->bkpwp_write_sql($path,$sql_file);
+				$sql_file = "";
+				$name = str_replace(get_option("bkpwppath")."/","",$path);
+				$this->bkpwp_set_status($name,'sqltable_row',$table."-".$current_row);
+				unset($status);
+			}
+			$batch_write++;
+			
     			unset($values);
     		} // while ($row = mysql_fetch_row($result))
     		mysql_free_result($result);
     
     		// Create footer/closing comment in SQL-file
-    		$sql_statements .= "\n";
-    		$sql_statements .= "#\n";
-    		$sql_statements .= "# End of data contents of table " . $table . "\n";
-    		$sql_statements .= "# --------------------------------------------------------\n";
-    		$sql_statements .= "\n";
-    		return $sql_statements;
+    		$sql_file .= "\n";
+    		$sql_file .= "#\n";
+    		$sql_file .= "# End of data contents of table " . $table . "\n";
+    		$sql_file .= "# --------------------------------------------------------\n";
+    		$sql_file .= "\n";
+		
+		if (empty($status) || !empty($continue_backup)) {
+			$this->bkpwp_write_sql($path,$sql_file);
+			$sql_file = "";
+			$name = str_replace(get_option("bkpwppath")."/","",$path);
+			$this->bkpwp_set_status($name,'sqltable',$table);
+		}
     } //function make_sql($table)
     
     function bkpwp_sql_addslashes($a_string = '', $is_like = FALSE)
@@ -281,20 +321,20 @@ class BKPWP_BACKUP {
         return $a_string;
     } // function sql_addslashes($a_string = '', $is_like = FALSE)
     
-    function bkpwp_mysql($path,$log) {
+    function bkpwp_mysql($path,$status="",$log) {
 	if (!$GLOBALS['db_connect'] = @mysql_pconnect(DB_HOST, DB_USER, DB_PASSWORD)) {
 		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Could not connect to MySQL server! ","bkpwp"). mysql_error()." ".$this->bkpwp_logtimestamp();
-		$this->bkpwp_write_log($log);
+		$this->bkpwp_write_log($log); unset($log['logfile']);
 	}
 	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("MySQL server connected successfully ","bkpwp")." ".$this->bkpwp_logtimestamp();
-	$this->bkpwp_write_log($log);
+	$this->bkpwp_write_log($log); unset($log['logfile']);
 	mysql_select_db(DB_NAME,$GLOBALS['db_connect']);
-	$file_name = "wordpress.sql";
+	
 	//Begin new backup of MySql
 	$tables = mysql_list_tables(DB_NAME);
 	if (!isset($tables) > 0) {
 		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Could not select db ","bkpwp").DB_NAME." ".$this->bkpwp_logtimestamp();
-		$this->bkpwp_write_log($log);
+		$this->bkpwp_write_log($log); unset($log['logfile']);
 	}
 	$sql_file  = "# WordPress : ".get_bloginfo("url")." MySQL database backup\n";
 	$sql_file .= "#\n";
@@ -302,27 +342,34 @@ class BKPWP_BACKUP {
 	$sql_file .= "# Hostname: " . DB_HOST . "\n";
 	$sql_file .= "# Database: " . $this->bkpwp_backquote(DB_NAME) . "\n";
 	$sql_file .= "# --------------------------------------------------------\n";
+	if (empty($status)) {
+		$this->bkpwp_write_sql($path,$sql_file);
+		$sql_file = "";
+	}
 	for ($i = 0; $i < mysql_num_rows($tables); $i++) {
 		$curr_table = mysql_tablename($tables, $i);
-			// Increase script execution time-limit to 15 min for every table.
-			if ( !ini_get('safe_mode')) @set_time_limit(15*60);
-			// Create the SQL statements
-			$sql_file .= "# --------------------------------------------------------\n";
-			$sql_file .= "# Table: " . $this->bkpwp_backquote($curr_table) . "\n";
-			$sql_file .= "# --------------------------------------------------------\n";
-			$sql_file .= $this->bkpwp_make_sql($curr_table,$log);
+		if (!empty($status) && empty($continue_backup)) {
+			$statusarr = get_option("bkpwp_status");
+			if ($statusarr['type'] == "sqltable_row") {
+				$continue_backup = 1;
+			} elseif ($statusarr['point'] == $curr_table) {
+				$continue_backup = 1;
+				continue;
+			} else {
+				continue;
+			}
+		}
+		// Increase script execution time-limit to 15 min for every table.
+		if ( !ini_get('safe_mode')) @set_time_limit(15*60);
+		// Create the SQL statements
+		$sql_file .= "# --------------------------------------------------------\n";
+		$sql_file .= "# Table: " . $this->bkpwp_backquote($curr_table) . "\n";
+		$sql_file .= "# --------------------------------------------------------\n";
+		$this->bkpwp_make_sql($path,$sql_file,$curr_table,$status,$log);
+		
+		$log['logfile'][] = $this->bkpwp_logtimestamp().": sql-dump for ".$curr_table." created ".$this->bkpwp_logtimestamp();
+		$this->bkpwp_write_log($log); unset($log['logfile']);
 	}
-	$cachefp = fopen($path."/".$file_name, "w");
-	fwrite($cachefp, $sql_file);
-	if (file_exists($path."/".$file_name)) {
-		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".$path."/".$file_name." created ".$this->bkpwp_logtimestamp();
-		$this->bkpwp_write_log($log);
-		return true;
-	} else {
-		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".$path."/".$file_name." could not be created ".$this->bkpwp_logtimestamp();
-		$this->bkpwp_write_log($log);
-	}
-	return false;
     }
     
     function bkpwp_calculate($preset) {
@@ -353,15 +400,38 @@ class BKPWP_BACKUP {
 	    return date(get_option('date_format'))." ".date("H:i:s");
     }
     
-    function bkpwp_do_backup($preset) {
+    function bkpwp_set_status($name,$type,$point) {
+	$new_backup_status = array("name" => $name, "time" => time(), "type" => $type, "point" => $point);
+	update_option("bkpwp_status",$new_backup_status);
+    }
+    
+    function bkpwp_do_backup($preset,$status="") {
 	$options = new BKPWP_OPTIONS();
 	$log = array();
 	// get the desired archive type from preset
+	if (!empty($status)) {
+		$preset = get_option("bkpwp_status_config");
+	}
+	
+	// load the full backup preset if none is set
+	if (empty($preset)) {
+	$presets = new BKPWP_MANAGE();
+	$preset = $presets->bkpwp_get_preset("full backup");
+	}
+		
 	$type = $preset['bkpwp_preset_options']['bkpwp_archive_type'];
 	$sqlonly = $preset['bkpwp_preset_options']['bkpwp_sql_only'];
 	$options->excludelist = $preset['bkpwp_preset_options']['bkpwp_excludelist'];
+	update_option("bkpwp_status_config",$preset);
 	
 	$datestamp = date("Y-m-d-H-i-s");
+	// or: load the name of the unfinished backup's temporary directory
+	if (!empty($status)) {
+		$datestamp = $status;
+		if (!is_dir(get_option("bkpwppath")."/".$datestamp)) {
+			return;
+		}
+	}
 	// temporary directory name
 	$backup_tmp_dir = get_option("bkpwppath")."/".$datestamp;
 	
@@ -383,6 +453,7 @@ class BKPWP_BACKUP {
 	
 	// count milliseconds
 	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress starting at","bkpwp")." ".$this->bkpwp_logtimestamp();
+	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress using Preset","bkpwp")." ".$log['preset'];
 	
 	// create a temporary directory
 	if (!is_dir($backup_tmp_dir)) {
@@ -391,8 +462,11 @@ class BKPWP_BACKUP {
 		} else {
 			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress temporary Directory","bkpwp")." '".$backup_tmp_dir."' ".__("created","bkpwp");
 		}
+	} else {
+			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress temporary Directory","bkpwp")." '".$backup_tmp_dir."' ".__("exists. Proceeding with unfinished backup.","bkpwp");
 	}
-	$this->bkpwp_write_log($log);
+	$this->bkpwp_write_log($log); unset($log['logfile']);
+	
 	if ($sqlonly != 1) {
 		// subdirectory of wordpress files
 		$wordpress_files = $backup_tmp_dir."/wordpress_files";
@@ -402,18 +476,18 @@ class BKPWP_BACKUP {
 			} else {
 				$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress temporary Directory","bkpwp")." '".$wordpress_files."' ".__("created","bkpwp");
 			}
-	$this->bkpwp_write_log($log);
+		$this->bkpwp_write_log($log); unset($log['logfile']);
 		}
 	}
 	
-	$db_dump = $this->bkpwp_mysql($backup_tmp_dir,$log);
+	$this->bkpwp_mysql($backup_tmp_dir,$status,$log);
 	
-	if(!$db_dump) {
+	if(!file_exists($backup_tmp_dir."/wordpress.sql")) {
 		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("SQL Dump could not be created.","bkpwp");
 	} else {
 		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("SQL Dump created.","bkpwp");
 	}
-	$this->bkpwp_write_log($log);
+	$this->bkpwp_write_log($log); unset($log['logfile']);
 	if ($sqlonly != 1) {
 		// create a temporary directory of files to backup
 		$dir = bkpwp_conform_dir(ABSPATH);
@@ -424,15 +498,35 @@ class BKPWP_BACKUP {
 		foreach ($files as $f) {
 			if (is_dir($f)) {
 				if (!mkdir($wordpress_files.bkpwp_conform_dir($f, true))) {
-					return __("Failed to make directory","bkpwp");
+					if (!is_dir($wordpress_files.bkpwp_conform_dir($f, true))) {
+						$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to make directory","bkpwp").": ".$f;
+					}
 				} else {
 					$subdirs_created++;
 				}
 			} elseif(file_exists($f)) {
 				if (!copy($f,$wordpress_files.bkpwp_conform_dir($f, true))) {
-					return __("Failed to copy","bkpwp");
-				} else {
+					if (!file_exists($wordpress_files.bkpwp_conform_dir($f, true))) {
+						$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to copy file","bkpwp").": ".$f;
+					}
+					} else {
+					// continue unfinished backup
+					if (!empty($status) && empty($continue_backup)) {
+						$statusarr = get_option("bkpwp_status");
+						if ($statusarr['point'] == $f) {
+							$continue_backup = 1;
+							continue;
+						} else {
+							continue;
+						}
+					}
+					$this->bkpwp_set_status($datestamp,'file',$f);
 					$files_copied++;
+					
+					//test
+// 					if (empty($status) && ($files_copied == 135)) {	
+// 						sleep(200);
+// 					}
 				}
 			}
 			$i++;
@@ -452,11 +546,19 @@ class BKPWP_BACKUP {
 	
 	$deleted_files_count = $this->bkpwp_rmdirtree($backup_tmp_dir);
 	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".count($deleted_files_count)." ".__("Temporary Directories and Files deleted successfully","bkpwp");
+	
 	$deleted_oldarchives_count = $this->bkpwp_delete_old();
 	if ($deleted_oldarchives_count > 0) {
 	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".$deleted_oldarchives_count." ".__("Old BackUpWordPress Archives deleted successfully","bkpwp");
 	} else {
 	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("No old BackUpWordPress Archives to delete","bkpwp");
+	}
+	
+	$deleted_oldlogfiles_count = $this->bkpwp_delete_oldlogs();
+	if ($deleted_oldlogfiles_count > 0) {
+	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".$deleted_oldlogfiles_count." ".__("Old BackUpWordPress Log Files deleted successfully","bkpwp");
+	} else {
+	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("No old BackUpWordPress Log Files to delete","bkpwp");
 	}
 	
 	
@@ -466,7 +568,13 @@ class BKPWP_BACKUP {
 	$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress was running for","bkpwp")." ".round($time,2)." ".__("Seconds","bkpwp");
 	
 	// write the log
-	$this->bkpwp_write_log($log);
+	$this->bkpwp_write_log($log); unset($log['logfile']);
+	
+	// dont need the status anymore
+	delete_option("bkpwp_status");
+	delete_option("bkpwp_status_config");
+		
+		
 	$backup = array("file" => $backup_filename,
 			"filename" => $backup_filename_short);
 	// start the output
@@ -528,6 +636,30 @@ class BKPWP_BACKUP {
 	return true;
     }
 
+    function bkpwp_write_sql($sqldir,$sql) {
+	$sqlname = $sqldir."/wordpress.sql";
+	// actually write the sql file
+	if ($this->is__writable($sqlname)) {
+		if (!$handle = fopen($sqlname, "a")) {
+			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("SQLfile could not be opened for writing: ","bkpwp").$sqlname;
+			$this->bkpwp_write_log($log); unset($log['logfile']);
+			return;
+		}
+		if (!fwrite($handle, $sql)) {
+			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("SQLfile not writable: ","bkpwp").$sqlname;
+			$this->bkpwp_write_log($log); unset($log['logfile']);
+		return;
+		}
+		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("successfully written to SQLfile: ","bkpwp").$sqlname;
+		$this->bkpwp_write_log($log); unset($log['logfile']);
+		fclose($handle);
+		return true;
+	} else {
+		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("SQLfile not writable: ","bkpwp").$sqlname;
+		$this->bkpwp_write_log($log); unset($log['logfile']);
+	}
+    }
+
     function bkpwp_write_log($log,$return="") {
 	    if (!is_array($log)) { return; }
 	    	$logdir = get_option("bkpwppath")."/logs";
@@ -536,9 +668,13 @@ class BKPWP_BACKUP {
 		}
 	    	$logname = $logdir."/".$log['filename'].".txt";
 		$logfile = "";
-		$logfile .= "Preset: ".$log['preset']."\n";
-		if (!empty($log['schedule'])) {
-			$logfile .= "Schedule: ".$log['schedule']."\n";
+		if (!file_exists($logname)) {
+			if (!empty($log['preset'])) {
+				$logfile .= "Preset: ".$log['preset']."\n";
+			}
+			if (!empty($log['schedule'])) {
+				$logfile .= "Schedule: ".$log['schedule']."\n";
+			}
 		}
 		if (is_array($log['logfile'])) {
 			foreach($log['logfile'] as $l) {
@@ -552,11 +688,9 @@ class BKPWP_BACKUP {
 			if ($this->is__writable($logname)) {
 			    if (!$handle = fopen($logname, "a")) {
 				 return __("Logfile could not be opened for writing: ","bkpwp").$logname;
-				 exit;
 			    }
 			    if (!fwrite($handle, $logfile)) {
 				return __("Logfile not writable: ","bkpwp").$logname;
-				exit;
 			    }
 			    fclose($handle);
 			    return true;
@@ -604,6 +738,29 @@ class BKPWP_BACKUP {
     		$i = 1;
     		foreach($files as $f) {
     			if ($i > get_option('bkpwp_max_backups')) {
+    				unlink($f['file']);
+				$unlinkcount++;
+    			}
+    			$i++;
+    		}
+    	}
+    if ($unlinkcount > 0) {
+	    return $unlinkcount;
+    }
+    return false;
+    }
+    
+    function bkpwp_delete_oldlogs() {
+    	$backups = new BKPWP_MANAGE();
+	$unlinkcount = 0;
+	$files = $backups->bkpwp_get_logs();
+	$num = get_option('bkpwp_max_backups')*10;
+    	if (count($files) <= $num) {
+    		return;
+    	} else {
+    		$i = 1;
+    		foreach($files as $f) {
+    			if ($i > $num) {
     				unlink($f['file']);
 				$unlinkcount++;
     			}
@@ -786,6 +943,29 @@ class BKPWP_MANAGE {
 	$restorefile = $bkpwppath."/bkpwp_restore.sql";
 	if (file_exists($restorefile)) {
 		unlink($restorefile);
+	}
+	if ($handle = opendir($bkpwppath)) {
+	      while (false !== ($file = readdir($handle))) {
+	  	    if (($file != ".") && ($file != "..") && !is_dir($bkpwppath."/".$file)) {
+			    $files[] = array("file" => $bkpwppath."/".$file,
+			    			"filename" => $file);
+	  	    }
+	      }
+	      closedir($handle);
+	  }
+	if (count($files) < 1) { return; }
+	foreach ($files as $key => $row) {
+	$filename[$key]  = $row['filename'];
+	}
+	array_multisort($filename, SORT_DESC, $files);
+	return $files;
+    }
+    
+    function bkpwp_get_logs() {
+	$files = array();
+	$bkpwppath = get_option("bkpwppath")."/logs";
+	if (!is_writable($bkpwppath)) {
+		return;
 	}
 	if ($handle = opendir($bkpwppath)) {
 	      while (false !== ($file = readdir($handle))) {

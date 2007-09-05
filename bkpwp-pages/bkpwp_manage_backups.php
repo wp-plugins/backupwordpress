@@ -248,7 +248,7 @@ if (count($backup_archives) < 1) {
 			preset = "full backup";
 		<?php } ?>
 		document.getElementById('bkpwp_manage_backups_newrow').style.display="table-row";
-		document.getElementById('bkpwp_manage_backups_newrow').innerHTML="<th scope=\"row\"><?php echo date(get_option('date_format'))." ".date("H:i"); ?></th><td colspan=\"<?php if (!$backups->options->bkpwp_easy_mode()) { echo "8"; } else { echo "3"; } ?>\"><img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' /> <?php _e("Creating backup. Please wait."); ?></td>";
+		document.getElementById('bkpwp_manage_backups_newrow').innerHTML="<th scope=\"row\"><?php echo date(get_option('date_format'))." ".date("H:i"); ?></th><td colspan=\"<?php if (!$backups->options->bkpwp_easy_mode()) { echo "8"; } else { echo "3"; } ?>\"><img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' /> <?php _e("Creating backup. Please wait."); ?> <?php _e("If nothing happens within 30 Seconds, reload this page manually."); ?></td>";
 		sajax_target_id = 'bkpwp_manage_backups_newrow';
 		x_bkpwp_ajax_create(preset,'');
 	}
@@ -272,6 +272,68 @@ if (count($backup_archives) < 1) {
 		document.getElementById('bkpwp_action_title').innerHTML="<h4>" + str + "</h4>";
 	}
 	</script>
+	<?php
+	
+	if (bkpwp_check_unfinished_backup()) {
+	$status = get_option("bkpwp_status");
+	?>
+	<div id="message" class="updated fade">
+		<p>
+	<?php
+		_e("Last Action of BackUpWordPress: ","bkpwp");
+		_e("Creating Backup Archive: ","bkpwp");
+		echo " ".$status['name'].". ";
+		if ($status['type'] == "sqltable") {
+			_e("Saving Database Table ","bkpwp");
+			echo $status['point']." ";
+		} elseif ($status['type'] == "sqltable_row") {
+			$d = explode("-",$status['point']);
+			_e("Saving data rows from table ","bkpwp");
+			echo $d[0].". ";
+			_e("Currently saving entries from row number","bkpwp");
+			echo " ".$d[1]." ";
+		} elseif ($status['type'] == "file") {
+			_e("Saving File ","bkpwp");
+			echo str_replace(get_option("bkpwp_path"),"",$status['point'])." ";
+		}
+		_e("at ","bkpwp");
+		echo date(get_option('date_format'),$status['time'])." ".date("H:i:s",$status['time'])."</p><p>";
+		
+		$sincet = bkpwp_date_diff($status['time'],time());
+		$since .= $sincet['days']." ".__("days","bkpwp")." ";
+		$since .= $sincet['hours']." ".__("hours","bkpwp")." ";
+		$since .= $sincet['minutes']." ".__("minutes","bkpwp")." ";
+		$since .= $sincet['seconds']." ".__("seconds","bkpwp");
+		_e("BackUpWordPress did not proceed with the current task since","bkpwp");
+		echo " ".$since;
+		?>
+		</p>
+		<p>
+		<?php
+		if (($status['time']+30) < time()) {
+			_e("BackUpWordPress tries to proceed with this unfinished backup.");
+			echo " ";
+			_e("On a WordPress website with low traffic, reload the page a few times, to trigger the action.");
+			echo "</p><p>";
+			_e("If nothing happens for more than 5 minutes, deaktivate the plugin, install the newest version and activate again.","bkpwp");
+		} else {
+			_e("Please be patient.","bkpwp");
+		}
+		?>
+		</p>
+		<p>
+		<?php
+		/*
+		echo __("Your server's configuration allows scripts to run for a maximum of","bkpwp")." ";
+		echo ini_get("max_execution_time");
+		echo " ".__("seconds.","bkpwp");
+		*/
+		?>
+		</p>
+	</div>
+	<?php
+	} else {
+	?>
 		<div id="bkpwp_actions" style="display:none;">
 		<div id="bkpwp_action_title"></div>
 		<div id="bkpwp_action_buffer"></div>
@@ -294,7 +356,8 @@ if (count($backup_archives) < 1) {
 		<button class="button" onclick="do_create(); sajax_target_id = ''; return false;"><?php _e("BackUp WordPress Now","bkpwp"); ?> &raquo;</button>
 		<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
 			<button class="button" onclick="bkpwp_js_loading('<?php _e("Calculating used disk space","bkpwp"); ?>'); calculate(); sajax_target_id = ''; return false;"><?php _e("Recalculate Used Disk Space","bkpwp"); ?> &raquo;</button>
-		<?php } ?>
+		<?php }
+	} ?>
 		
 		
 	<?php
@@ -309,6 +372,7 @@ if (count($backup_archives) < 1) {
 	if (!empty($_REQUEST['bkpwp_restore'])) {
 		 bkpwp_restore();
 	}
+	
 	?>
 		
 	  	<br /><br />

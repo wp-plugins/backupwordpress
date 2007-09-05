@@ -21,6 +21,11 @@ Whishlist:
 
 Changelog:
 	
+Changes in 0.2.1:
+	- old Logfiles are deleted. 10 times the amount of the configured amount of backups to keep is kept.
+	- feature: backups are done in kind of a staggered process:
+	 	if BackUpWordPress runs into a server side time-out, BackUpWordPress tries to trigger an single scheduled event for finishing the task. Corresponding dialoques appear on the *Manage Backups* - screen. 
+	
 Changes in 0.1.4:
 	- @set_time_limit(0) in functions.php line 277 supresses the 'Cannot set time limit in safe mode' warning
 	- dialoques streamlined: e.g. when you click "delete" on a backup archive, you just need to hit enter to delete it
@@ -75,11 +80,13 @@ add_action('deactivate_backupwordpress/backupwordpress.php', 'bkpwp_exit');
 add_action('init', 'bkpwp_download_files');
 add_action('init', 'bkpwp_setup');
 add_action('init', 'bkpwp_sajax_do');
+add_action('init', 'bkpwp_proceed_unfinished');
 
 // cron jobs with wordpress' pseude-cron: add special reccurences
 add_filter('cron_schedules', 'bkpwp_more_reccurences');
 
 add_action('bkpwp_schedule_bkpwp_hook','bkpwp_schedule_bkpwp');
+add_action('bkpwp_finish_bkpwp_hook','bkpwp_finish_bkpwp');
 
 if (eregi("backupwordpress",$_REQUEST['page']) || eregi("bkpwp",$_REQUEST['page'])) {
 add_action('admin_head', 'bkpwp_sajax_js');

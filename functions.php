@@ -30,6 +30,8 @@ function bkpwp_exit() {
 	delete_option("bkpwp_automail_maxsize");
 	delete_option("bkpwp_automail_address");
 	delete_option("bkpwp_automail_receiver");
+	delete_option("bkpwp_status");
+	delete_option("bkpwp_status_config");
 }
 
 function bkpwp_setup() {
@@ -83,10 +85,70 @@ $options = new BKPWP_OPTIONS();
 		</div>
 	<?php
 }
+
+function bkpwp_check_unfinished_backup() {
+	$status = get_option("bkpwp_status");
+	if (!empty($status)) {
+		if (!is_dir(get_option("bkpwppath")."/".$status['name'])) {
+			return false;
+		}
+		if (($status['time']-5) < time()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function bkpwp_proceed_unfinished() {
+	// no unfinished backup
+	if(!bkpwp_check_unfinished_backup()) {
+		return;
+	}
+	
+	$status = get_option("bkpwp_status");
+	
+	// no working directory
+	if (!is_dir(get_option("bkpwppath")."/".$status['name'])) {
+		return;
+	}
+	// wait a little
+	if (($status['time']+30) > time()) {
+		return;
+	}
+	
+	// okay, schedule that one for finishing up
+	if (!wp_next_scheduled('bkpwp_finish_bkpwp_hook', $status)) {
+		wp_schedule_single_event(time(), 'bkpwp_finish_bkpwp_hook', $status);
+		return;
+	}
+}
+
+function bkpwp_date_diff($earlierDate, $laterDate) {
+  //returns an array of numeric values representing days, hours, minutes & seconds respectively
+  $ret=array('days'=>0,'hours'=>0,'minutes'=>0,'seconds'=>0);
+
+  $totalsec = $laterDate - $earlierDate;
+  if ($totalsec >= 86400) {
+    $ret['days'] = floor($totalsec/86400);
+    $totalsec = $totalsec % 86400;
+  }
+  if ($totalsec >= 3600) {
+    $ret['hours'] = floor($totalsec/3600);
+    $totalsec = $totalsec % 3600;
+  }
+  if ($totalsec >= 60) {
+    $ret['minutes'] = floor($totalsec/60);
+  }
+  $ret['seconds'] = $totalsec % 60;
+  return $ret;
+}
 		
 function bkpwp_latest_activity() {
 	echo "<h3>".__("BackUpWordPress","bkpwp")." <a href=\"admin.php?page=backupwordpress/backupwordpress.php\">&raquo;</a></h3>";
 	echo "<p><a href=\"http://wordpress.designpraxis.at/\">".__("Check for a new version of BackUpWordPress!","bkpwp")."</a></p>";
+	if (bkpwp_check_unfinished_backup()) {
+		echo "<span style=\"color:red\">".__("You have unfinished Backups!","bkpwp")." <a href=\"admin.php?page=backupwordpress/backupwordpress.php\">".__("Please finish them manually","bkpwp")." &raquo;</a></span>";
+	}
 	echo "<p><b>".__("Latest Backups","bkpwp")."</b>:</p>";
 	$backup = new BKPWP_MANAGE();
 	$backups = $backup->bkpwp_get_backups();
@@ -247,6 +309,11 @@ function bkpwp_more_reccurences($recc) {
 		$recc[$key] = $value;
 	}
 	return $recc;
+}
+
+function bkpwp_finish_bkpwp($status) {
+	$backup = new BKPWP_BACKUP();
+	$backup->bkpwp_do_backup("",$status);
 }
 
 function bkpwp_schedule_bkpwp($options) {
