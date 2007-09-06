@@ -44,6 +44,12 @@ more option in AdvancedMode:
 3. Go to BackUpWordPress in your Administration Backend
 
 
+== Support Forum ==
+
+For support questions, please search and post at our Support forum:
+[WordPress Designpraxis Forum](http://wpforum.designpraxis.at)
+
+
 == Screenshots ==
 
 1. Manage your Backups
