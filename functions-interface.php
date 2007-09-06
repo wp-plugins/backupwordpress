@@ -62,7 +62,9 @@ function bkpwp_sajax_js() {
 	?>
 	<script>
 	<?php
-	sajax_show_javascript();
+	if (function_exists("sajax_show_javascript")) {
+		sajax_show_javascript();
+	}
 	?>
 	</script>
 	<?php

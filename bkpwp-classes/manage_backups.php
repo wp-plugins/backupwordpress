@@ -29,7 +29,8 @@ class BKPWP_BACKUP_ARCHIVE {
 					    $values['preset'] = $p[1];
 				    }
 				    if (eregi("Schedule:",$line)) {
-					    $values['runby'] = __("scheduled","bkpwp");
+					    $p=explode(":",$line);
+					    $values['runby'] = $p[1];
 				    }
 			    }
 		    }
@@ -60,18 +61,18 @@ class BKPWP_BACKUP_ARCHIVE {
 		<th scope="row"><?php
 		echo date(get_option('date_format'),filemtime($f['file']))." ".date("H:i",filemtime($f['file']));
 		?></th>
-		<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
 		<td>
 		<?php
 		echo " <b>".$type."</b>";
-		?>
-		</td>
-		<td>
-		<?php
-		echo " <b>".$info['preset']."</b>";
 		if (!empty($info['runby'])) {
 			echo " - ".$info['runby'];
 		}
+		?>
+		</td>
+		<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
+		<td>
+		<?php
+		echo " <b>".$info['preset']."</b>";
 		?>
 		</td>
 		<?php } ?>
@@ -86,7 +87,7 @@ class BKPWP_BACKUP_ARCHIVE {
 		?>
 		</td>
 		<td style="text-align: center;">
-		<?php if (!is_dir($f['file'])) { ?>
+		<?php if (!empty($info['preset'])) { ?>
 			<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
 				<?php
 				echo " <a href=\"javascript:void(0)\"
@@ -115,7 +116,7 @@ class BKPWP_BACKUP_ARCHIVE {
 				</td>
 			<?php } ?>
 		<?php } else { ?>
-		<?php echo "".__("Your Backup is bein processed.","bkpwp").""; ?>
+		<?php echo "".__("Your Backup is being processed.","bkpwp").""; ?>
 		<?php } ?>
 		<?php
 		if ($alternate != "new_row") {
@@ -451,7 +452,11 @@ class BKPWP_BACKUP {
 	$log['filename'] = $backup_filename_short;
 	$log['logfile'] = array();
 	$log['preset'] = $preset['bkpwp_preset_name'];
-	$log['schedule'] = $preset['bkpwp_schedule'];
+	if (empty($preset['bkpwp_schedule'])) {
+		$log['schedule'] = __("manually","bkpwp");
+	} else {
+		$log['schedule'] = $preset['bkpwp_schedule'];
+	}
 	$time_start = microtime(true);
 	
 	// count milliseconds
@@ -688,6 +693,9 @@ class BKPWP_BACKUP {
 			if (!empty($log['schedule'])) {
 				$logfile .= "Schedule: ".$log['schedule']."\n";
 			}
+			// write some environmental information for debuging purposes
+			$logfile .= "WordPress Version: ".$GLOBALS['wp_version']."\n";
+			$logfile .= "BackUpWordPress Version: ".$GLOBALS['bkpwp_version']."\n";
 		}
 		if (is_array($log['logfile'])) {
 			foreach($log['logfile'] as $l) {

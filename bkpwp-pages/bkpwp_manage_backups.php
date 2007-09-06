@@ -396,8 +396,8 @@ if (count($backup_archives) < 1) {
 			<thead>
 			<tr>
 			<th scope="col"><?php _e("Date/Time","bkpwp"); ?></th>
-			<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
 			<th scope="col"><?php _e("Type","bkpwp"); ?></th>
+			<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
 			<th scope="col"><?php _e("Preset","bkpwp"); ?></th>
 			<?php } ?>
 			<th scope="col"><?php _e("Size","bkpwp"); ?></th>
