@@ -1,9 +1,37 @@
 <?php
 function bkpwp_schedulelist($bkpwppath) {
-	//delete_option("cron");
+	$backups = new BKPWP_MANAGE();	
+	$backups->options = new BKPWP_OPTIONS();
+	
 	echo "<h2>".__("Manage Backup Schedules","bkpwp")."</h2>";
 	echo "<p>".__("Info: Creating custom schedules is on the wishlist for BackUpWordPress 2.0.","bkpwp")."</p>";
 	?>
+	<script type="text/javascript">
+	<!-- ajax call for calculating disk space usage -->
+	function calculate() {
+		var preset;
+		<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
+			preset = document.getElementById('bkpwp_preset').value;
+		<?php } else { ?>
+			preset = "full backup";
+		<?php } ?>
+		x_bkpwp_ajax_calculater(preset,'');
+	}
+	
+	<!-- displays a loading text information while doing ajax requests -->	
+	function bkpwp_js_loading(str) {
+		document.getElementById('bkpwp_actions').style.display = 'block';
+		is_loading('bkpwp_action_buffer');
+		sajax_target_id = 'bkpwp_action_buffer';
+		document.getElementById('bkpwp_action_title').innerHTML="<h4>" + str + "</h4>";
+	}
+	</script>
+	<div id="bkpwp_actions" style="display:none;">
+	<div id="bkpwp_action_title"></div>
+	<div id="bkpwp_action_buffer"></div>
+	</div>
+	<input type="hidden" name="bkpwp_preset" id="bkpwp_preset" value="" />
+				
 	<form name="form1" method="post" action="admin.php?page=<?php echo $_REQUEST['page']; ?>">
 	  <fieldset>
 	  <input class="button" type="submit" name="bkpwp_reset_schedules" value="<?php _e("reset default schedules","bkpwp"); ?> &raquo;" />
@@ -34,8 +62,9 @@ function bkpwp_schedulelist($bkpwppath) {
 			?>
 			<tr class="<?php echo $alternate; ?>">
 				<th style="text-align: center;" scope="row"><?php
-				if (!empty($options['lastrun'])) {
-					echo date(get_option('date_format'),strtotime($options['lastrun']))." ".date("H:i",strtotime($options['lastrun']));
+				$preset = $backups->bkpwp_get_preset($options['preset']);
+				if (!empty($preset['bkpwp_preset_options']['bkpwp_lastrun'])) {
+					echo date(get_option('date_format'),$preset['bkpwp_preset_options']['bkpwp_lastrun'])." ".date("H:i",$preset['bkpwp_preset_options']['bkpwp_lastrun']);
 				} else {
 					_e("Not Yet","bkpwp");
 				}
@@ -79,6 +108,9 @@ function bkpwp_schedulelist($bkpwppath) {
 				<?php
 				echo $options['preset'];
 				?>
+				<a title="<?php _e("Recalculate Backup size","bkpwp"); ?>" 
+				href="javascript:void(0);"
+				onclick="document.getElementById('bkpwp_preset').value='<?php echo $options['preset'];  ?>'; bkpwp_js_loading('<?php _e("Calculating file sizes","bkpwp"); ?>'); calculate(); sajax_target_id = ''; return false;">&raquo;</a>
 				</td>
 				<td>
 				<?php

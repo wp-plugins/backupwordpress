@@ -87,6 +87,7 @@ $bkpwppath = get_option("bkpwppath");
 	<?php 
 	$options->bkpwp_handle_backup_automail();
 	$bkpwp_automail = get_option("bkpwp_automail");
+	$bkpwp_automail_address = get_option("bkpwp_automail_address");
 	?>
 	<h2><?php _e("Mail Setup","bkpwp"); ?></h2>
 	<p>
@@ -94,7 +95,8 @@ $bkpwppath = get_option("bkpwppath");
 	<form name="form1" method="post" action="admin.php?page=<?php echo $_REQUEST['page']; ?>">
 	  <fieldset>
 	  <?php  if ($options->bkpwp_easy_mode()) {  } ?>
-	  <p><?php _e("Mail to:","bkpwp"); ?><b> <?php echo $GLOBALS['userdata']->user_email; ?></b></p>
+	  <p><?php _e("Mail to:","bkpwp"); ?><b> <?php _e("Please seperate multiple email addresses with kommas.","bkpwp"); ?></p>
+	  <p><input type="text" size="55" value="<?php if (empty($bkpwp_automail_address)) { echo $GLOBALS['userdata']->user_email; } else { echo $bkpwp_automail_address; } ?>" name="bkpwp_automail_address" /></b></p>
 	  <p><input type="checkbox" size="50" value="1" name="bkpwp_automail" <?php if(!empty($bkpwp_automail)) { echo " checked"; } ?> />
 	  <?php _e("Yes, send me my backups","bkpwp"); ?></p>
 	  <p><?php _e("as long as they are smaller than","bkpwp"); ?> 

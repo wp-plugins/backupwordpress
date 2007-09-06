@@ -30,6 +30,7 @@ function bkpwp_exit() {
 	delete_option("bkpwp_automail_maxsize");
 	delete_option("bkpwp_automail_address");
 	delete_option("bkpwp_automail_receiver");
+	delete_option("bkpwp_automail_from");
 	delete_option("bkpwp_status");
 	delete_option("bkpwp_status_config");
 }

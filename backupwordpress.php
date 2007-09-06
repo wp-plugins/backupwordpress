@@ -4,7 +4,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
 Description: Manage <a href="admin.php?page=backupwordpress/backupwordpress.php">WordPress Backups</a>. Beta Release. Please help testing and give me feedback under the comments section of <a href="http://wordpress.designpraxis.at/plugins/backupwordpress/">the Plugin page</a>. Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.2.2
+Version: 0.2.3
 Author URI: http://wordpress.designpraxis.at
 */
 
@@ -19,6 +19,12 @@ Whishlist:
 /*
 
 Changelog:
+	
+Changes in 0.2.3:
+	- Mailing options: multiple email addresses supported
+	- Backup file size reports also display the size of the database
+	- Backup archive filesize is estimated
+	- schedule table rows display the lastrun-timestamp of the last running backup
 	
 Changes in 0.2.2:
 	- Manage Backups now display the type, either scheduled or manual for Advanced as well as EasyMode

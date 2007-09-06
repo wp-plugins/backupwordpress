@@ -377,10 +377,26 @@ class BKPWP_BACKUP {
     }
     
     function bkpwp_calculate($preset) {
-	    if ($preset['bkpwp_preset_options']['bkpwp_sql_only'] == 1) {
-		$ret = "<p>".__("Database Only Backup with this Preset. No Disk Files will be backed up.","bkpwp")."</p>";
-		return $ret;
-	    }
+	$sql = 'SHOW TABLE STATUS FROM ' . DB_NAME;
+	$res = @$GLOBALS['wpdb']->get_results($sql, ARRAY_A);
+	$sum_free = 0;
+	$sum_data = 0;
+	foreach($res as $r) {
+		$sum_free = $sum_free + $r['Data_free'];
+		$sum_data = $sum_data + $r['Data_length'];
+	}
+	$ret = "<p>";
+	$ret .= __("Your Database holds.","bkpwp")." "
+		.bkpwp_size_readable($sum_data)." "
+		.__("of Data","dprx_opt").".<br />";
+		
+		
+	if ($preset['bkpwp_preset_options']['bkpwp_sql_only'] == 1) {
+	$ret .= __("The resulting Backup Archive will be about","dprx_opt")." <b> ".bkpwp_size_readable(($sum_data/2.5))."</b>.</p>";
+	$ret .= "<p>".__("Database Only Backup with this Preset. No Disk Files will be backed up.","bkpwp")."</p>";
+	return $ret;
+	}
+	
 	$options = new BKPWP_OPTIONS();
 	clearstatcache(); //get rid of cached filesizes...
 	$dir = bkpwp_conform_dir(ABSPATH);
@@ -394,9 +410,9 @@ class BKPWP_BACKUP {
 		//echo $str.": ".bkpwp_size_readable($thisf)." (".bkpwp_size_readable($filesize).")\\n";
 	}
 	update_option("bkpwp_calculation",bkpwp_size_readable($filesize));
-	$ret = "<p>".__("Your Wordpress files backuped with preset","bkpwp")." <b>".$preset['bkpwp_preset_name']."</b> ".__(" use","bkpwp")." ";
-	$ret .= "<b>".bkpwp_size_readable($filesize)."</b> ".__("of disk space.","bkpwp")."<br />";
-	$ret .= "".__("Depending on the type of these files, the resulting Backup Archive filesize can be reduced by more than 70%.","bkpwp")."</p>";
+	$ret .= __("Your Wordpress files in this backup use","bkpwp")." ";
+	$ret .= bkpwp_size_readable($filesize)." ".__("of disk space.","bkpwp")."<br />";
+	$ret .= "".__("Your Backup Archive filesize saved with preset","bkpwp")." <b>".$preset['bkpwp_preset_name']."</b> ".__("will be about","bkpwp")." <b>".bkpwp_size_readable((($sum_data+$filesize)/1.9))."</b>.</p>";
 	return $ret;
     }
     
@@ -411,6 +427,7 @@ class BKPWP_BACKUP {
     
     function bkpwp_do_backup($preset,$status="") {
 	$options = new BKPWP_OPTIONS();
+	$presets = new BKPWP_MANAGE();
 	$log = array();
 	// get the desired archive type from preset
 	if (!empty($status)) {
@@ -419,8 +436,7 @@ class BKPWP_BACKUP {
 	
 	// load the full backup preset if none is set
 	if (empty($preset)) {
-	$presets = new BKPWP_MANAGE();
-	$preset = $presets->bkpwp_get_preset("full backup");
+		$preset = $presets->bkpwp_get_preset("full backup");
 	}
 		
 	$type = $preset['bkpwp_preset_options']['bkpwp_archive_type'];
@@ -456,6 +472,8 @@ class BKPWP_BACKUP {
 		$log['schedule'] = __("manually","bkpwp");
 	} else {
 		$log['schedule'] = $preset['bkpwp_schedule'];
+		$preset['bkpwp_preset_options']['bkpwp_lastrun'] = time();
+		$presets->bkpwp_update_preset($preset);
 	}
 	$time_start = microtime(true);
 	
@@ -895,7 +913,7 @@ class BKPWP_MANAGE {
     	$presets= array();
 	foreach($apresets as $p) {
     		if ($p['bkpwp_preset_name'] != $name) {
-    		$presets[] = $p;
+    			$presets[] = $p;
     		} else {
 			if ($p['bkpwp_preset_options']['default'] == 1) {
 				return __("You can not delete this default preset.","bkpwp");
@@ -906,7 +924,20 @@ class BKPWP_MANAGE {
     	return "<div id=\"message\" class=\"updated fade\"><p>".__("Preset deleted.","bkpwp")."</p></div>";
     }
     
-    function bkpwp_save_preset($name="",$archive_type="",$excludelist="",$sql_only="") {
+    function bkpwp_update_preset($preset) {
+    	$apresets = $this->bkpwp_get_presets();
+    	$presets= array();
+    	foreach($apresets as $p) {
+    		if ($p['bkpwp_preset_name'] != $preset['bkpwp_preset_name']) {
+    			$presets[] = $p;
+    		} else {
+    			$presets[] = $preset;
+		}
+    	}
+    	$this->bkpwp_update_presets($presets);
+    }
+    
+    function bkpwp_save_preset($name="",$archive_type="",$excludelist="",$sql_only="", $lastrun="") {
     	if (empty($name)) {
     		$name = "Preset".date("Y-m-d-H-i-s");
     	}
@@ -914,7 +945,7 @@ class BKPWP_MANAGE {
     	$presets= array();
     	foreach($apresets as $p) {
     		if ($p['bkpwp_preset_name'] != $name) {
-    		$presets[] = $p;
+    			$presets[] = $p;
     		} else {
 			if ($p['bkpwp_preset_options']['default'] == 1) {
 				return "<div id=\"message\" class=\"updated fade\"><p>".__("You can not overwrite this default preset. Please save changes with a new Preset Name.","bkpwp")."</p></div>";
@@ -924,7 +955,8 @@ class BKPWP_MANAGE {
 	
 	$options = array("bkpwp_archive_type" => $archive_type,
 			 "bkpwp_sql_only" => $sql_only,
-			 "bkpwp_excludelist" => $excludelist);
+			 "bkpwp_excludelist" => $excludelist,
+			 "bkpwp_lastrun" => $lastrun);
 	$presets[] = array("bkpwp_preset_name" => $name,
 			   "bkpwp_preset_options" => $options);
     	
@@ -1039,10 +1071,11 @@ function bkpwp_mail_now($file="", $bkpwpinfo="") {
 	// Now you only need to add the necessary stuff
 	
 	$email = get_option("bkpwp_automail_address");
-	$name = get_option("bkpwp_automail_receiver");
-	
-	$mail->AddAddress($email, $name);
-	$mail->From = $email;
+	$em = explode (",",$email);
+	foreach($em as $e) {
+		$mail->AddAddress(trim($e), "Backup Admin");
+	}
+	$mail->From = get_option("bkpwp_automail_from");
 	$mail->FromName = __("BackUpWordPress","bkpwp")." ".get_bloginfo("url");
 	$mail->Subject = __("BackUpWordPress","bkpwp")." ".get_bloginfo("url");
 	$mail->Body    = "<html><body>";

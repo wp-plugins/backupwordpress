@@ -117,7 +117,11 @@ class BKPWP_OPTIONS {
 	  if (!empty($_REQUEST['bkpwp_automailsettings'])) {
 		  if (!empty($_REQUEST['bkpwp_automail'])) {
 			  $this->bkpwp_update_option("bkpwp_automail",$_REQUEST['bkpwp_automail']);
-			  $this->bkpwp_update_option("bkpwp_automail_address",$GLOBALS['userdata']->user_email);
+			  if (empty($_REQUEST['bkpwp_automail_address'])) {
+				  $_REQUEST['bkpwp_automail_address'] = $GLOBALS['userdata']->user_email;
+			  }
+			  $this->bkpwp_update_option("bkpwp_automail_address",$_REQUEST['bkpwp_automail_address']);
+			  $this->bkpwp_update_option("bkpwp_automail_from",$GLOBALS['userdata']->user_email);
 			  $this->bkpwp_update_option("bkpwp_automail_receiver",$GLOBALS['userdata']->user_nicename);
 			  if (!empty($_REQUEST['bkpwp_automail_maxsize'])) {
 				  $this->bkpwp_update_option("bkpwp_automail_maxsize",$_REQUEST['bkpwp_automail_maxsize']);
