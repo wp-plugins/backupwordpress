@@ -21,9 +21,9 @@ Whishlist:
 Changelog:
 	
 Changes in 0.2.2:
-	- Manage Backups now display the type, either scheduled or maunual for Advanced as well as EasyMode
+	- Manage Backups now display the type, either scheduled or manual for Advanced as well as EasyMode
 	- logfile prints out WordPress and BackUpWordPress version for easier posting at http://wpforum.designpraxis.at/
-	- BackUpWordPress displays "Your backup is bing processed" instead of the actions links on the Manage Backups screen as long as archiving is not finished
+	- BackUpWordPress displays "Your backup is being processed" instead of the actions links on the Manage Backups screen as long as archiving is not finished
 	
 Changes in 0.2.1:
 	- old Logfiles are deleted. 10 times the amount of the configured amount of backups to keep is kept.
