@@ -8,49 +8,6 @@ Version: 0.2.3
 Author URI: http://wordpress.designpraxis.at
 */
 
-/*
-Notes:
-backupwordpress\Archive\Writer\Tar.php has been debugged around line 80 to handle long filenames according to http://pear.php.net/bugs/bug.php?id=10144&edit=3
-
-Whishlist:
-	- custom schedules
-*/
-
-/*
-
-Changelog:
-	
-Changes in 0.2.3:
-	- Mailing options: multiple email addresses supported
-	- Backup file size reports also display the size of the database
-	- Backup archive filesize is estimated
-	- schedule table rows display the lastrun-timestamp of the last running backup
-	
-Changes in 0.2.2:
-	- Manage Backups now display the type, either scheduled or manual for Advanced as well as EasyMode
-	- logfile prints out WordPress and BackUpWordPress version for easier posting at http://wpforum.designpraxis.at/
-	- BackUpWordPress displays "Your backup is being processed" instead of the actions links on the Manage Backups screen as long as archiving is not finished
-	
-Changes in 0.2.1:
-	- old Logfiles are deleted. 10 times the amount of the configured amount of backups to keep is kept.
-	- feature: backups are done in kind of a staggered process:
-	 	if BackUpWordPress runs into a server side time-out, BackUpWordPress tries to trigger an single scheduled event for finishing the task. Corresponding dialoques appear on the *Manage Backups* - screen. 
-	
-Changes in 0.1.4:
-	- @set_time_limit(0) in functions.php line 277 supresses the 'Cannot set time limit in safe mode' warning
-	- dialoques streamlined: e.g. when you click "delete" on a backup archive, you just need to hit enter to delete it
-	
-Changes in 0.1.3:
-	- ajax problems fixed
-	- schedules last run timestamp fixed
-
-Changes in 0.1.2:
-	- bug fixed: Backup-Now doesn't call Sajax
-	- bkpwp_delete_old() refactored
-	- bug fixed: table data is not dumped
-
-*/
-
 /*  Copyright 2007  Roland Rust  (email : wordpress@designpraxis.at)
 
     This program is free software; you can redistribute it and/or modify
@@ -69,7 +26,7 @@ Changes in 0.1.2:
 */
 //return;
 $GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/backupwordpress/";
-$GLOBALS['bkpwp_version'] = "0.2.2";
+$GLOBALS['bkpwp_version'] = "0.2.3";
 
 // get the functions
 require_once($GLOBALS['bkpwp_plugin_path']."functions.php");
