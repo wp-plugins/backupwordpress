@@ -613,10 +613,12 @@ class BKPWP_BACKUP {
 			"filename" => $backup_filename_short);
 	// start the output
 	$backuprow = new BKPWP_BACKUP_ARCHIVE();
+	$out = "<table class=\"widefat\">";
 	ob_start();
 	$backuprow->bkpwp_get_backup_row($backup,"new_row");
-	$out = ob_get_contents();
+	$out .= ob_get_contents();
 	ob_end_clean();
+	$out .= "</table>";
 	
 	// mail it if bkpwp_automail is set
 	$bkpwp_automail = get_option("bkpwp_automail");
