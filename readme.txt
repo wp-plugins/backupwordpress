@@ -63,6 +63,8 @@ BackUpWordPress utilizes several Open Source Tools:
 + [bigdump](http://www.ozerov.de/bigdump.php) for staggered sql import
 + [Sajax](http://www.modernmethod.com/sajax/) for ajax support
 
+Some pieces of code have been modified:
+
 + backupwordpress\Archive\Writer\Tar.php has been debugged around line 80 to handle long filenames according to http://pear.php.net/bugs/bug.php?id=10144&edit=3
 
 == Changelog ==
