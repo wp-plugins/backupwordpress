@@ -71,32 +71,39 @@ BackUpWordPress utilizes several Open Source Tools:
 Changelog:
 	
 Changes in 0.2.4:
+	
 + Internet Explorer ajax issue with not being able to do backups manually fixed
 	
 Changes in 0.2.3:
+	
 + Mailing options: multiple email addresses supported
 + Backup file size reports also display the size of the database
 + Backup archive filesize is estimated
 + schedule table rows display the lastrun-timestamp of the last running backup
 	
 Changes in 0.2.2:
+	
 + Manage Backups now display the type, either scheduled or manual for Advanced as well as EasyMode
 + logfile prints out WordPress and BackUpWordPress version for easier posting at http://wpforum.designpraxis.at/
 + BackUpWordPress displays "Your backup is being processed" instead of the actions links on the Manage Backups screen as long as archiving is not finished
 	
 Changes in 0.2.1:
+	
 + old Logfiles are deleted. 10 times the amount of the configured amount of backups to keep is kept.
 + feature: backups are done in kind of a staggered process: if BackUpWordPress runs into a server side time-out, BackUpWordPress tries to trigger an single scheduled event for finishing the task. Corresponding dialoques appear on the *Manage Backups* - screen. 
 	
 Changes in 0.1.4:
+	
 + @set_time_limit(0) in functions.php line 277 supresses the 'Cannot set time limit in safe mode' warning
 + dialoques streamlined: e.g. when you click "delete" on a backup archive, you just need to hit enter to delete it
 	
 Changes in 0.1.3:
+	
 + ajax problems fixed
 + schedules last run timestamp fixed
 
 Changes in 0.1.2:
+	
 + bug fixed: Backup-Now doesn't call Sajax
 + bkpwp_delete_old() refactored
 + bug fixed: table data is not dumped
