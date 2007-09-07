@@ -26,7 +26,7 @@ Author URI: http://wordpress.designpraxis.at
 */
 //return;
 $GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/backupwordpress/";
-$GLOBALS['bkpwp_version'] = "0.2.3";
+$GLOBALS['bkpwp_version'] = "0.2.4";
 
 // get the functions
 require_once($GLOBALS['bkpwp_plugin_path']."functions.php");
