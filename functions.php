@@ -245,6 +245,7 @@ function bkpwp_ajax_create($preset="") {
 	$backup = new BKPWP_BACKUP();
 	$backup->preset = new BKPWP_MANAGE();
 	$preset = $backup->preset->bkpwp_get_preset($preset);
+	$preset['bkpwp_schedule'] = __("manually","bkpwp");
 	$ret = $backup->bkpwp_do_backup($preset);
 	return $ret;
 }

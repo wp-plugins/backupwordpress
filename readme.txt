@@ -70,6 +70,9 @@ BackUpWordPress utilizes several Open Source Tools:
 
 Changelog:
 	
+Changes in 0.2.4:
++ Internet Explorer ajax issue with not being able to do backups manually fixed
+	
 Changes in 0.2.3:
 + Mailing options: multiple email addresses supported
 + Backup file size reports also display the size of the database

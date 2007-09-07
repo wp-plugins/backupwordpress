@@ -468,10 +468,8 @@ class BKPWP_BACKUP {
 	$log['filename'] = $backup_filename_short;
 	$log['logfile'] = array();
 	$log['preset'] = $preset['bkpwp_preset_name'];
-	if (empty($preset['bkpwp_schedule'])) {
-		$log['schedule'] = __("manually","bkpwp");
-	} else {
-		$log['schedule'] = $preset['bkpwp_schedule'];
+	$log['schedule'] = $preset['bkpwp_schedule'];
+	if ($preset['bkpwp_schedule'] != __("manually","bkpwp")) {
 		$preset['bkpwp_preset_options']['bkpwp_lastrun'] = time();
 		$presets->bkpwp_update_preset($preset);
 	}
