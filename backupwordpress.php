@@ -4,7 +4,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
 Description: Manage <a href="admin.php?page=backupwordpress/backupwordpress.php">WordPress Backups</a>. Beta Release. Please help testing and give me feedback under the comments section of <a href="http://wordpress.designpraxis.at/plugins/backupwordpress/">the Plugin page</a>. Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.2.4
+Version: 0.2.5
 Author URI: http://wordpress.designpraxis.at
 */
 
@@ -24,7 +24,7 @@ Author URI: http://wordpress.designpraxis.at
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-//return;
+
 $GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/backupwordpress/";
 $GLOBALS['bkpwp_version'] = "0.2.4";
 
@@ -59,7 +59,7 @@ add_action('bkpwp_finish_bkpwp_hook','bkpwp_finish_bkpwp');
 if (eregi("backupwordpress",$_REQUEST['page']) || eregi("bkpwp",$_REQUEST['page'])) {
 add_action('admin_head', 'bkpwp_sajax_js');
 }
-if (eregi("backupwordpress",$_REQUEST['page']) || eregi("bkpwp",$_REQUEST['page']) || $_SERVER['REQUEST_URI'] == "/wp-admin/index.php") {
+if (eregi("backupwordpress",$_REQUEST['page']) || eregi("bkpwp",$_REQUEST['page']) || $_SERVER['REQUEST_URI'] == "/wp-admin/index.php" || $_SERVER['REQUEST_URI'] == "/wp-admin/") {
 add_action('admin_head', 'bkpwp_load_css_and_js');
 }
 

@@ -113,7 +113,8 @@ function bkpwp_proceed_unfinished() {
 		return;
 	}
 	// wait a little
-	if (($status['time']+30) > time()) {
+	$timeout = ini_get("max_execution_time")-5;
+	if (($status['time']+$timeout) > time()) {
 		return;
 	}
 	
