@@ -72,6 +72,14 @@ Some pieces of code have been modified:
 
 Changelog:
 	
+Changes in 0.2.6:
+
++ unable to delete backup presets bug fixed
+	
+Changes in 0.2.5:
+
++ some smaller improvements
+
 Changes in 0.2.4:
 	
 + Internet Explorer ajax issue with not being able to do backups manually fixed
