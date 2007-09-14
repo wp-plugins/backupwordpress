@@ -72,6 +72,11 @@ Some pieces of code have been modified:
 
 Changelog:
 	
+Changes in 0.2.7:
+
++ manage presets. link to configure excludelists corrected
++ require_once instead of require for class-phpmailer.php
+	
 Changes in 0.2.6:
 
 + unable to delete backup presets bug fixed

@@ -4,7 +4,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
 Description: Manage <a href="admin.php?page=backupwordpress/backupwordpress.php">WordPress Backups</a>. Beta Release. Please help testing and give me feedback under the comments section of <a href="http://wordpress.designpraxis.at/plugins/backupwordpress/">the Plugin page</a>. Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.2.6
+Version: 0.2.7
 Author URI: http://wordpress.designpraxis.at
 */
 
@@ -26,7 +26,7 @@ Author URI: http://wordpress.designpraxis.at
 */
 
 $GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/backupwordpress/";
-$GLOBALS['bkpwp_version'] = "0.2.6";
+$GLOBALS['bkpwp_version'] = "0.2.7";
 
 // get the functions
 require_once($GLOBALS['bkpwp_plugin_path']."functions.php");
@@ -62,7 +62,21 @@ add_action('admin_head', 'bkpwp_sajax_js');
 if (eregi("backupwordpress",$_REQUEST['page']) || eregi("bkpwp",$_REQUEST['page']) || $_SERVER['REQUEST_URI'] == "/wp-admin/index.php" || $_SERVER['REQUEST_URI'] == "/wp-admin/") {
 add_action('admin_head', 'bkpwp_load_css_and_js');
 }
-
 add_action('admin_menu', 'bkpwp_add_menu');
 add_action('activity_box_end', 'bkpwp_latest_activity',0);
+
+// debug code. how do we get rid of the eaccelerator problem causing a redeclare error fpr pear?
+/* if (eregi("backupwordpress",$_REQUEST['page']) || eregi("bkpwp",$_REQUEST['page'])) {
+	//@ini_set('eaccelerator.enable',0)
+	if ((ini_get('eaccelerator.enable') == 1)) {
+		echo "eAcc is running";
+	}
+	if (!in_array("PEAR", get_declared_classes())) {
+echo "<pre>";
+		 //print_r(get_declared_classes());
+		 require_once $GLOBALS['bkpwp_plugin_path']."PEAR.php";
+echo "</pre>";
+ }
+//print_r(get_declared_classes());
+} */
 ?>
