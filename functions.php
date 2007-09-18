@@ -277,18 +277,6 @@ function bkpwp_ajax_shownobfiles($excludelist) {
 	return $ret;
 }
 
-function bkpwp_ajax_save_preset($name="",$archive_type="",$excludelist="",$sql_only="") {
-	$backup = new BKPWP_MANAGE();
-	$ret = $backup->bkpwp_save_preset($name,$archive_type,$excludelist,$sql_only);
-	return $ret;
-}
-
-function bkpwp_ajax_delete_preset($name) {
-	$backup = new BKPWP_MANAGE();
-	$ret = $backup->bkpwp_delete_preset($name);
-	return $ret;
-}
-
 function bkpwp_ajax_calculater($preset="") {
 	$backup = new BKPWP_BACKUP();
 	$backup->preset = new BKPWP_MANAGE();

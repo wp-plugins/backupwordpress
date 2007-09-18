@@ -19,6 +19,13 @@ $presets = $backups->bkpwp_get_presets();
 	if (!empty($_REQUEST['bkpwp_delete_preset'])) {
 		 $backups->bkpwp_delete_preset(urldecode($_REQUEST['bkpwp_delete_preset']));
 	}
+	
+	if (!empty($_REQUEST['mod_bkpwp_preset_name'])) {
+		 echo $backups->bkpwp_save_preset($_REQUEST['mod_bkpwp_preset_name'],$_REQUEST['mod_bkpwp_archive_type'],$_REQUEST['mod_bkpwp_excludelist'],$_REQUEST['mod_bkpwp_sql_only']);
+		$backups = new BKPWP_MANAGE();
+		$backups->options = new BKPWP_OPTIONS();
+		$presets = $backups->bkpwp_get_presets();
+	}
 	?>
 	<table class="widefat">
 		<thead>
@@ -69,27 +76,35 @@ $presets = $backups->bkpwp_get_presets();
 			<td style="text-align: center;">
 			<?php
 		echo " <a href=\"javascript:void(0)\"
-			onclick=\"is_loading('bkpwp_preset_options'); 
-			sajax_target_id = 'bkpwp_preset_options'; 
-			x_bkpwp_ajax_load_preset('".$p['bkpwp_preset_name']."',''); 
-			sajax_target_id = '';\">".__("edit","bkpwp")."</a>";
+			onclick=\"is_loading('bkpwp_action_buffer'); 
+			ajax =  new Ajax.Updater(
+				 'bkpwp_action_buffer', 
+				 '".get_bloginfo("wpurl")."/wp-admin/admin.php?page=backupwordpress/backupwordpress.php"."',
+				 {
+				 method:'post',
+				 postBody:'bkpwp_load_preset=".$p['bkpwp_preset_name']."'
+				     });\">".__("edit","bkpwp")."</a>";
 			?>
 			</td>
 			<td style="text-align: center;">
 			<?php
 		echo " <a href=\"javascript:void(0)\"
-			onclick=\"is_loading('bkpwp_preset_options'); 
-			sajax_target_id = 'bkpwp_preset_options'; 
-			x_bkpwp_ajax_view_preset('".$p['bkpwp_preset_name']."',''); 
-			sajax_target_id = '';\">".__("view","bkpwp")."</a>";
+			onclick=\"is_loading('bkpwp_action_buffer'); 
+			ajax =  new Ajax.Updater(
+				 'bkpwp_action_buffer', 
+				 '".get_bloginfo("wpurl")."/wp-admin/admin.php?page=backupwordpress/backupwordpress.php"."',
+				 {
+				 method:'post',
+				 postBody:'bkpwp_view_preset=".$p['bkpwp_preset_name']."'
+				     });\">".__("view","bkpwp")."</a>";
 			?>
 			</td>
 			<td style="text-align: center;">
 			<?php
 			if ($p['bkpwp_preset_options']['default'] != 1) {
-		echo " <a href=\"admin.php?page=bkpwp-backup-presets-page&amp;bkpwp_delete_preset=".$p['bkpwp_preset_name']."\">".__("delete","bkpwp")."</a>";
+				echo " <a href=\"admin.php?page=bkpwp_manage_presets&amp;bkpwp_delete_preset=".$p['bkpwp_preset_name']."\">".__("delete","bkpwp")."</a>";
 			} else {
-			echo __("default","bkpwp");
+				echo __("default","bkpwp");
 			}
 			?>
 			</td>
@@ -108,33 +123,13 @@ $presets = $backups->bkpwp_get_presets();
 	?>
         <div class="wrap">
 	<script type="text/javascript">
-		
-		function save_preset() {
-			var name;
-			var archive_type;
-			var excludelist;
-			var sql_only;
-			name = document.getElementById('mod_bkpwp_preset_name').value;
-			archive_type = document.getElementById('mod_bkpwp_archive_type').value;
-			excludelist = document.getElementById('mod_bkpwp_excludelist').value;
-			sql_only = document.getElementById('mod_bkpwp_sql_only').value;
-			x_bkpwp_ajax_save_preset(name,archive_type,excludelist,sql_only,"");
-		}
-		
-		function delete_preset() {
-			var name;
-			name = document.getElementById('mod_bkpwp_preset_name').value;
-			x_bkpwp_ajax_delete_preset(name,"");
-		}
-		
 		function is_loading(divid) {
+			document.getElementById('bkpwp_actions').style.display = 'block';
 			document.getElementById(divid).innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' />";
 		}
 		<!-- displays a loading text information while doing ajax requests -->	
 		function bkpwp_js_loading(str) {
-			document.getElementById('bkpwp_actions').style.display = 'block';
 			is_loading('bkpwp_action_buffer');
-			sajax_target_id = 'bkpwp_action_buffer';
 			document.getElementById('bkpwp_action_title').innerHTML="<h4>" + str + "</h4>";
 		}
 		</script>

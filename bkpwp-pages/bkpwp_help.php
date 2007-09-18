@@ -48,7 +48,7 @@ $options = new BKPWP_OPTIONS();
 			_e("By default, BackUpWordPress keeps a number of","bkpwp");
 			echo " ".get_option("bkpwp_max_backups")." ";
 			_e("backup archives in the backup repository. You can alter this number within the Advanced Backup Settings. ","bkpwp");?>
-			<br /><a href="admin.php?page=bkpwp-backup-options#backup_options"><?php _e("Configure","bkpwp"); ?> &raquo;</a>
+			<br /><a href="admin.php?page=bkpwp_options#backup_options"><?php _e("Configure","bkpwp"); ?> &raquo;</a>
 			</p>
 			<p>
 			<?php _e("As soon as this amount of backup archives in the repository is reached, 

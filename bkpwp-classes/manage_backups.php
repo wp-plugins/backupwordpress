@@ -91,10 +91,14 @@ class BKPWP_BACKUP_ARCHIVE {
 			<?php if (!$backup->options->bkpwp_easy_mode()) { ?>
 				<?php
 				echo " <a href=\"javascript:void(0)\"
-				onclick=\"bkpwp_js_loading('".__("View Backup Information","bkpwp")."'); 
-				sajax_target_id = 'bkpwp_action_buffer'; 
-				x_bkpwp_ajax_view_backup('".base64_encode($f['file'])."',''); 
-				sajax_target_id = '';\">".__("view","bkpwp")."</a>";
+				onclick=\"bkpwp_js_loading('".__("View Backup Information","bkpwp")."');
+				ajax =  new Ajax.Updater(
+				 'bkpwp_action_buffer',        // DIV id must be declared before the method was called
+				 '".get_bloginfo("wpurl")."/wp-admin/admin.php?page=backupwordpress/backupwordpress.php"."',
+				 {
+				 method:'post',
+				 postBody:'bkpwp_view_backup=".base64_encode($f['file'])."'
+				     });\">".__("view","bkpwp")."</a>";
 				?>
 				</td>
 				<td style="text-align: center;">
@@ -841,6 +845,7 @@ class BKPWP_MANAGE {
     function bkpwp_load_preset($preset) {
 	    $options = new BKPWP_OPTIONS();
 	    $ret = "<div style=\"border: 1px solid #ccc; padding:10px; margin-bottom:20px;\">";
+	    $ret .= "<form  method=\"post\" action=\"admin.php?page=bkpwp_manage_presets\">";
 	    /*if ($preset['bkpwp_preset_options']['default'] == 1) {
 	     	$ret .= "<div id=\"message\" class=\"updated fade\"><p>".__("You can not overwrite this default preset. Please save changes with a new Preset Name.","bkpwp")."</p></div>";
 	    }
@@ -888,8 +893,8 @@ class BKPWP_MANAGE {
 	    $ret .= " checked";
 	    } 
 	    $ret .= "  onclick=\"if (document.getElementById('mod_bkpwp_sql_only').checked == false) { document.getElementById('mod_bkpwp_sql_only').value=''; document.getElementById('full_only').style.display='block'; } else { document.getElementById('mod_bkpwp_sql_only').value=1; document.getElementById('full_only').style.display='none'; }\" /> ".__("SQL only","bkpwp")."</label></p>";
-	    $ret .= "<p><input type=\"button\" class=\"button\" value=\"".__("Save Preset","bkpwp")."\" onclick=\"bkpwp_js_loading('".__("Saving Preset","bkpwp")."'); sajax_target_id = 'bkpwp_action_buffer'; save_preset(); sajax_target_id = ''; return false;\" /></p>";
-	    $ret .= "</div>";
+	    $ret .= "<p><input type=\"submit\" class=\"button\" value=\"".__("Save Preset","bkpwp")."\" /></p>";
+	    $ret .= "</form></div>";
 	    return $ret;
     }
     

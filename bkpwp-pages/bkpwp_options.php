@@ -147,10 +147,19 @@ $bkpwppath = get_option("bkpwppath");
 		function do_show_nobfiles() {
 			x_bkpwp_ajax_shownobfiles('<?php echo urlencode($listn); ?>',"","");
 		}
+		function do_show_nobfiles2() {
+		 ajax =  new Ajax.Updater(
+			 'bkpwp_action_buffer',        // DIV id must be declared before the method was called
+			 '<?php echo get_bloginfo("wpurl")."/wp-admin/admin.php?page=backupwordpress/backupwordpress.php"; ?>',        // URL
+			 {                // options
+			 method:'post',
+			 postBody:'bkpwp_view_excludelist=<?php echo $listn; ?>'
+			     });
+		}
 		function loading_shownobfiles() {
 			document.getElementById('bkpwp_actions').style.display="block";
 			document.getElementById('bkpwp_action_title').innerHTML="<br /><?php _e("Files &amp; Folders that will NOT (!) be included in the Backup when using ","bkpwp"); echo $_REQUEST['excludelist_to_change']; ?><br /><br />";
-			document.getElementById('bkpwp_action_buffer').innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' />";
+			document.getElementById('bkpwp_action_buffer').innerHTML="<img src='<?php bloginfo("wpurl"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' />";
 		}
 		</script>
 		<div id="bkpwp_actions" style="display:none;">
@@ -202,7 +211,7 @@ $bkpwppath = get_option("bkpwppath");
 		  <?php } else { ?>
 			  <p><?php _e("this is a Default Exclude List","bkpwp"); ?>
 		  <?php } ?>
-		  <button class="button" onclick="loading_shownobfiles(); sajax_target_id = 'bkpwp_action_buffer'; do_show_nobfiles(); sajax_target_id = ''; return false;">&raquo; <?php _e("Show excluded files","bkpwp"); ?></button>
+		  <button class="button" onclick="loading_shownobfiles(); do_show_nobfiles2(); return false;">&raquo; <?php _e("Show excluded files","bkpwp"); ?></button>
 		  </p>
 	  <?php } else { ?>
 		  <h4><?php _e("New Exclude List","bkpwp"); ?></h4>

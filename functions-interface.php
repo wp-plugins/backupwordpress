@@ -15,61 +15,6 @@ function bkpwp_display_message($msg) {
 	<?php
 }
 
-function bkpwp_display_console() {
-	?>
-	<textarea id="bkpwp_console"></textarea><br /><br />
-	<?php
-	flush();
-}
-
-function bkpwp_console($msg,$all=true) {
-	echo "<script>
-	var objDiv = document.getElementById('bkpwp_console');
-	objDiv.value ";
-	if ($all == true) {
-		echo "+";
-	} else {
-		$msg = "[...]".$msg;
-	}
-	echo "= '".$msg."';
-	objDiv.scrollTop = objDiv.scrollHeight;
-	currentTime();</script>";				
-	flush();
-}
-
-function bkpwp_sajax_do() {
-	// maybe some other module has sajax allready built in? (zenphoto, cforms,...)
-	if (!function_exists("sajax_handle_client_request")) { 
-		require_once $GLOBALS['bkpwp_plugin_path']."Sajax.php";
-	}
-	//$GLOBALS['sajax_debug_mode'] = 1;
-	
-	sajax_init();
-	sajax_export("bkpwp_ajax_calculater",
-		     "bkpwp_ajax_create",
-		     "bkpwp_ajax_shownobfiles",
-		     "bkpwp_ajax_load_preset",
-		     "bkpwp_ajax_view_preset",
-		     "bkpwp_ajax_view_backup",
-		     "bkpwp_ajax_save_preset",
-		     "bkpwp_ajax_delete_preset",
-		     "bkpwp_reload_table");
-	sajax_handle_client_request();
-}
-
-function bkpwp_sajax_js() {
-	bkpwp_sajax_do();
-	?>
-	<script>
-	<?php
-	if (function_exists("sajax_show_javascript")) {
-		sajax_show_javascript();
-	}
-	?>
-	</script>
-	<?php
-}
-
 function bkpwp_load_css_and_js() {
 	echo "<style type='text/css'>
 	h2 {
@@ -86,13 +31,6 @@ function bkpwp_load_css_and_js() {
        }
        .success { 
 	       color: green;
-       }
-       #bkpwp_console {
-	       font-family: monospace;
-	       color:#EEE;
-	       width: 750px; min-height: 120px;
-		background: #000; 
-		border: 1px solid lime;
        }
        .bkpwp_manage_backups_newrow {
 	       background: #99FF66;
@@ -113,7 +51,7 @@ function bkpwp_load_css_and_js() {
 	<!-- displays a loading animation while doing ajax requests -->
 	function is_loading(divid) {
 		document.getElementById(divid).style.display = 'block';
-		document.getElementById(divid).innerHTML="<img src='<?php bloginfo("url"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' />";
+		document.getElementById(divid).innerHTML="<img src='<?php bloginfo("wpurl"); ?>/wp-content/plugins/backupwordpress/images/loading.gif' />";
 	}	
 	</script>
 

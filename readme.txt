@@ -62,7 +62,6 @@ BackUpWordPress utilizes several Open Source Tools:
 + [PEAR](http://pear.php.net/package/PEAR/)
 + [FILE_ARCHIVE](http://pear.php.net/package/File_Archive) for compression/decompression
 + [bigdump](http://www.ozerov.de/bigdump.php) for staggered sql import
-+ [Sajax](http://www.modernmethod.com/sajax/) for ajax support
 
 Some pieces of code have been modified:
 
@@ -77,6 +76,7 @@ Changes in 0.2.7:
 
 + manage presets. link to configure excludelists corrected
 + require_once instead of require for class-phpmailer.php
++ Sajax is replaces by prototype. this resolves the "backup hangs" bug on hosts with hardened php (register_globals: off, safe_mode: on, etc.)
 	
 Changes in 0.2.6:
 

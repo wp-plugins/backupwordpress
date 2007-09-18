@@ -7,22 +7,28 @@ function bkpwp_schedulelist($bkpwppath) {
 	echo "<p>".__("Info: Creating custom schedules is on the wishlist for BackUpWordPress 2.0.","bkpwp")."</p>";
 	?>
 	<script type="text/javascript">
+	
 	<!-- ajax call for calculating disk space usage -->
-	function calculate() {
+	function calculate2() {
 		var preset;
 		<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
 			preset = document.getElementById('bkpwp_preset').value;
 		<?php } else { ?>
 			preset = "full backup";
 		<?php } ?>
-		x_bkpwp_ajax_calculater(preset,'');
+		 ajax =  new Ajax.Updater(
+			 'bkpwp_action_buffer',        // DIV id must be declared before the method was called
+			 '<?php echo get_bloginfo("wpurl")."/wp-admin/admin.php?page=backupwordpress/backupwordpress.php"; ?>',        // URL
+			 {                // options
+			 method:'post',
+			 postBody:'bkpwp_calculate_preset='+preset
+			     });
 	}
 	
 	<!-- displays a loading text information while doing ajax requests -->	
 	function bkpwp_js_loading(str) {
 		document.getElementById('bkpwp_actions').style.display = 'block';
 		is_loading('bkpwp_action_buffer');
-		sajax_target_id = 'bkpwp_action_buffer';
 		document.getElementById('bkpwp_action_title').innerHTML="<h4>" + str + "</h4>";
 	}
 	</script>
@@ -110,7 +116,7 @@ function bkpwp_schedulelist($bkpwppath) {
 				?>
 				<a title="<?php _e("Recalculate Backup size","bkpwp"); ?>" 
 				href="javascript:void(0);"
-				onclick="document.getElementById('bkpwp_preset').value='<?php echo $options['preset'];  ?>'; bkpwp_js_loading('<?php _e("Calculating file sizes","bkpwp"); ?>'); calculate(); sajax_target_id = ''; return false;">&raquo;</a>
+				onclick="document.getElementById('bkpwp_preset').value='<?php echo $options['preset'];  ?>'; bkpwp_js_loading('<?php _e("Calculating file sizes","bkpwp"); ?>'); calculate2(); return false;">&raquo;</a>
 				</td>
 				<td>
 				<?php

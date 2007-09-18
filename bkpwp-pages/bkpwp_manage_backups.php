@@ -239,33 +239,45 @@ if (count($backup_archives) < 1) {
 ?>
 	<h2><?php _e("Manage Backups","bkpwp"); ?></h2>
 	<script type="text/javascript">
+	
 	<!-- ajax call to the actual backup function -->
-	function do_create() {
+	function do_create2() {
 		var preset;
 		<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
 			preset = document.getElementById('bkpwp_preset').options[document.getElementById('bkpwp_preset').selectedIndex].value;
 		<?php } else { ?>
 			preset = "full backup";
 		<?php } ?>
-		x_bkpwp_ajax_create(preset,'');
+		 ajax =  new Ajax.Updater(
+			 'bkpwp_action_buffer',        // DIV id must be declared before the method was called
+			 '<?php echo get_bloginfo("wpurl")."/wp-admin/admin.php?page=backupwordpress/backupwordpress.php"; ?>',        // URL
+			 {                // options
+			 method:'post',
+			 postBody:'bkpwp_docreate_preset='+preset
+			     });
 	}
 	
 	<!-- ajax call for calculating disk space usage -->
-	function calculate() {
+	function calculate2() {
 		var preset;
 		<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
 			preset = document.getElementById('bkpwp_preset').options[document.getElementById('bkpwp_preset').selectedIndex].value;
 		<?php } else { ?>
 			preset = "full backup";
 		<?php } ?>
-		x_bkpwp_ajax_calculater(preset,'');
+		 ajax =  new Ajax.Updater(
+			 'bkpwp_action_buffer',        // DIV id must be declared before the method was called
+			 '<?php echo get_bloginfo("wpurl")."/wp-admin/admin.php?page=backupwordpress/backupwordpress.php"; ?>',        // URL
+			 {                // options
+			 method:'post',
+			 postBody:'bkpwp_calculate_preset='+preset
+			     });
 	}
 	
 	<!-- displays a loading text information while doing ajax requests -->	
 	function bkpwp_js_loading(str) {
 		document.getElementById('bkpwp_actions').style.display = 'block';
 		is_loading('bkpwp_action_buffer');
-		sajax_target_id = 'bkpwp_action_buffer';
 		document.getElementById('bkpwp_action_title').innerHTML="<h4>" + str + "</h4>";
 	}
 	</script>
@@ -319,13 +331,6 @@ if (count($backup_archives) < 1) {
 		?>
 		</p>
 		<p>
-		<?php
-		/*
-		echo __("Your server's configuration allows scripts to run for a maximum of","bkpwp")." ";
-		echo ini_get("max_execution_time");
-		echo " ".__("seconds.","bkpwp");
-		*/
-		?>
 		</p>
 	</div>
 	<?php
@@ -350,9 +355,9 @@ if (count($backup_archives) < 1) {
 		</p>
 		<?php }
 		} ?>
-		<button class="button" onclick="bkpwp_js_loading('<?php _e("Your backup is being processed.","bkpwp"); ?>'); do_create(); sajax_target_id = ''; return false;"><?php _e("BackUp WordPress Now","bkpwp"); ?> &raquo;</button>
+		<button class="button" onclick="bkpwp_js_loading('<?php _e("Your backup is being processed.","bkpwp"); ?>'); do_create2(); return false;"><?php _e("BackUp WordPress Now","bkpwp"); ?> &raquo;</button>
 		<?php if (!$backups->options->bkpwp_easy_mode()) { ?>
-			<button class="button" onclick="bkpwp_js_loading('<?php _e("Calculating used disk space","bkpwp"); ?>'); calculate(); sajax_target_id = ''; return false;"><?php _e("Recalculate Used Disk Space","bkpwp"); ?> &raquo;</button>
+			<button class="button" onclick="bkpwp_js_loading('<?php _e("Calculating used disk space","bkpwp"); ?>'); calculate2(); return false;"><?php _e("Recalculate Used Disk Space","bkpwp"); ?> &raquo;</button>
 		<?php }
 	} ?>
 		
