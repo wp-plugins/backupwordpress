@@ -72,6 +72,10 @@ Some pieces of code have been modified:
 
 Changelog:
 	
+Changes in 0.3.2:
++ added capabilities manage_backups and download_backups
++ backup repository secured by .htaccess
+	
 Changes in 0.2.7:
 
 + manage presets. link to configure excludelists corrected

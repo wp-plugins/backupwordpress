@@ -345,6 +345,12 @@ class BKPWP_OPTIONS {
     	return $a;
     }
 
+	function bkpwp_add_capabilities() { 
+	      global $wp_roles; 
+	      $wp_roles->add_cap('administrator','manage_backups', true);
+	      $wp_roles->add_cap('administrator','download_backups', true);
+	} 
+	
     function bkpwp_default_archive_types() {
 	    // a wishlist of compression types
 	$archive_types_wishlist = array();
@@ -448,6 +454,7 @@ class BKPWP_OPTIONS {
 	$this->bkpwp_default_excludelists();
 	$this->bkpwp_default_presets();
 	$this->bkpwp_default_schedules();
+	$this->bkpwp_add_capabilities();
     }
 }
 ?>

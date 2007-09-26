@@ -1004,7 +1004,7 @@ class BKPWP_MANAGE {
 	}
 	if ($handle = opendir($bkpwppath)) {
 	      while (false !== ($file = readdir($handle))) {
-	  	    if (($file != ".") && ($file != "..") && !is_dir($bkpwppath."/".$file)) {
+	  	    if ((substr($file,0,1) != ".") && !is_dir($bkpwppath."/".$file)) {
 			    $files[] = array("file" => $bkpwppath."/".$file,
 			    			"filename" => $file);
 	  	    }

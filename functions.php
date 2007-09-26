@@ -21,18 +21,20 @@ function bkpwp_exit() {
 	delete_option("bkpwp_domain_path");
 	delete_option("bkpwp_archive_types");
 	delete_option("bkpwp_easy_mode");
-	delete_option("bkpwp_excludelists");
 	delete_option("bkpwp_reccurrences");
 	delete_option("bkpwp_calculation");
-	delete_option("bkpwp_max_backups");
 	delete_option("bkpwp_listmax_backups");
 	delete_option("bkpwp_automail");
 	delete_option("bkpwp_automail_maxsize");
-	delete_option("bkpwp_automail_address");
-	delete_option("bkpwp_automail_receiver");
-	delete_option("bkpwp_automail_from");
 	delete_option("bkpwp_status");
 	delete_option("bkpwp_status_config");
+	
+	// configuration options to keep
+	//delete_option("bkpwp_excludelists");
+	//delete_option("bkpwp_max_backups");
+	//delete_option("bkpwp_automail_address");
+	//delete_option("bkpwp_automail_receiver");
+	//delete_option("bkpwp_automail_from");
 }
 
 function bkpwp_setup() {
@@ -319,6 +321,9 @@ function bkpwp_schedule_bkpwp($options) {
 
 function bkpwp_download_files() {
 	if (!empty($_REQUEST['bkpwp_download'])) {
+		if (!current_user_can("download_backups")) {
+			die("Permission denied");
+		}
 		$file = base64_decode($_REQUEST['bkpwp_download']);
 		bkpwp_send_file($file);
 	}
@@ -361,5 +366,20 @@ function bkpwp_send_file($path) {
     return((connection_status()==0) and !connection_aborted());
 }
 
-
+function bkpwp_security_check() {
+	// secure the backup directory with .htaccess
+	// deny from all 
+	$path = get_option("bkpwppath");
+	if (empty($path)) { return; }
+	$filename = $path."/.htaccess";
+	    if (!$handle = fopen($filename, 'w')) {
+		    echo "Cannot open file ($filename)";
+		 // should be checked at configuration
+	    }
+	    if (fwrite($handle, "deny from all") === FALSE) {
+		    echo "Cannot write to file ($filename)";
+		// todo: warn the blog owner
+	    }
+	    fclose($handle);
+}
 ?>

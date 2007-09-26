@@ -4,7 +4,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
 Description: Manage <a href="admin.php?page=backupwordpress/backupwordpress.php">WordPress Backups</a>. Beta Release. Please help testing and give me feedback under the comments section of <a href="http://wordpress.designpraxis.at/plugins/backupwordpress/">the Plugin page</a>. Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.3.1
+Version: 0.3.2
 Author URI: http://wordpress.designpraxis.at
 */
 
@@ -26,7 +26,7 @@ Author URI: http://wordpress.designpraxis.at
 */
 
 $GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/backupwordpress/";
-$GLOBALS['bkpwp_version'] = "0.3.1";
+$GLOBALS['bkpwp_version'] = "0.3.2";
 
 // get the functions
 require_once($GLOBALS['bkpwp_plugin_path']."functions.php");
@@ -47,6 +47,7 @@ add_action('deactivate_backupwordpress/backupwordpress.php', 'bkpwp_exit');
 // set up ajax stuff on init, to prevent header oputput
 add_action('init', 'bkpwp_download_files');
 add_action('init', 'bkpwp_setup');
+add_action('init', 'bkpwp_security_check');
 add_action('init', 'bkpwp_proceed_unfinished');
 
 // cron jobs with wordpress' pseude-cron: add special reccurences
