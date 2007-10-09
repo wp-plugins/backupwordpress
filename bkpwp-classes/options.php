@@ -66,7 +66,7 @@ class BKPWP_OPTIONS {
 			  bkpwp_display_message($msg);
 		  } else {
 			  if (!is_dir($_REQUEST['bkpwppath'])) {
-				  if (!mkdir($_REQUEST['bkpwppath']))  {
+				  if (!mkdir($_REQUEST['bkpwppath'],0777))  {
 					$this->bkpwp_delete_option("bkpwppath");
 					$msg = __("Wrong Backup Path. Directory does not exist and this script was not able to create it.","bkpwp");
 					bkpwp_display_message($msg);
@@ -251,6 +251,7 @@ class BKPWP_OPTIONS {
     
     function bkpwp_get_excludelist($listname) {
 	    $usernoblists = $this->bkpwp_get_excludelists();
+	    if(!is_array($usernoblists)) { return; }
 	    foreach($usernoblists as $f) {
 		    if ($f['listname'] == $listname) {
 			    return $f;

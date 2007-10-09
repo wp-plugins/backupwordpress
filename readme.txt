@@ -71,6 +71,12 @@ Some pieces of code have been modified:
 
 
 Changelog:
+
+Changes in 0.4.1
++ added test for empty array in bkpwp_get_excludelist()
++ all mkdir() calls use mode 0777
++ backup archive permissions chage to 0777 (should solve issues with users not being able to delete archive files)
+
 	
 Changes in 0.3.2:
 + added capabilities manage_backups and download_backups

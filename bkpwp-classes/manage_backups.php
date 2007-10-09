@@ -485,7 +485,7 @@ class BKPWP_BACKUP {
 	
 	// create a temporary directory
 	if (!is_dir($backup_tmp_dir)) {
-		if (!mkdir($backup_tmp_dir)) {
+		if (!mkdir($backup_tmp_dir,0777)) {
 			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress temporary Directory","bkpwp")." '".$backup_tmp_dir."' ".__("could not be created","bkpwp");
 		} else {
 			$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress temporary Directory","bkpwp")." '".$backup_tmp_dir."' ".__("created","bkpwp");
@@ -499,7 +499,7 @@ class BKPWP_BACKUP {
 		// subdirectory of wordpress files
 		$wordpress_files = $backup_tmp_dir."/wordpress_files";
 		if (!is_dir($wordpress_files)) {
-			if (!mkdir($wordpress_files)) {
+			if (!mkdir($wordpress_files,0777)) {
 				$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress temporary Directory","bkpwp")." '".$wordpress_files."' ".__("could not be created","bkpwp");
 			} else {
 				$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("BackUpWordPress temporary Directory","bkpwp")." '".$wordpress_files."' ".__("created","bkpwp");
@@ -526,7 +526,7 @@ class BKPWP_BACKUP {
 		$i=1; // the sql at least
 		foreach ($files as $f) {
 			if (is_dir($f)) {
-				if (!mkdir($wordpress_files.bkpwp_conform_dir($f, true))) {
+				if (!mkdir($wordpress_files.bkpwp_conform_dir($f, true),0777)) {
 					if (!is_dir($wordpress_files.bkpwp_conform_dir($f, true))) {
 						$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to make directory","bkpwp").": ".$f;
 					}
@@ -576,6 +576,11 @@ class BKPWP_BACKUP {
 	$archive_backup = new File_Archive();
 	$archive_backup->setOption("tmpDirectory",get_option("bkpwppath"));
 	$archive_backup->extract($backup_tmp_dir,File_Archive::toArchive($backup_filename, File_Archive::toFiles()));
+	if (!chmod($backup_filename, 0777)) {
+		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Backup Archive Permissions changed to 0777","bkpwp")." ".$backup_filename;
+	} else {
+		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to change backup archive permissions","bkpwp")." ".$backup_filename;
+	}
 	if (!file_exists($backup_filename)) {
 		$log['logfile'][] = $this->bkpwp_logtimestamp().": ".__("Failed to create backup archive","bkpwp")." ".$backup_filename;
 	} else {
@@ -704,7 +709,7 @@ class BKPWP_BACKUP {
 	    if (!is_array($log)) { return; }
 	    	$logdir = get_option("bkpwppath")."/logs";
 		if (!is_dir($logdir)) {
-			mkdir($logdir);
+			mkdir($logdir,0777);
 		}
 	    	$logname = $logdir."/".$log['filename'].".txt";
 		$logfile = "";
