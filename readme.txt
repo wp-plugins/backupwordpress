@@ -6,9 +6,6 @@ Requires at least: 2.1
 Tested up to: 2.2.2
 Stable tag: trunk
 
-
-== Description ==
-
 BackUpWordPress is a Backup & Recovery Suite for your WordPress website. This Plugin allows you to backup database as well as files and comes with a rich set of options.
 
 == Features ==
@@ -71,6 +68,9 @@ Some pieces of code have been modified:
 
 
 Changelog:
+
+Changes in 0.4.2
++ prevent unpriviledged users from seeing the BackUpWordPress Dashboard
 
 Changes in 0.4.1
 + added test for empty array in bkpwp_get_excludelist()
