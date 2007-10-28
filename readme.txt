@@ -72,6 +72,9 @@ Some pieces of code have been modified:
 
 Changelog:
 
+Changes in 0.4.2
++ prevent unpriviledged users from seeing the BackUpWordPress Dashboard
+
 Changes in 0.4.1
 + added test for empty array in bkpwp_get_excludelist()
 + all mkdir() calls use mode 0777

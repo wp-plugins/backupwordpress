@@ -148,6 +148,7 @@ function bkpwp_date_diff($earlierDate, $laterDate) {
 }
 		
 function bkpwp_latest_activity() {
+   if(current_user_can('manage bkpwp')) {
 	echo "<h3>".__("BackUpWordPress","bkpwp")." <a href=\"admin.php?page=backupwordpress/backupwordpress.php\">&raquo;</a></h3>";
 	echo "<p><a href=\"http://wordpress.designpraxis.at/\">".__("Check for a new version of BackUpWordPress!","bkpwp")."</a></p>";
 	if (bkpwp_check_unfinished_backup()) {
@@ -199,6 +200,7 @@ function bkpwp_latest_activity() {
 		<?php 
 		break;
 	}
+   }
 }
 
 function bkpwp_conform_dir($dir,$rel=false) {
