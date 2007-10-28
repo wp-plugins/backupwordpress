@@ -3,7 +3,7 @@ Contributors: wpdprx
 Donate link: http://wordpress.designpraxis.at/
 Tags: Backup, database, diectory, uploads, images, db, recovery
 Requires at least: 2.1
-Tested up to: 2.2.2
+Tested up to: 2.3.1
 Stable tag: trunk
 
 BackUpWordPress is a Backup & Recovery Suite for your WordPress website. This Plugin allows you to backup database as well as files and comes with a rich set of options.
