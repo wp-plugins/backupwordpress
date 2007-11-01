@@ -29,7 +29,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Writer.php";
 require_once "Mail.php";
 require_once "Mail/mime.php";
 

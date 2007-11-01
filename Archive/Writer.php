@@ -29,7 +29,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."PEAR.php";
+require_once BKPWP_PLUGIN_PATH."PEAR.php";
 
 /**
  * Base class for any writer

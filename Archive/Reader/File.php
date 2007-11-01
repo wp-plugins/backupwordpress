@@ -29,8 +29,8 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader.php";
-require_once $GLOBALS['bkpwp_plugin_path']."Type.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Reader.php";
+require_once BKPWP_PLUGIN_PATH."Type.php";
 
 /**
  * Reader that represents a single file
@@ -268,7 +268,7 @@ class File_Archive_Reader_File extends File_Archive_Reader
      */
     function makeWriterRemoveBlocks($blocks, $seek = 0)
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Files.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Files.php";
 
         $writer = new File_Archive_Writer_Files();
 

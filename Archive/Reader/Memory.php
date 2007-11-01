@@ -29,7 +29,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Reader.php";
 
 /**
  * A reader that takes its input from a memory buffer
@@ -202,7 +202,7 @@ class File_Archive_Reader_Memory extends File_Archive_Reader
      */
     function makeWriterRemoveBlocks($blocks, $seek = 0)
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Memory.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Memory.php";
         $data = substr($this->memory, 0, $this->offset + $seek);
         $this->memory = substr($this->memory, $this->offset + $seek);
 

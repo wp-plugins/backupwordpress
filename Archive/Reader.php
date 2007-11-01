@@ -31,7 +31,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."PEAR.php";
+require_once BKPWP_PLUGIN_PATH."PEAR.php";
 
 /**
  * Abstract base class for all the readers
@@ -157,7 +157,7 @@ class File_Archive_Reader
      */
     function getMime()
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader/MimeList.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Reader/MimeList.php";
         return File_Archive_Reader_GetMime($this->getFilename());
     }
 
@@ -354,7 +354,7 @@ class File_Archive_Reader
      */
     function makeAppendWriter()
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Predicate/False.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Predicate/False.php";
         return $this->makeWriterRemoveFiles(new File_Archive_Predicate_False());
     }
 
@@ -379,7 +379,7 @@ class File_Archive_Reader
      */
     function makeWriterRemove()
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Predicate/Current.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Predicate/Current.php";
         return $this->makeWriterRemoveFiles(new File_Archive_Predicate_Current());
     }
 

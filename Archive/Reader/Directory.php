@@ -29,8 +29,8 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader/Relay.php";
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader/File.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Reader/Relay.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Reader/File.php";
 
 /**
  * Recursively reads a directory
@@ -159,7 +159,7 @@ class File_Archive_Reader_Directory extends File_Archive_Reader_Relay
             return PEAR::raiseError($pred);
         }
 
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Files.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Files.php";
 
         $writer = new File_Archive_Writer_Files($this->directory);
         $this->close();
@@ -186,7 +186,7 @@ class File_Archive_Reader_Directory extends File_Archive_Reader_Relay
             return PEAR::raiseError('No file selected');
         }
 
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Files.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Files.php";
 
         $writer = $lastSource->makeWriterRemoveBlocks($blocks, $seek);
         if (!PEAR::isError($writer)) {
@@ -202,7 +202,7 @@ class File_Archive_Reader_Directory extends File_Archive_Reader_Relay
      */
     function makeAppendWriter()
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Files.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Files.php";
 
         if ($this->source === null ||
             is_a($this->source, 'File_Archive_Reader_File') ) {

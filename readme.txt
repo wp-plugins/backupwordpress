@@ -69,6 +69,9 @@ Some pieces of code have been modified:
 
 Changelog:
 
+Changes in 0.4.3
++ security fix for RFI vulnerability reported on http://www.milw0rm.com/exploits/4593
+
 Changes in 0.4.2
 + prevent unpriviledged users from seeing the BackUpWordPress Dashboard
 

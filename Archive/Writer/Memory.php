@@ -29,7 +29,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Writer.php";
 
 /**
  * Write the concatenation of the files in a buffer
@@ -115,7 +115,7 @@ class File_Archive_Writer_Memory extends File_Archive_Writer
      */
     function makeReader($filename = null, $stat = null, $mime = null)
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader/Memory.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Reader/Memory.php";
         return new File_Archive_Reader_Memory(
             $this->data,
             $filename === null ? $this->filename : $filename,

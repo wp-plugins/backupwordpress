@@ -24,21 +24,20 @@ Author URI: http://wordpress.designpraxis.at
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
-$GLOBALS['bkpwp_plugin_path'] = ABSPATH."wp-content/plugins/backupwordpress/";
-$GLOBALS['bkpwp_version'] = "0.4.2";
+define("BKPWP_PLUGIN_PATH", ABSPATH."wp-content/plugins/backupwordpress/");
+define("BKPWP_VERSION", "0.4.3");
 
 // get the functions
-require_once($GLOBALS['bkpwp_plugin_path']."functions.php");
+require_once(BKPWP_PLUGIN_PATH."functions.php");
 // require_once the required PEAR::FILE_ARCHIVE package for files backup
-require_once $GLOBALS['bkpwp_plugin_path']."Archive.php";
-require_once $GLOBALS['bkpwp_plugin_path']."Type.php";
+require_once BKPWP_PLUGIN_PATH."Archive.php";
+require_once BKPWP_PLUGIN_PATH."Type.php";
 // BackUpWordPress classes
-require_once($GLOBALS['bkpwp_plugin_path']."bkpwp-classes/interface.php");
-require_once($GLOBALS['bkpwp_plugin_path']."bkpwp-classes/options.php");
-require_once($GLOBALS['bkpwp_plugin_path']."bkpwp-classes/manage_backups.php");
-require_once($GLOBALS['bkpwp_plugin_path']."bkpwp-classes/schedule.php");
-require_once($GLOBALS['bkpwp_plugin_path']."functions-interface.php");
+require_once(BKPWP_PLUGIN_PATH."bkpwp-classes/interface.php");
+require_once(BKPWP_PLUGIN_PATH."bkpwp-classes/options.php");
+require_once(BKPWP_PLUGIN_PATH."bkpwp-classes/manage_backups.php");
+require_once(BKPWP_PLUGIN_PATH."bkpwp-classes/schedule.php");
+require_once(BKPWP_PLUGIN_PATH."functions-interface.php");
 
 // Plugin activation and deactivation e.g.: set 'manage bkpwp' capabilities to admin
 add_action('activate_backupwordpress/backupwordpress.php', 'bkpwp_activate');
@@ -99,7 +98,7 @@ add_action('activity_box_end', 'bkpwp_latest_activity',0);
 	if (!in_array("PEAR", get_declared_classes())) {
 echo "<pre>";
 		 //print_r(get_declared_classes());
-		 require_once $GLOBALS['bkpwp_plugin_path']."PEAR.php";
+		 require_once BKPWP_PLUGIN_PATH."PEAR.php";
 echo "</pre>";
  }
 //print_r(get_declared_classes());

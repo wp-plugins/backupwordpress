@@ -29,7 +29,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader/Archive.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Reader/Archive.php";
 
 /**
  * Read a tar archive
@@ -237,7 +237,7 @@ class File_Archive_Reader_Tar extends File_Archive_Reader_Archive
      */
     function makeWriterRemoveFiles($pred)
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Tar.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Tar.php";
 
         $blocks = array();
         $seek = null;
@@ -334,7 +334,7 @@ class File_Archive_Reader_Tar extends File_Archive_Reader_Archive
      */
     function makeAppendWriter()
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Tar.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Tar.php";
 
         while (($error = $this->next()) === true) { }
         if (PEAR::isError($error)) {

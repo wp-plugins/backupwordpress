@@ -33,7 +33,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Predicate.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Predicate.php";
 
 /**
  * Evaluates to true if a for the files for which a newer version

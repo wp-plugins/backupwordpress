@@ -29,7 +29,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader/Relay.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Reader/Relay.php";
 
 /**
  * Filter out the files that do not respect a given predicat

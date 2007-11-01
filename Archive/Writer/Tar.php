@@ -29,7 +29,7 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Archive.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Writer/Archive.php";
 
 /**
  * Write the files as a TAR archive
@@ -218,7 +218,7 @@ class File_Archive_Writer_Tar extends File_Archive_Writer_Archive
  *
  * @see File_Archive_Predicate, File_Archive_Reader_Filter
  */
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Predicate.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Predicate.php";
 class File_Archive_Predicate_TARCompatible extends File_Archive_Predicate
 {
     function isTrue($source)

@@ -722,7 +722,7 @@ class BKPWP_BACKUP {
 			}
 			// write some environmental information for debuging purposes
 			$logfile .= "WordPress Version: ".$GLOBALS['wp_version']."\n";
-			$logfile .= "BackUpWordPress Version: ".$GLOBALS['bkpwp_version']."\n";
+			$logfile .= "BackUpWordPress Version: ".BKPWP_VERSION."\n";
 		}
 		if (is_array($log['logfile'])) {
 			foreach($log['logfile'] as $l) {
@@ -1065,12 +1065,12 @@ class backupwordpressMailer extends PHPMailer {
 
 function bkpwp_mail_now($file="", $bkpwpinfo="") {
 	ob_start();
-	include_once($GLOBALS['bkpwp_plugin_path']."bkpwp-pages/bkpwp_footer.php");
+	include_once(BKPWP_PLUGIN_PATH."bkpwp-pages/bkpwp_footer.php");
 	$text_html = ob_get_contents();
 	ob_end_clean();
 	
 	ob_start();
-	include_once($GLOBALS['bkpwp_plugin_path']."bkpwp-pages/bkpwp_mail_footer.php");
+	include_once(BKPWP_PLUGIN_PATH."bkpwp-pages/bkpwp_mail_footer.php");
 	$text_plain = ob_get_contents();
 	ob_end_clean();
 	

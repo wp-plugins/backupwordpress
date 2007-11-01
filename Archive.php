@@ -36,7 +36,7 @@
  * We should probably use lazy include and remove this inclusion...
  */
  if (!class_exists("pear")) {
-require_once $GLOBALS['bkpwp_plugin_path']."PEAR.php";
+require_once BKPWP_PLUGIN_PATH."PEAR.php";
  }
 
 function File_Archive_cleanCache($file, $group)
@@ -294,7 +294,7 @@ class File_Archive
             $uncompressionLevel = $uncompression;
         }
 
-        require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader.php';
+        require_once BKPWP_PLUGIN_PATH.'Archive/Reader.php';
         $std = File_Archive_Reader::getStandardURL($URL);
 
         //Modify the symbolic name if necessary
@@ -348,8 +348,8 @@ class File_Archive
             }
 
             if ($directoryDepth >= 0) {
-                require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Filter.php';
-                require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Predicate/MaxDepth.php';
+                require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Filter.php';
+                require_once BKPWP_PLUGIN_PATH.'Archive/Predicate/MaxDepth.php';
 
                 $tmp =& File_Archive::filter(
                     new File_Archive_Predicate_MaxDepth($directoryDepth),
@@ -554,7 +554,7 @@ class File_Archive
             return $source;
         }
 
-        require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Cache.php';
+        require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Cache.php';
         return new File_Archive_Reader_Cache($source);
     }
 
@@ -594,7 +594,7 @@ class File_Archive
         if (is_string($dest)) {
             return File_Archive::appender($dest);
         } else if (is_array($dest)) {
-            require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Writer/Multi.php';
+            require_once BKPWP_PLUGIN_PATH.'Archive/Writer/Multi.php';
             $writer = new File_Archive_Writer_Multi();
             foreach($dest as $key => $foo) {
                 $writer->addWriter($dest[$key]);
@@ -661,30 +661,30 @@ class File_Archive
                     File_Archive::readArchive('bz2', $source, $sourceOpened)
                     );
         case 'tar':
-            require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Tar.php';
+            require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Tar.php';
             return new File_Archive_Reader_Tar($source, $sourceOpened);
 
         case 'gz':
         case 'gzip':
-            require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Gzip.php';
+            require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Gzip.php';
             return new File_Archive_Reader_Gzip($source, $sourceOpened);
 
         case 'zip':
-            require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Zip.php';
+            require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Zip.php';
             return new File_Archive_Reader_Zip($source, $sourceOpened);
 
         case 'bz2':
         case 'bzip2':
-            require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Bzip2.php';
+            require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Bzip2.php';
             return new File_Archive_Reader_Bzip2($source, $sourceOpened);
 
         case 'deb':
         case 'ar':
-            require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Ar.php';
+            require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Ar.php';
             return new File_Archive_Reader_Ar($source, $sourceOpened);
 
 /*        case 'cab':
-            require_once $GLOBALS['bkpwp_plugin_path'].'Archive/Reader/Cab.php';
+            require_once BKPWP_PLUGIN_PATH.'Archive/Reader/Cab.php';
             return new File_Archive_Reader_Cab($source, $sourceOpened);
 
 

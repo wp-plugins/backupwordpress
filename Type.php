@@ -20,7 +20,7 @@
 
 
  if (!class_exists("pear")) {
-require_once $GLOBALS['bkpwp_plugin_path']."PEAR.php";
+require_once BKPWP_PLUGIN_PATH."PEAR.php";
  }
  
 $_fileCmd = &PEAR::getStaticProperty('MIME_Type', 'fileCmd');

@@ -51,12 +51,12 @@ function bkpwp_setup() {
 }
 
 function bkpwp_load_menu_page() {
-	if (!empty($_REQUEST['page']) && file_exists($GLOBALS['bkpwp_plugin_path']."bkpwp-pages/".$_REQUEST['page'].".php")) {
-		include_once($GLOBALS['bkpwp_plugin_path']."bkpwp-pages/".$_REQUEST['page'].".php");
+	if (!empty($_REQUEST['page']) && file_exists(BKPWP_PLUGIN_PATH."bkpwp-pages/".$_REQUEST['page'].".php")) {
+		include_once(BKPWP_PLUGIN_PATH."bkpwp-pages/".$_REQUEST['page'].".php");
 	} else {
-		include_once($GLOBALS['bkpwp_plugin_path']."bkpwp-pages/bkpwp_manage_backups.php");
+		include_once(BKPWP_PLUGIN_PATH."bkpwp-pages/bkpwp_manage_backups.php");
 	}
-	include_once($GLOBALS['bkpwp_plugin_path']."bkpwp-pages/bkpwp_footer.php");
+	include_once(BKPWP_PLUGIN_PATH."bkpwp-pages/bkpwp_footer.php");
 }
 
 function bkpwp_add_menu() {

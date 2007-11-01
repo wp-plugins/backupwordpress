@@ -29,8 +29,8 @@
  * @link       http://pear.php.net/package/File_Archive
  */
 
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Reader/Archive.php";
-require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Files.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Reader/Archive.php";
+require_once BKPWP_PLUGIN_PATH."Archive/Writer/Files.php";
 
 /**
  * Uncompress a file that was compressed in the Gzip format
@@ -214,7 +214,7 @@ class File_Archive_Reader_Gzip extends File_Archive_Reader_Archive
      */
     function makeWriterRemoveBlocks($blocks, $seek = 0)
     {
-        require_once $GLOBALS['bkpwp_plugin_path']."Archive/Writer/Gzip.php";
+        require_once BKPWP_PLUGIN_PATH."Archive/Writer/Gzip.php";
 
         if ($this->nbRead == 0) {
             return PEAR::raiseError('No file selected');
