@@ -4,7 +4,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://wordpress.designpraxis.at
 Description: Manage <a href="admin.php?page=backupwordpress/backupwordpress.php">WordPress Backups</a>. Beta Release. Please help testing and give me feedback under the comments section of <a href="http://wordpress.designpraxis.at/plugins/backupwordpress/">the Plugin page</a>. Backup DB, Files & Folders, use .tar.gz, .zip, Exclude List, etc.
 Author: Roland Rust
-Version: 0.4.3
+Version: 0.4.4
 Author URI: http://wordpress.designpraxis.at
 */
 
@@ -25,7 +25,7 @@ Author URI: http://wordpress.designpraxis.at
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 define("BKPWP_PLUGIN_PATH", ABSPATH."wp-content/plugins/backupwordpress/");
-define("BKPWP_VERSION", "0.4.3");
+define("BKPWP_VERSION", "0.4.4");
 
 // get the functions
 require_once(BKPWP_PLUGIN_PATH."functions.php");

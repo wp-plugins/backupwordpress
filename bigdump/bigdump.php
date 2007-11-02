@@ -39,6 +39,9 @@
 
 // dprx-modified-start
 require_once('../../../../wp-config.php');
+if (!current_user_can("manage_backups")) {
+	die ("Access denied.");
+}
 global $table_prefix,$wpdb;
 // dprx-modified-end	
 

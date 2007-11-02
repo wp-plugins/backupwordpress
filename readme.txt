@@ -69,6 +69,9 @@ Some pieces of code have been modified:
 
 Changelog:
 
+Changes in 0.4.4
++ another even more important security fix.
+
 Changes in 0.4.3
 + security fix for RFI vulnerability reported on http://www.milw0rm.com/exploits/4593
 
