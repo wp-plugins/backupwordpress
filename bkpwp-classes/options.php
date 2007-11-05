@@ -64,6 +64,10 @@ class BKPWP_OPTIONS {
 			  delete_option("bkpwppath");
 			  $msg = __("Path is not within your webroot. Please specify a writable directory inside ","bkpwp").bkpwp_conform_dir(ABSPATH).".";
 			  bkpwp_display_message($msg);
+		  } elseif (bkpwp_conform_dir($_REQUEST['bkpwppath']) == bkpwp_conform_dir(ABSPATH)."/wp-content") {
+			  delete_option("bkpwppath");
+			  $msg = __("Do not use your wp-content directory for backup storage. Specify a writable directory inside ","bkpwp").bkpwp_conform_dir(ABSPATH)." that doen't need to be accessible by unauthenticated users.";
+			  bkpwp_display_message($msg);
 		  } else {
 			  if (!is_dir($_REQUEST['bkpwppath'])) {
 				  if (!mkdir($_REQUEST['bkpwppath'],0777))  {
@@ -439,6 +443,7 @@ class BKPWP_OPTIONS {
 	update_option('bkpwp_listmax_backups',15);
 	update_option('bkpwp_max_backups',10);
 	update_option("bkpwp_domain","bkpwp");
+	update_option("bkpwp_install_user",$GLOBALS['userdata']->user_login);
 	update_option("bkpwp_domain_path","wp-content/plugins/bkpwp/locale");
 	
 	 $user = $GLOBALS['userdata']->user_login;

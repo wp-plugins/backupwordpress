@@ -69,6 +69,10 @@ Some pieces of code have been modified:
 
 Changelog:
 
+Changes in 0.4.5
++ fix prevents users from setting wp-content as backup repository. The directory must be one that can be secured with .htaccess.
++ fixes the default admin issue reported here: http://wpforum.designpraxis.at/topic/error-invalid-argument-supplied-for-foreach-?replies=2#post-322
+
 Changes in 0.4.4
 + another even more important security fix.
 

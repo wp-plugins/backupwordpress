@@ -365,14 +365,14 @@ if (count($backup_archives) < 1) {
 	<?php
   	/* delete the backup (but leave the logfile for a while!) */
 	if (!empty($_REQUEST['bkpwp_delete'])) {
-		 bkpwp_delete();
+		bkpwp_delete();
 	}
 	/* mail the backup to someone */
 	if (!empty($_REQUEST['bkpwp_mail'])) {
 		bkpwp_mail();
 	}
 	if (!empty($_REQUEST['bkpwp_restore'])) {
-		 bkpwp_restore();
+		bkpwp_restore();
 	}
 	
 	?>

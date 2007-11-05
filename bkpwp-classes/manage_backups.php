@@ -975,11 +975,11 @@ class BKPWP_MANAGE {
     }
 
     function bkpwp_get_preset($name="") {
-	    if (empty($name)) {
-		    $name = "full backup";
-	    }
+	if (empty($name)) {
+	    $name = "full backup";
+	}
 	$user = $GLOBALS['userdata']->user_login;
-	if(empty($user)) { $user = "admin"; }
+	if(empty($user)) { $user = get_option("bkpwp_install_user"); }
 	$presets = get_option("bkpwp_presets");
 	$apresets = $presets[$user]['bkpwp_presets'];
 	foreach($apresets as $p) {
