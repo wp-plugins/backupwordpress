@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://humanmade.co.uk/
 Description: Simple automated backups of your WordPress powered website.
 Author: Human Made Limited
-Version: 1.0
+Version: 1.0.2
 Author URI: http://humanmade.co.uk/
 */
 
@@ -30,8 +30,8 @@ Author URI: http://humanmade.co.uk/
 // TODO try to use zipArchive before pclzip
 // TODO get rid of schedules
 
-define( 'HMBKP_PLUGIN_PATH', WP_PLUGIN_DIR .'/humanmade.backup' );
-define( 'HMBKP_PLUGIN_URL', WP_PLUGIN_URL .'/humanmade.backup' );
+define( 'HMBKP_PLUGIN_PATH', trailingslashit( dirname( __FILE__ ) ) );
+define( 'HMBKP_PLUGIN_URL', str_replace( ABSPATH, get_bloginfo( 'url' ) . '/', HMBKP_PLUGIN_PATH ) );
 
 // Load the admin actions file
 function hmbkp_actions() {
@@ -40,7 +40,7 @@ function hmbkp_actions() {
 	
 	require_once( HMBKP_PLUGIN_PATH . '/admin.actions.php' );
 
-	if ( isset( $_GET['page'] ) && $_GET['page'] == 'humanmade_backups' ) :
+	if ( isset( $_GET['page'] ) && $_GET['page'] == 'backupswordpress' ) :
 		wp_enqueue_script( 'hmbkp', HMBKP_PLUGIN_URL . '/assets/hmbkp.js' );
 		wp_enqueue_style( 'hmbkp', HMBKP_PLUGIN_URL . '/assets/hmbkp.css' );
 	endif;
@@ -63,8 +63,8 @@ require_once( HMBKP_PLUGIN_PATH . '/functions/backup.mysql.fallback.functions.ph
 require_once( HMBKP_PLUGIN_PATH . '/functions/backup.files.fallback.functions.php' );
 
 // Plugin activation and deactivation
-add_action( 'activate_humanmade.backup/plugin.php', 'hmbkp_activate' );
-add_action( 'deactivate_humanmade.backup/plugin.php', 'hmbkp_deactivate' );
+add_action( 'activate_backupwordpress/plugin.php', 'hmbkp_activate' );
+add_action( 'deactivate_backupwordpress/plugin.php', 'hmbkp_deactivate' );
 
 // Add more cron schedules
 add_filter( 'cron_schedules', 'hmbkp_more_reccurences' );

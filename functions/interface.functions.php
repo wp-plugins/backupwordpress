@@ -22,8 +22,8 @@ function hmbkp_get_backup_row( $file ) {
 
 		<td>
 
-			<a href="tools.php?page=humanmade_backups&amp;hmbkp_download=<?php echo $encode; ?>"><?php _e( 'Download', 'hmbkp' ); ?></a> |
-			<a href="tools.php?page=humanmade_backups&amp;hmbkp_delete=<?php echo $encode ?>"><?php _e( 'Delete', 'hmbkp' ); ?></a>
+			<a href="tools.php?page=backupswordpress&amp;hmbkp_download=<?php echo $encode; ?>"><?php _e( 'Download', 'hmbkp' ); ?></a> |
+			<a href="tools.php?page=backupswordpress&amp;hmbkp_delete=<?php echo $encode ?>"><?php _e( 'Delete', 'hmbkp' ); ?></a>
 
 		</td>
 

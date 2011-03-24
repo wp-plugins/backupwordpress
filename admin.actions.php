@@ -15,7 +15,7 @@ function hmbkp_request_delete_backup() {
 	exit;
 
 }
-add_action( 'load-tools_page_humanmade_backups', 'hmbkp_request_delete_backup' );
+add_action( 'load-tools_page_backupswordpress', 'hmbkp_request_delete_backup' );
 
 /**
  * Schedule a one time backup and then
@@ -43,7 +43,7 @@ function hmbkp_request_do_backup() {
 	exit;
 
 }
-add_action( 'load-tools_page_humanmade_backups', 'hmbkp_request_do_backup' );
+add_action( 'load-tools_page_backupswordpress', 'hmbkp_request_do_backup' );
 
 /**
  * Send the download file to the browser and
@@ -57,7 +57,7 @@ function hmbkp_request_download_backup() {
 	hmbkp_send_file( base64_decode( $_GET['hmbkp_download'] ) );
 
 }
-add_action( 'load-tools_page_humanmade_backups', 'hmbkp_request_download_backup' );
+add_action( 'load-tools_page_backupswordpress', 'hmbkp_request_download_backup' );
 
 function hmbkp_ajax_is_backup_in_progress() {
 	echo (int) hmbkp_is_in_progress();
