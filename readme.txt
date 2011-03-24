@@ -1,5 +1,5 @@
 === BackUpWordPress ===
-Contributors: humanmade, willmot
+Contributors: willmot, humanmade
 Tags: backup
 Requires at least: 3.0
 Tested up to: 3.1
