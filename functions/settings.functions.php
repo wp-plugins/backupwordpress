@@ -48,7 +48,7 @@ function hmbkp_path() {
 
 	if ( !file_exists( $htaccess ) && is_writable( $path ) ) :
 		require_once( ABSPATH . '/wp-admin/includes/misc.php' );
-		insert_with_markers( $htaccess, 'Human Made Backup', array( 'deny from all' ) );
+		insert_with_markers( $htaccess, 'BackUpWordPress', array( 'deny from all' ) );
 	endif;
 
     return $path;

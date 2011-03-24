@@ -98,7 +98,7 @@
 
 <?php else : ?>
 
-	<p><strong><?php _e( 'You need to fix the issues detailed above before Human Made Backups can start.', 'hmbkp' ); ?></strong></p>
+	<p><strong><?php _e( 'You need to fix the issues detailed above before BackUpWordPress can start.', 'hmbkp' ); ?></strong></p>
 <?php endif; ?>
 
 	<p class="howto"><?php printf( __( 'If you need help getting things working you are more than welcome to email us at %s and we\'ll do what we can.', 'hmbkp' ), '<a href="mailto:support@humanmade.co.uk">support@humanmade.co.uk</a>' ); ?></p>

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Plugin Name: Human Made Backup
+Plugin Name: BackUpWordPress
 Plugin URI: http://humanmade.co.uk/
 Description: Simple automated backups of your WordPress powered website.
 Author: Human Made Limited
@@ -78,7 +78,7 @@ if ( !is_dir( hmbkp_path() ) ) :
     function hmbkp_path_exists_warning() {
 	    $php_user = exec( 'whoami' );
 		$php_group = reset( explode( ' ', exec( 'groups' ) ) );
-    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'Human Made Backup has detected a problem.' ) . '</strong> ' . sprintf( __( 'The backups directory can\'t be created because your %s directory isn\'t writable, run %s or %s or create the folder yourself.' ), '<code>wp-content</code>', '<code>chown ' . $php_user . ':' . $php_group . ' ' . WP_CONTENT_DIR . '</code>', '<code>chmod 777 ' . WP_CONTENT_DIR . '</code>' ) . '</p></div>';
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.' ) . '</strong> ' . sprintf( __( 'The backups directory can\'t be created because your %s directory isn\'t writable, run %s or %s or create the folder yourself.' ), '<code>wp-content</code>', '<code>chown ' . $php_user . ':' . $php_group . ' ' . WP_CONTENT_DIR . '</code>', '<code>chmod 777 ' . WP_CONTENT_DIR . '</code>' ) . '</p></div>';
     }
     add_action( 'admin_notices', 'hmbkp_path_exists_warning' );
 
@@ -89,7 +89,7 @@ if ( is_dir( hmbkp_path() ) && !is_writable( hmbkp_path() ) ) :
     function hmbkp_writable_path_warning() {
 		$php_user = exec( 'whoami' );
 		$php_group = reset( explode( ' ', exec( 'groups' ) ) );
-    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'Human Made Backup has detected a problem.' ) . '</strong> ' . sprintf( __( 'Your backups directory isn\'t writable. run %s or %s or set the permissions yourself.' ), '<code>chown -R ' . $php_user . ':' . $php_group . ' ' . hmbkp_path() . '</code>', '<code>chmod -R 777 ' . hmbkp_path() . '</code>' ) . '</p></div>';
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.' ) . '</strong> ' . sprintf( __( 'Your backups directory isn\'t writable. run %s or %s or set the permissions yourself.' ), '<code>chown -R ' . $php_user . ':' . $php_group . ' ' . hmbkp_path() . '</code>', '<code>chmod -R 777 ' . hmbkp_path() . '</code>' ) . '</p></div>';
     }
     add_action( 'admin_notices', 'hmbkp_writable_path_warning' );
 
