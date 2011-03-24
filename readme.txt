@@ -1,4 +1,4 @@
-=== BackUp WordPress ===
+=== BackUpWordPress ===
 Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
@@ -7,7 +7,7 @@ Stable tag: 1.0.2
 
 Simple automated backups of your WordPress powered website.
 
-BackUp WordPress will back up your entire site including your database and all your files once every day.
+BackUpWordPress will back up your entire site including your database and all your files once every day.
 
 == Installation ==
 
