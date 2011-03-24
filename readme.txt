@@ -3,7 +3,7 @@ Contributors: humanmade, willmot
 Tags: backup
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 0.4.5
+Stable tag: 1.0
 
 Simple automated backups of your WordPress powered website.
 
