@@ -1,4 +1,4 @@
-=== BackUp WordPress ===
+=== BackUpWordPress ===
 Contributors: humanmade, willmot
 Tags: backup
 Requires at least: 3.0
@@ -11,7 +11,7 @@ BackUp WordPress will back up your entire site including your database and all y
 
 == Installation ==
 
-1. Install Back Up WordPress either via the WordPress.org plugin directory, or by uploading the files to your server
+1. Install BackUpWordPress either via the WordPress.org plugin directory, or by uploading the files to your server
 2. Activate the plugin
 3. Sit back and relax safe in the knowledge that your complete site will be backed up every day at 11:00
 
