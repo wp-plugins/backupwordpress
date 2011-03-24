@@ -1,6 +1,6 @@
 === BackUp WordPress ===
-Contributors: humanmade, willmot
-Tags: backup
+Contributors: willmot, humanmade
+Tags: back up, backup, backups
 Requires at least: 3.0
 Tested up to: 3.1
 Stable tag: 1.0
