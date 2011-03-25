@@ -15,10 +15,24 @@ function hmbkp_activate() {
  * Removes options and clears all cron schedules
  *
  * @todo remove all hmbkp_ options
- * @todo remove all old bkpwp_ options
  * @return void
  */
 function hmbkp_deactivate() {
+
+	// Delete options
+	$options = array(
+		'hmbkp_zip_path',
+		'hmbkp_mysqldump_path',
+		'hmbkp_path',
+		'hmbkp_max_backups',
+		'hmbkp_running',
+		'_transient_hmbkp_estimated_filesize',
+		'_transient_timeout_hmbkp_estimated_filesize'
+	);
+
+	foreach ( $options as $option )
+		delete_option( $option );
+
 
 	// Clear crons
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
@@ -33,6 +47,9 @@ function hmbkp_deactivate() {
  * @return void
  */
 function hmbkp_update() {
+
+	if ( !get_option( 'hmbkp_max_backups' ) )
+		hmbkp_set_defaults();
 
 	// Update from backUpWordPress
 	if ( get_option( 'bkpwp_max_backups' ) ) :
@@ -323,7 +340,7 @@ function hmbkp_calculate() {
 
     foreach ( $files as $f ) :
     	$str = hmbkp_conform_dir( $f, true );
-    	$filesize += filesize( $f );
+    	$filesize += @filesize( $f );
     endforeach;
 
     // Cache in a transient for a day
