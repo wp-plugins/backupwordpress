@@ -3,7 +3,7 @@ Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 
 Simple automated backups of your WordPress powered website.
 
@@ -26,6 +26,16 @@ Contact hello@humanmade.co.uk for help and support
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.0.3
+
+Minor bug fix release.
+
+* Suppress filesize() warnings when calculating backup size.
+* Plugin should now work when symlinked.
+* Remove all options on deactivate, you should now be able to deactivate then activate to fix issues with settings etc. becoming corrupt.
+* Call setup_defaults for users who update from backupwordpress 0.4.5 so they get new settings.
+* Don't ajax ping running backup status quite so often.
 
 #### 1.0.1 & 1.0.2
 
