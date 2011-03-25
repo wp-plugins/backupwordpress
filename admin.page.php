@@ -58,7 +58,7 @@
 
 	<?php if ( count( $backup_archives ) >= get_option( 'hmbkp_max_backups' ) ) : ?>
 
-	<p class="howto"><?php printf( _n( '* Only the latest backup is saved.', '* Only the latest %d backups are saved.', get_option( 'hmbkp_max_backups' ), 'hmbkp' ) ); ?></p>
+	<p class="howto"><?php printf( _n( '* Only the latest backup is saved.', '* Only the latest %d backups are saved.', (int) get_option( 'hmbkp_max_backups' ), 'hmbkp' ) ); ?></p>
 
 	<?php endif; ?>
 
