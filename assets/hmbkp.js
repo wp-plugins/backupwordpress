@@ -22,7 +22,7 @@ function hmbkpRedirectOnBackupComplete() {
 			if ( data == 0 )
 				location.reload( true );
 			else
-				setTimeout( 'hmbkpRedirectOnBackupComplete();', 1000 );
+				setTimeout( 'hmbkpRedirectOnBackupComplete();', 5000 );
 		}
 	);
 
