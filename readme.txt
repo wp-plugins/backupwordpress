@@ -17,7 +17,7 @@ BackUpWordPress will back up your entire site including your database and all yo
 
 The plugin will try to use the `mysqldump` and `zip` commands via shell if they are available, using these will greatly improve the time it takes to back up your site. You can point the plugin in the right direction by defining `HMBKP_ZIP_PATH` and `HMBKP_MYSQLDUMP_PATH` in your `wp-config.php`.
 
-== FAQ ==
+== Frequently Asked Questions ==
 
 Contact hello@humanmade.co.uk for help and support
 
