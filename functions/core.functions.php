@@ -349,3 +349,19 @@ function hmbkp_calculate() {
     return hmbkp_size_readable( $filesize );
 
 }
+
+/**
+ * Check whether shell_exec has been disabled.
+ *
+ * @return bool
+ */
+function hmbkp_shell_exec_available() {
+
+	$disable_functions = ini_get( 'disable_functions' );
+
+	if ( strpos( $disable_functions, 'shell_exec' ) !== false )
+		return false;
+
+	return true;
+
+}

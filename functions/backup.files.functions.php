@@ -113,6 +113,9 @@ function hmbkp_archive_files( $backup_tmp_dir, $backup_filepath ) {
  */
 function hmbkp_zip_path() {
 
+	if ( !hmbkp_shell_exec_available() )
+		return false;
+
 	$path = '';
 
 	// List of possible zip locations

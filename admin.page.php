@@ -64,26 +64,35 @@
 
 	<h4><?php _e( 'Compatibility', 'hmbkp' ); ?></h4>
 
-<?php if ( !hmbkp_zip_path() || !hmbkp_mysqldump_path() ) : ?>
+<?php if ( !hmbkp_zip_path() || !hmbkp_mysqldump_path() || !hmbkp_shell_exec_available() ) : ?>
 	<p><?php _e( 'You can increase the speed and reliability of your backups by resolving the items below. Your backups will still work fine if you don\'t.', 'hmnkp' ); ?></p>
 <?php endif; ?>
 
-<?php if ( !hmbkp_zip_path() ) : ?>
-
-	<p>&#10007; <?php printf( __( 'We couldn\'t find the %s command on your server.', 'hmbkp' ), '<code>zip</code>' ); ?></p>
-
-	<p><?php printf( __( 'You can fix this by adding %s to your %s file. run %s on your server to find the path or ask your server administrator.', 'hmbkp' ), '<code>' . define( 'HMBKP_ZIP_PATH', __( 'path to the zip command', 'hmbkp' ) ) . '</code>', '<code>wp-config.php</code>', '<code>which zip</code>' ); ?></p>
-
-<?php else : ?>
-	<p>&#10003; <?php printf( __( 'Your files are being backed up using the %s command.', 'hmbkp' ), '<code>' . hmbkp_zip_path() . '</code>' ); ?></p>
-
+<?php if ( !hmbkp_shell_exec_available() ) : ?>
+	<p>&#10007; <?php printf( __( '%s is disabled which means we have to use the slower PHP fallbacks, you could try contacting yout host and asking them to enable it.', 'hmbkp' ), '<code>shell_exec</code>' ); ?>
 <?php endif; ?>
 
-<?php if ( !hmbkp_mysqldump_path() ) : ?>
+<?php if ( hmbkp_shell_exec_available() ) : ?>
+
+	<?php if ( !hmbkp_zip_path() ) : ?>
+
+	<p>&#10007; <?php printf( __( 'We couldn\'t find the %s command on your server.', 'hmbkp' ), '<code>zip</code>' ); ?></p>
+	<p><?php printf( __( 'You can fix this by adding %s to your %s file. run %s on your server to find the path or ask your server administrator.', 'hmbkp' ), '<code>define( "HMBKP_ZIP_PATH", ' . __( 'path to the zip command', 'hmbkp' ) . ' )</code>', '<code>wp-config.php</code>', '<code>which zip</code>' ); ?></p>
+
+	<?php else : ?>
+	<p>&#10003; <?php printf( __( 'Your files are being backed up using the %s command.', 'hmbkp' ), '<code>' . hmbkp_zip_path() . '</code>' ); ?></p>
+
+	<?php endif; ?>
+
+	<?php if ( !hmbkp_mysqldump_path() ) : ?>
 	<p>&#10007; <?php printf( __( 'We couldn\'t find the %s command on your server.', 'hmbkp' ), '<code>mysqldump</code>' ); ?></p>
-	<p><?php printf( __( 'You can fix this by adding %s to your %s file. run %s on your server to find the path or ask your server administrator.', 'hmbkp' ), '<code>' . define( 'HMBKP_MYSQLDUMP_PATH', __( 'path to the mysqldump command' ) ) . '</code>', '<code>wp-config.php</code>', '<code>which mysqldump</code>' ); ?></p>
-<?php else : ?>
+	<p><?php printf( __( 'You can fix this by adding %s to your %s file. run %s on your server to find the path or ask your server administrator.', 'hmbkp' ), '<code>define( "HMBKP_MYSQLDUMP_PATH", ' . __( 'path to the mysqldump command' ) . ' )</code>', '<code>wp-config.php</code>', '<code>which mysqldump</code>' ); ?></p>
+	
+	<?php else : ?>
     <p>&#10003; <?php printf( __( 'Your database is being backed up using the %s command.', 'hmbkp' ), '<code>' . hmbkp_mysqldump_path() . '</code>' ); ?></p>
+	
+	<?php endif; ?>
+
 <?php endif; ?>
 
 <?php if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH ) :

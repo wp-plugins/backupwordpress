@@ -40,6 +40,9 @@ function hmbkp_backup_mysql( $backup_tmp_dir, $log ) {
  */
 function hmbkp_mysqldump_path() {
 
+	if ( !hmbkp_shell_exec_available() )
+		return false;
+
 	$path = '';
 
 	// List of possible mysqldump locations
