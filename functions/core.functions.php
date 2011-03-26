@@ -6,6 +6,7 @@
  * @return void
  */
 function hmbkp_activate() {
+	
 	hmbkp_set_defaults();
 }
 
