@@ -22,8 +22,8 @@
 <?php if ( is_dir( hmbkp_path() ) && is_writable( hmbkp_path() ) ) : ?>
 
 	<p>
-		<?php printf( __( 'Your %s &amp; %s will be automatically backed up every day at %s to %s.', 'hmbkp' ), '<code>' . __( 'database', 'hmbkp' ) . '</code>', '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<code>' . date( 'H:i', wp_next_scheduled( 'hmbkp_schedule_backup_hook', $schedules['default'] ) ) . '</code>', '<code>' . trailingslashit( hmbkp_path() ) . '</code>' ); ?>	
-		<span class="hmbkp_estimated-size"><?php printf( __( 'Each backup will be approximately %s.', 'hmbkp' ), '<code>Calculating Size...</code>' ); ?></span>
+		<?php printf( __( 'Your %s &amp; %s will be automatically backed up every day at %s to %s.', 'hmbkp' ), '<code>' . __( 'database', 'hmbkp' ) . '</code>', '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<code>' . date( 'H:i', wp_next_scheduled( 'hmbkp_schedule_backup_hook', $schedules['default'] ) ) . '</code>', '<code>' . trailingslashit( hmbkp_path() ) . '</code>' ); ?>
+		<span class="hmbkp_estimated-size"><?php printf( __( 'Each backup will be approximately %s.', 'hmbkp' ), get_transient( 'hmbkp_estimated_filesize' ) ? '<code>' . hmbkp_calculate() . '</code>' : '<code class="calculate">' . __( 'Calculating Size...', 'hmbkp' ) . '</code>' ); ?></span>
 	</p>
 
 	<?php $backup_archives = hmbkp_get_backups();
@@ -56,11 +56,7 @@
 
 	<?php endif; ?>
 
-	<?php if ( count( $backup_archives ) >= get_option( 'hmbkp_max_backups' ) ) : ?>
-
-	<p class="howto"><?php printf( _n( '* Only the latest backup is saved.', '* Only the latest %d backups are saved.', (int) get_option( 'hmbkp_max_backups' ), 'hmbkp' ) ); ?></p>
-
-	<?php endif; ?>
+	<p class="howto"><?php printf( _n( '* Only the latest backup is saved.', '* Only the latest %d backups are saved.', (int) get_option( 'hmbkp_max_backups' ), 'hmbkp' ), get_option( 'hmbkp_max_backups' ) ); ?></p>
 
 	<h4><?php _e( 'Compatibility', 'hmbkp' ); ?></h4>
 
@@ -87,10 +83,10 @@
 	<?php if ( !hmbkp_mysqldump_path() ) : ?>
 	<p>&#10007; <?php printf( __( 'We couldn\'t find the %s command on your server.', 'hmbkp' ), '<code>mysqldump</code>' ); ?></p>
 	<p><?php printf( __( 'You can fix this by adding %s to your %s file. run %s on your server to find the path or ask your server administrator.', 'hmbkp' ), '<code>define( "HMBKP_MYSQLDUMP_PATH", ' . __( 'path to the mysqldump command' ) . ' )</code>', '<code>wp-config.php</code>', '<code>which mysqldump</code>' ); ?></p>
-	
+
 	<?php else : ?>
     <p>&#10003; <?php printf( __( 'Your database is being backed up using the %s command.', 'hmbkp' ), '<code>' . hmbkp_mysqldump_path() . '</code>' ); ?></p>
-	
+
 	<?php endif; ?>
 
 <?php endif; ?>

@@ -3,7 +3,7 @@ Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 
 Simple automated backups of your WordPress powered website.
 
@@ -19,13 +19,21 @@ The plugin will try to use the `mysqldump` and `zip` commands via shell if they 
 
 == Frequently Asked Questions ==
 
-Contact hello@humanmade.co.uk for help and support
+Contact support@humanmade.co.uk for help/support.
 
 == Screenshots ==
 
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.0.5
+
+* Don't ajax load estimated backup size if it's already been calculated.
+* Fix time in backup complete log message.
+* Don't mark backup as running until cron has been called, will fix issues with backup showing as running even if cron never fired.
+* Show number of backups saved message.
+* Add a link to the backups page to the plugin action links.
 
 #### 1.0.4
 

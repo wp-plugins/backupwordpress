@@ -6,7 +6,9 @@
  * @return void
  */
 function hmbkp_activate() {
+
 	hmbkp_set_defaults();
+
 }
 
 /**
@@ -32,7 +34,6 @@ function hmbkp_deactivate() {
 
 	foreach ( $options as $option )
 		delete_option( $option );
-
 
 	// Clear crons
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );

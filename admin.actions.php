@@ -33,8 +33,6 @@ function hmbkp_request_do_backup() {
 			'created' => time()
 		);
 
-	update_option( 'hmbkp_running', microtime( true ) );
-
 	wp_schedule_single_event( time(), 'hmbkp_schedule_backup_hook', $options );
 
 	spawn_cron();

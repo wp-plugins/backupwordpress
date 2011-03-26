@@ -36,7 +36,7 @@ function hmbkp_do_backup() {
 	// Delete any old backup files
     hmbkp_delete_old_backups( $log );
 
-    $log['logfile'][] = sprintf( __( 'Backup done at %d', 'hmbkp' ), hmbkp_timestamp() );
+    $log['logfile'][] = sprintf( __( 'Backup completed %s', 'hmbkp' ), hmbkp_timestamp() );
     $log['logfile'][] = sprintf( __( 'Backup was running for %d Seconds', 'hmbkp' ), round( microtime( true ) - $time_start, 2 ) );
 
     hmbkp_write_log( $log );
@@ -155,7 +155,7 @@ function hmbkp_create_tmp_dir( $log ) {
     // Temporary directory name
     $backup_tmp_dir = trailingslashit( hmbkp_path() ) . date( 'Y-m-d-H-i-s' );
 
-    $log['logfile'][] = __( 'Backup starting at', 'hmbkp' ) . ' ' . hmbkp_timestamp() ;
+    $log['logfile'][] = sprintf( __( 'Backup starting at $s', 'hmbkp' ), hmbkp_timestamp() );
 
 	// Create the temp backup directory
     if ( !is_dir( $backup_tmp_dir ) ) :
