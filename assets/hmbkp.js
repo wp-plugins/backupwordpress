@@ -12,6 +12,12 @@ jQuery( document ).ready( function( $ ) {
 	    	} ).fadeIn();
 	    }
 	);
+	
+	$( '.hmbkp_advanced-options-toggle' ).click( function() {
+		
+		$( '#hmbkp_advanced-options' ).toggle();
+	
+	} );
 
 } );
 

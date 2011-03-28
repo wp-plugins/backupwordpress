@@ -27,15 +27,9 @@ function hmbkp_request_do_backup() {
 	if ( !isset( $_GET['action'] ) || $_GET['action'] !== 'hmbkp_backup_now' || hmbkp_is_in_progress() || !is_writable( hmbkp_path() ) || !is_dir( hmbkp_path() ) )
 		return false;
 
-		$options = array(
-			'preset' => 'full backup',
-			'info' => __( 'Single Backup', 'hmbkp' ),
-			'created' => time()
-		);
-
-	wp_schedule_single_event( time(), 'hmbkp_schedule_backup_hook', $options );
-
-	spawn_cron();
+	wp_schedule_single_event( time(), 'hmbkp_schedule_single_backup_hook' );
+	
+	wp_cron();
 
 	wp_redirect( remove_query_arg( 'action' ) );
 	exit;

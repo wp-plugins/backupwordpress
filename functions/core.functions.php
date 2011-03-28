@@ -2,12 +2,10 @@
 
 /**
  * Setup the default options on plugin activation
- *
- * @return void
  */
 function hmbkp_activate() {
 
-	hmbkp_set_defaults();
+	hmbkp_setup_daily_schedule();
 
 }
 
@@ -15,13 +13,10 @@ function hmbkp_activate() {
  * Cleanup on plugin deactivation
  *
  * Removes options and clears all cron schedules
- *
- * @todo remove all hmbkp_ options
- * @return void
  */
 function hmbkp_deactivate() {
 
-	// Delete options
+	// Options to delete
 	$options = array(
 		'hmbkp_zip_path',
 		'hmbkp_mysqldump_path',
@@ -35,8 +30,9 @@ function hmbkp_deactivate() {
 	foreach ( $options as $option )
 		delete_option( $option );
 
-	// Clear crons
+	// Clear cron
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
+	wp_clear_scheduled_hook( 'hmbkp_schedule_single_backup_hook' );
 
 }
 
@@ -44,13 +40,21 @@ function hmbkp_deactivate() {
 /**
  * Handles anything that needs to be
  * done when the plugin is updated
- *
- * @return void
  */
 function hmbkp_update() {
 
-	if ( !get_option( 'hmbkp_max_backups' ) )
-		hmbkp_set_defaults();
+	global $hmbkp_version;
+
+	// 1.0.x to 1.1
+	if ( !get_option( 'hmbkp_plugin_version' ) ) :
+		delete_transient( 'hmbkp_estimated_filesize' );
+		delete_option( 'hmbkp_max_backups' );
+		delete_option( 'hmbkp_backup_running' );
+
+		// Delete the logs directory
+		hmbkp_rmdirtree( hmbkp_path() . '/logs' );
+
+	endif;
 
 	// Update from backUpWordPress
 	if ( get_option( 'bkpwp_max_backups' ) ) :
@@ -91,6 +95,9 @@ function hmbkp_update() {
 
 	endif;
 
+	// Update the stored version
+	update_option( 'hmbkp_plugin_version', $hmbkp_version );
+
 }
 
 /**
@@ -107,7 +114,7 @@ function hmbkp_timestamp() {
  *
  * @param string $dir
  * @param bool $rel. (default: false)
- * @return void
+ * @return string $dir
  */
 function hmbkp_conform_dir( $dir, $rel = false ) {
 
@@ -183,7 +190,6 @@ function hmbkp_more_reccurences( $recc ) {
  * Send a flie to the browser for download
  *
  * @param string $path
- * @return void
  */
 function hmbkp_send_file( $path ) {
 
@@ -320,34 +326,43 @@ function hmbkp_calculate() {
 
     // Check cache
     if ( $filesize = get_transient( 'hmbkp_estimated_filesize' ) )
-    	return hmbkp_size_readable( $filesize );
+    	return hmbkp_size_readable( $filesize, null, '%01u %s' );
 
-    global $wpdb;
+	$filesize = 0;
 
-    $sql = 'SHOW TABLE STATUS FROM ' . DB_NAME;
-    $res = $wpdb->get_results( $sql, ARRAY_A );
-    $sum_free = $sum_data = $filesize = 0;
+    // Don't include database if files only
+	if ( ( defined( 'HMBKP_FILES_ONLY' ) && !HMBKP_FILES_ONLY ) || !defined( 'HMBKP_FILES_ONLY' ) ) :
 
-    foreach ( $res as $r ) :
-    	$sum_free += $r['Data_free'];
-    	$sum_data += $r['Data_length'];
-    endforeach;
+    	global $wpdb;
 
-    // Get rid of any cached filesizes
-    clearstatcache();
+    	$sql = 'SHOW TABLE STATUS FROM ' . DB_NAME;
+    	$res = $wpdb->get_results( $sql, ARRAY_A );
 
-    $dir = hmbkp_conform_dir( ABSPATH );
-    $files = hmbkp_ls( $dir );
+    	foreach ( $res as $r ) :
+    		$filesize += $r['Data_free'];
+    		$filesize += $r['Data_length'];
+    	endforeach;
 
-    foreach ( $files as $f ) :
-    	$str = hmbkp_conform_dir( $f, true );
-    	$filesize += @filesize( $f );
-    endforeach;
+    endif;
+
+   	if ( ( defined( 'HMBKP_DATABASE_ONLY' ) && !HMBKP_DATABASE_ONLY ) || !defined( 'HMBKP_DATABASE_ONLY' ) ) :
+
+    	// Get rid of any cached filesizes
+    	clearstatcache();
+
+    	$files = hmbkp_ls( hmbkp_conform_dir( ABSPATH ) );
+
+    	foreach ( $files as $f ) :
+    		$str = hmbkp_conform_dir( $f, true );
+    		$filesize += @filesize( $f );
+    	endforeach;
+
+	endif;
 
     // Cache in a transient for a day
     set_transient( 'hmbkp_estimated_filesize', $filesize,  86400 );
 
-    return hmbkp_size_readable( $filesize );
+    return hmbkp_size_readable( $filesize, null, '%01u %s' );
 
 }
 
@@ -364,5 +379,24 @@ function hmbkp_shell_exec_available() {
 		return false;
 
 	return true;
+
+}
+
+/**
+ * Calculate the total filesize of all backups
+ *
+ * @return string
+ */
+function hmbkp_total_filesize() {
+
+	$files = hmbkp_get_backups();
+	$filesize = 0;
+
+	clearstatcache();
+
+   	foreach ( $files as $f )
+		$filesize += @filesize( $f['file'] );
+
+	return hmbkp_size_readable( $filesize );
 
 }

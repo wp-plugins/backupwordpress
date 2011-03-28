@@ -1,29 +1,33 @@
 <?php
 
 /**
- * hmbkp_set_defaults function.
- *
- * @return void
+ * Setup the daily backup schedule
  */
-function hmbkp_set_defaults() {
+function hmbkp_setup_daily_schedule() {
 
-    update_option( 'hmbkp_max_backups', 10 );
+	// Clear any old schedules
+	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
 
-	hmbkp_default_schedule();
+	// Default to 11 in the evening
+	$time = '23:00';
+
+	// Allow it to be overridden
+	if ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) && HMBKP_DAILY_SCHEDULE_TIME )
+		$time = HMBKP_DAILY_SCHEDULE_TIME;
+		
+	if ( time() > strtotime( $time ) )
+		$time = 'tomorrow ' . $time;
+
+	wp_schedule_event( strtotime( $time ), 'hmbkp_daily', 'hmbkp_schedule_backup_hook' );
 }
 
+
 /**
- * hmbkp_default_schedules function.
+ * Get the path to the backups directory
  *
- * @return void
- */
-function hmbkp_default_schedule() {
-	wp_schedule_event( strtotime( '2300' ), 'hmbkp_daily', 'hmbkp_schedule_backup_hook' );
-}
-
-
-/**
- * hmbkp_path function.
+ * Will try to create it if it doesn't exist
+ * and will fallback to default if a custom dir
+ * isn't writable.
  */
 function hmbkp_path() {
 
@@ -52,4 +56,18 @@ function hmbkp_path() {
 	endif;
 
     return $path;
+}
+
+/**
+ * The maximum number of backups to keep
+ *
+ * @return int
+ */
+function hmbkp_max_backups() {
+
+	if ( defined( 'HMBKP_MAX_BACKUPS' ) && is_numeric( HMBKP_MAX_BACKUPS ) )
+		return (int) HMBKP_MAX_BACKUPS;
+
+	return 10;
+
 }

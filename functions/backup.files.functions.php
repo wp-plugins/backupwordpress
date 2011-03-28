@@ -5,25 +5,13 @@
  * then zip it all up
  *
  * @param string $backup_tmp_dir
- * @param array $log
- * @param string $backup_filename
- * @return void
  */
-function hmbkp_backup_files( $backup_tmp_dir, $log, $backup_filename ) {
+function hmbkp_backup_files( $backup_tmp_dir ) {
 
-	$backup_filepath = trailingslashit( hmbkp_path() ) . $backup_filename;
     $wordpress_files = $backup_tmp_dir . '/wordpress_files';
 
-    if ( !is_dir( $wordpress_files ) ) :
-
-        if ( !mkdir( $wordpress_files, 0777 ) )
-        	$log['logfile'][] = sprintf( __( 'The temporary directory %s could not be created', 'hmbkp' ), $wordpress_files );
-        else
-        	$log['logfile'][] = sprintf( __( 'Temporary directory created', 'hmbkp' ), $wordpress_files );
-
-        hmbkp_write_log( $log );
-
-    endif;
+	if ( !is_dir( $wordpress_files ) )
+        mkdir( $wordpress_files, 0755 );
 
     // Copy the whole site to the temporary directory
     $files = hmbkp_ls( hmbkp_conform_dir( ABSPATH ) );
@@ -35,13 +23,7 @@ function hmbkp_backup_files( $backup_tmp_dir, $log, $backup_filename ) {
 
         if ( is_dir( $f ) ) :
 
-        	if ( !mkdir( $wordpress_files . hmbkp_conform_dir( $f, true ), 0755 ) ) :
-
-        		if ( !is_dir( $wordpress_files . hmbkp_conform_dir( $f, true ) ) ) {
-        			$log['logfile'][] = __( 'Failed to make directory', 'hmbkp' ) . ': ' . $f;
-        		}
-
-        	else
+        	if ( mkdir( $wordpress_files . hmbkp_conform_dir( $f, true ), 0755 ) ) :
         		$subdirs_created++;
 
         	endif;
@@ -54,30 +36,12 @@ function hmbkp_backup_files( $backup_tmp_dir, $log, $backup_filename ) {
         		unlink( $wordpress_files . hmbkp_conform_dir( $f, true ) );
 
         	// Copy the file
-        	if ( !copy( $f, $wordpress_files . hmbkp_conform_dir( $f, true ) ) )
-        		$log['logfile'][] = __( 'Failed to copy file', 'hmbkp' ) . ': ' . $f;
+        	copy( $f, $wordpress_files . hmbkp_conform_dir( $f, true ) );
 
         endif;
 
         $i++;
     endforeach;
-
-    $log['logfile'][] = $subdirs_created . ' ' . __( 'temporary sub-directories copied sucessfully', 'hmbkp' );
-    $log['logfile'][] = $files_copied . ' ' . __( 'temporary files copied sucessfully', 'hmbkp' );
-
-	// Zip up the files
-	hmbkp_archive_files( $backup_tmp_dir, $backup_filepath );
-
-    // Make sure the archive exists
-    if ( !file_exists( $backup_filepath ) )
-    	$log['logfile'][] = __( 'Failed to create backup archive', 'hmbkp' ) . ' ' . $backup_filename;
-
-    else
-    	$log['logfile'][] = __( 'Archive created successfully:', 'hmbkp' ) . ' ' . $backup_filename;
-
-    $log['logfile'][] = count( hmbkp_rmdirtree( $backup_tmp_dir ) ) . ' ' . __( 'Temporary file and directories deleted successfully', 'hmbkp' );
-
-    hmbkp_write_log( $log );
 
 }
 
@@ -90,7 +54,6 @@ function hmbkp_backup_files( $backup_tmp_dir, $log, $backup_filename ) {
  *
  * @param string $backup_tmp_dir
  * @param string $backup_filepath
- * @return void
  */
 function hmbkp_archive_files( $backup_tmp_dir, $backup_filepath ) {
 
@@ -113,7 +76,7 @@ function hmbkp_archive_files( $backup_tmp_dir, $backup_filepath ) {
  */
 function hmbkp_zip_path() {
 
-	if ( !hmbkp_shell_exec_available() )
+	if ( !hmbkp_shell_exec_available() || ( defined( 'HMBKP_ZIP_PATH' ) && !HMBKP_ZIP_PATH ) )
 		return false;
 
 	$path = '';

@@ -12,34 +12,36 @@
  */
 function hmbkp_do_backup() {
 
-    $time_start = microtime( true );
+    $time_start = date( 'Y-m-d-H-i-s' );
 
-	$log['filename'] = date( 'Y-m-d-H-i-s' ) . '.zip';
+	$filename = $time_start . '.zip';
+	$filepath = trailingslashit( hmbkp_path() ) . $filename;
 
-	update_option( 'hmbkp_running', $log['filename'] );
+	update_option( 'hmbkp_running', $time_start );
 
 	// Raise the memory limit
     ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
-
-	// start the log
-    $log['logfile'] = array();
+    set_time_limit( 300 );
 
 	// Create a temporary directory for this backup
-    $backup_tmp_dir = hmbkp_create_tmp_dir( $log );
+    $backup_tmp_dir = hmbkp_create_tmp_dir( $time_start );
 
 	// Backup database
-    hmbkp_backup_mysql( $backup_tmp_dir, $log );
+	if ( ( defined( 'HMBKP_FILES_ONLY' ) && !HMBKP_FILES_ONLY ) || !defined( 'HMBKP_FILES_ONLY' ) )
+	    hmbkp_backup_mysql( $backup_tmp_dir );
 
 	// Backup files
-	hmbkp_backup_files( $backup_tmp_dir, $log, $log['filename'] );
-
+	if ( ( defined( 'HMBKP_DATABASE_ONLY' ) && !HMBKP_DATABASE_ONLY ) || !defined( 'HMBKP_DATABASE_ONLY' ) )
+		hmbkp_backup_files( $backup_tmp_dir );
+	
+	// Zip up the files
+	hmbkp_archive_files( $backup_tmp_dir, $filepath );
+	
+	// Remove the temporary directory
+	hmbkp_rmdirtree( $backup_tmp_dir );
+	
 	// Delete any old backup files
-    hmbkp_delete_old_backups( $log );
-
-    $log['logfile'][] = sprintf( __( 'Backup completed %s', 'hmbkp' ), hmbkp_timestamp() );
-    $log['logfile'][] = sprintf( __( 'Backup was running for %d Seconds', 'hmbkp' ), round( microtime( true ) - $time_start, 2 ) );
-
-    hmbkp_write_log( $log );
+    hmbkp_delete_old_backups();
 
     delete_option( 'hmbkp_running' );
 
@@ -47,41 +49,22 @@ function hmbkp_do_backup() {
 
 /**
  * Deletes old backup files
- *
- * @see hmbkp_set_defaults for default number of backups
- * to be kept.
  */
-function hmbkp_delete_old_backups( $log ) {
+function hmbkp_delete_old_backups() {
 
     $files = hmbkp_get_backups();
 
-    if ( count( $files ) <= get_option( 'hmbkp_max_backups' ) )
+    if ( count( $files ) <= hmbkp_max_backups() )
     	return;
 
-    $unlinkcount = 0;
-
-    foreach ( $files as $key => $f ) :
-
-        if ( ( $key + 1 ) > get_option( 'hmbkp_max_backups' ) ) :
+    foreach ( $files as $key => $f )
+        if ( ( $key + 1 ) > hmbkp_max_backups() )
         	hmbkp_delete_backup( base64_encode( $f['file'] ) );
-        	$unlinkcount++;
-
-        endif;
-
-    endforeach;
-
-    if ( $unlinkcount )
-    	$log['logfile'][] = sprintf( __( '%d old backup deleted.', 'hmbkp' ), $unlinkcount );
-
-    else
-    	$log['logfile'][] = __( 'No old backups to delete.', 'hmbkp' );
 
 }
 
 /**
  * Returns an array of backup files
- *
- * @todo support when backups directory changes
  */
 function hmbkp_get_backups() {
 
@@ -114,16 +97,7 @@ function hmbkp_get_backups() {
 }
 
 /**
- * Fire the backup on schedule
- *
- * @param mixed $options
- */
-function hmbkp_schedule_backup( $options ) {
-	hmbkp_do_backup();
-}
-
-/**
- * Delete a backup file and it's associated logs
+ * Delete a backup file
  *
  * @param $file base64 encoded filename
  */
@@ -135,48 +109,30 @@ function hmbkp_delete_backup( $file ) {
 	if ( strpos( $file, hmbkp_path() ) !== false || strpos( $file, WP_CONTENT_DIR . '/backups' ) !== false )
 	  unlink( $file );
 
-	// Handle changed backups directory
-	$log = str_replace( hmbkp_path(), trailingslashit( hmbkp_path() ) . 'logs/', $file );
-	$log = str_replace( WP_CONTENT_DIR . '/backups', WP_CONTENT_DIR . '/backups/logs/', $log );
-
-	// Delete the log
-	if ( file_exists( $log . '.log' ) )
-		unlink( $log . '.log' );
-
-	// Delete the mysqldump log
-	if ( file_exists( str_replace( '.zip', '', $log ) . '-mysqldump.log' ) )
-		unlink( str_replace( '.zip', '', $log ) . '-mysqldump.log' );
-
 }
 
+/**
+ * Create and return the path to the tmp directory
+ * 
+ * @param string $date
+ * @return string
+ */
+function hmbkp_create_tmp_dir( $date ) {
 
-function hmbkp_create_tmp_dir( $log ) {
-
-    // Temporary directory name
-    $backup_tmp_dir = trailingslashit( hmbkp_path() ) . date( 'Y-m-d-H-i-s' );
-
-    $log['logfile'][] = sprintf( __( 'Backup starting at $s', 'hmbkp' ), hmbkp_timestamp() );
-
-	// Create the temp backup directory
-    if ( !is_dir( $backup_tmp_dir ) ) :
-
-    	if ( !mkdir( $backup_tmp_dir, 0777 ) )
-    		$log['logfile'][] = sprintf( __( 'Backup temporary directory %s could not be created', 'hmbkp' ), $backup_tmp_dir );
-
-    	else
-    		$log['logfile'][] = sprintf( __( 'Backup temporary directory %s created', 'hmbkp' ), $backup_tmp_dir );
-
-    else :
-    	$log['logfile'][] = sprintf( __( 'Backup temporary directory %s exists.', 'hmbkp' ), $backup_tmp_dir );
-
-    endif;
-
-    hmbkp_write_log( $log );
+    $backup_tmp_dir = trailingslashit( hmbkp_path() ) . $date;
+    
+    if ( !is_dir( $backup_tmp_dir ) )
+		mkdir( $backup_tmp_dir );
 
     return $backup_tmp_dir;
 
 }
 
+/**
+ * Check if a backup is running
+ * 
+ * @return bool
+ */
 function hmbkp_is_in_progress() {
 	return (bool) get_option( 'hmbkp_running' );
 }

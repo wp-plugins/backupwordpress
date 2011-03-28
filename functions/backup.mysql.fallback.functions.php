@@ -7,7 +7,6 @@
  *
  * @access public
  * @param mixed $a_name
- * @return void
  */
 function hmbkp_backquote( $a_name ) {
 
@@ -45,10 +44,10 @@ function hmbkp_backquote( $a_name ) {
  * @param string $path
  * @param mixed $sql_file
  * @param mixed $table
- * @param mixed $log
- * @return void
  */
-function hmbkp_make_sql( $path, $sql_file, $table, $log ) {
+function hmbkp_make_sql( $path, $sql_file, $table ) {
+
+	global $hmbkp_db_connect;
 
     // Add SQL statement to drop existing table
     $sql_file = "\n";
@@ -71,13 +70,10 @@ function hmbkp_make_sql( $path, $sql_file, $table, $log ) {
 
     // Get table structure
     $query = 'SHOW CREATE TABLE ' . hmbkp_backquote( $table );
-    $result = mysql_query( $query, $GLOBALS['db_connect'] );
+    $result = mysql_query( $query, $hmbkp_db_connect );
 
-    if ( $result == false ) :
-    	$log['logfile'][] = __( 'Error getting table structure of ', 'hmbkp' ) . $table . '! ' . mysql_errno() . ': ' . mysql_error();
-    	hmbkp_write_log( $log );
+    if ( $result ) :
 
-    else :
     	if ( mysql_num_rows( $result ) > 0 ) :
     		$sql_create_arr = mysql_fetch_array( $result );
     		$sql_file .= $sql_create_arr[1];
@@ -92,13 +88,9 @@ function hmbkp_make_sql( $path, $sql_file, $table, $log ) {
 
     // Get table contents
     $query = 'SELECT * FROM ' . hmbkp_backquote( $table );
-    $result = mysql_query( $query, $GLOBALS['db_connect'] );
+    $result = mysql_query( $query, $hmbkp_db_connect );
 
-    if ( $result == false ) :
-    	$log['logfile'][] = __( 'Error getting records of ', 'hmbkp' ) . $table . '! ' . mysql_errno() . ': ' . mysql_error();
-    	hmbkp_write_log( $log );
-
-    else :
+    if ( $result ) :
     	$fields_cnt = mysql_num_fields( $result );
     	$rows_cnt   = mysql_num_rows( $result );
     endif;
@@ -158,7 +150,7 @@ function hmbkp_make_sql( $path, $sql_file, $table, $log ) {
     	// write the rows in batches of 100
     	if ( $batch_write == 100 ) :
     		$batch_write = 0;
-    		hmbkp_write_sql( $path, $sql_file, $log  );
+    		hmbkp_write_sql( $path, $sql_file );
     		$sql_file = '';
     	endif;
 
@@ -177,7 +169,7 @@ function hmbkp_make_sql( $path, $sql_file, $table, $log ) {
     $sql_file .= "# --------------------------------------------------------\n";
     $sql_file .= "\n";
     
-	hmbkp_write_sql( $path, $sql_file, $log );
+	hmbkp_write_sql( $path, $sql_file );
 
 }
 
@@ -190,7 +182,6 @@ function hmbkp_make_sql( $path, $sql_file, $table, $log ) {
  * @access public
  * @param string $a_string. (default: '')
  * @param bool $is_like. (default: false)
- * @return void
  */
 function hmbkp_sql_addslashes( $a_string = '', $is_like = false ) {
 
@@ -210,28 +201,17 @@ function hmbkp_sql_addslashes( $a_string = '', $is_like = false ) {
  *
  * @access public
  * @param mixed $path
- * @param mixed $log
- * @return void
  */
-function hmbkp_backup_mysql_fallback( $path, $log ) {
+function hmbkp_backup_mysql_fallback( $path ) {
 
-    if ( !$GLOBALS['db_connect'] = @mysql_pconnect( DB_HOST, DB_USER, DB_PASSWORD ) ) :
-    	$log['logfile'][] = __( 'Could not connect to MySQL server! ', 'hmbkp' ) . mysql_error();
-    	hmbkp_write_log( $log );
-    endif;
+	global $hmbkp_db_connect;
 
-    $log['logfile'][] = __( 'MySQL server connected successfully ', 'hmbkp' );
-    hmbkp_write_log( $log );
+    $hmbkp_db_connect = @mysql_pconnect( DB_HOST, DB_USER, DB_PASSWORD );
 
-    mysql_select_db( DB_NAME, $GLOBALS['db_connect'] );
+    mysql_select_db( DB_NAME, $hmbkp_db_connect );
 
     // Begin new backup of MySql
     $tables = mysql_list_tables( DB_NAME );
-
-    if ( !isset($tables) > 0 ) :
-    	$log['logfile'][] = __( 'Could not select db ', 'hmbkp') . DB_NAME;
-    	hmbkp_write_log( $log );
-    endif;
 
     $sql_file  = "# WordPress : " . get_bloginfo( 'url' ) . " MySQL database backup\n";
     $sql_file .= "#\n";
@@ -252,19 +232,9 @@ function hmbkp_backup_mysql_fallback( $path, $log ) {
     	$sql_file .= "# --------------------------------------------------------\n";
     	$sql_file .= "# Table: " . hmbkp_backquote( $curr_table ) . "\n";
     	$sql_file .= "# --------------------------------------------------------\n";
-    	hmbkp_make_sql( $path, $sql_file, $curr_table, $log );
+    	hmbkp_make_sql( $path, $sql_file, $curr_table );
 
-    	$log['logfile'][] = 'sql-dump for ' . $curr_table . ' created';
-    	hmbkp_write_log( $log );
     endfor;
-
-    if ( !file_exists( $path . '/wordpress.sql' ) )
-    	$log['logfile'][] = __( 'SQL Dump could not be created.', 'hmbkp' );
-
-    else
-    	$log['logfile'][] = __( 'SQL Dump created.', 'hmbkp' );
-
-    hmbkp_write_log( $log );
 
 }
 
@@ -273,36 +243,23 @@ function hmbkp_backup_mysql_fallback( $path, $log ) {
  *
  * @param mixed $sqldir
  * @param mixed $sql
- * @param mixed $log
  */
-function hmbkp_write_sql( $sqldir, $sql, $log ) {
+function hmbkp_write_sql( $sqldir, $sql ) {
 
     $sqlname = $sqldir . '/wordpress.sql';
 
     // Actually write the sql file
     if ( is_writable( $sqlname ) || !file_exists( $sqlname ) ) :
 
-    	if ( !$handle = fopen( $sqlname, 'a' ) ) :
-    		$log['logfile'][] =  __( 'SQLfile could not be opened for writing: ', 'hmbkp' ) . $sqlname;
-    		hmbkp_write_log( $log );
+    	if ( !$handle = fopen( $sqlname, 'a' ) )
     		return;
-    	endif;
 
-    	if ( !fwrite( $handle, $sql ) ) :
-    		$log['logfile'][] =  __( 'SQLfile not writable: ', 'hmbkp' ) . $sqlname;
-    		hmbkp_write_log( $log );
+    	if ( !fwrite( $handle, $sql ) )
     		return;
-    	endif;
 
-    	$log['logfile'][] =  __( 'successfully written to SQLfile: ', 'hmbkp' ) . $sqlname;
-    	hmbkp_write_log( $log );
     	fclose( $handle );
 
     	return true;
-
-    else :
-    	$log['logfile'][] =  __( 'SQLfile not writable: ', 'hmbkp' ) . $sqlname;
-    	hmbkp_write_log( $log );
 
     endif;
 }

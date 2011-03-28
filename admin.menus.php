@@ -21,7 +21,7 @@ function hmbkp_manage_backups() {
  * Add a link to the backups page to the plugin action links.
  *
  * @param Array $links
- * @param String $file
+ * @param string $file
  * @return Array $links
  */
 function hmbkp_plugin_action_link( $links, $file ) {

@@ -4,13 +4,12 @@
  *
  * @param mixed $file
  * @param mixed $alternate
- * @return void
  */
 function hmbkp_get_backup_row( $file ) {
 
 	$encode = base64_encode( $file['file'] ); ?>
 
-	<tr id="hmbkp_manage_backups_row_<?php echo $encode; ?>" class="hmbkp_manage_backups_row">
+	<tr class="hmbkp_manage_backups_row">
 
 		<th scope="row">
 			<?php echo date( get_option('date_format'), filemtime( $file['file'] ) ) . ' ' . date( 'H:i', filemtime($file['file'] ) ); ?>
@@ -23,7 +22,7 @@ function hmbkp_get_backup_row( $file ) {
 		<td>
 
 			<a href="tools.php?page=<?php echo HMBKP_PLUGIN_SLUG; ?>&amp;hmbkp_download=<?php echo $encode; ?>"><?php _e( 'Download', 'hmbkp' ); ?></a> |
-			<span class="submitdelete"><a href="tools.php?page=<?php echo HMBKP_PLUGIN_SLUG; ?>&amp;hmbkp_delete=<?php echo $encode ?>"><?php _e( 'Delete', 'hmbkp' ); ?></a></span>
+			<a href="tools.php?page=<?php echo HMBKP_PLUGIN_SLUG; ?>&amp;hmbkp_delete=<?php echo $encode ?>" class="delete"><?php _e( 'Delete', 'hmbkp' ); ?></a>
 
 		</td>
 

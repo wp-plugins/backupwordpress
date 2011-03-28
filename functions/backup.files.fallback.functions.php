@@ -9,7 +9,6 @@
  * @todo support zipArchive
  * @param string $backup_tmp_dir
  * @param string $backup_filepath
- * @return void
  */
 function hmbkp_archive_files_fallback( $backup_tmp_dir, $backup_filepath ) {
 
