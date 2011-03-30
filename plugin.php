@@ -3,9 +3,9 @@
 /*
 Plugin Name: BackUpWordPress
 Plugin URI: http://humanmade.co.uk/
-Description: Simple automated backups of your WordPress powered website.
+Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.1
+Version: 1.1.1
 Author URI: http://humanmade.co.uk/
 */
 
@@ -36,6 +36,7 @@ function hmbkp_actions() {
 	global $hmbkp_version;
 
 	$plugin_data = get_plugin_data( __FILE__ );
+
 	$hmbkp_version = (float) $plugin_data['Version'];
 
 	// Fire the update action
@@ -68,6 +69,16 @@ function hmbkp_actions() {
 
 }
 add_action( 'admin_init', 'hmbkp_actions' );
+
+function hmbkp_plugin_row( $plugins ) {
+
+	if ( isset( $plugins[HMBKP_PLUGIN_SLUG . '/plugin.php'] ) )
+		$plugins[HMBKP_PLUGIN_SLUG . '/plugin.php']['Description'] = str_replace( 'Once activated you\'ll find me under <strong>Tools &rarr; Backups</strong>', 'Find me under <strong><a href="' . admin_url( 'tools.php?page=' . HMBKP_PLUGIN_SLUG ) . '">Tools &rarr; Backups</a></strong>', $plugins[HMBKP_PLUGIN_SLUG . '/plugin.php']['Description'] );
+
+	return $plugins;
+
+}
+add_filter( 'all_plugins', 'hmbkp_plugin_row', 10 );
 
 // Load the admin menu
 require_once( HMBKP_PLUGIN_PATH . '/admin.menus.php' );

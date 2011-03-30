@@ -44,12 +44,18 @@ function hmbkp_deactivate() {
 function hmbkp_update() {
 
 	global $hmbkp_version;
+	
+	// Every update
+	if ( version_compare( $hmbkp_version, get_option( 'hmbkp_plugin_version' ), '>' ) ) :
+		delete_transient( 'hmbkp_estimated_filesize' );
+		delete_option( 'hmbkp_running' );
+	endif;
 
 	// 1.0.x to 1.1
 	if ( !get_option( 'hmbkp_plugin_version' ) ) :
 		delete_transient( 'hmbkp_estimated_filesize' );
 		delete_option( 'hmbkp_max_backups' );
-		delete_option( 'hmbkp_backup_running' );
+		delete_option( 'hmbkp_running' );
 
 		// Delete the logs directory
 		hmbkp_rmdirtree( hmbkp_path() . '/logs' );

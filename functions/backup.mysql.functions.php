@@ -72,8 +72,8 @@ function hmbkp_mysqldump_path() {
 
 	endif;
 
-	// Check again incase the saved path has stopped working for some reason
-	if ( !shell_exec( 'which ' . $path ) ) :
+	// Check again in-case the saved path has stopped working for some reason
+	if ( $path && !shell_exec( 'which ' . $path ) ) :
 		delete_option( 'hmbkp_mysqldump_path' );
 		return hmbkp_mysqldump_path();
 

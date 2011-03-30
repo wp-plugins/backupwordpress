@@ -3,7 +3,7 @@ Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 1.1
+Stable tag: 1.1.1
 
 Simple automated backups of your WordPress powered website.
 
@@ -26,6 +26,13 @@ Contact support@humanmade.co.uk for help/support.
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.1.1
+
+* Fix a possible `max_execution_timeout` fatal error when attempting to calculate the path to `mysqldump`.
+* Clear the running backup status and reset the calculated filesize on update.
+* Show a link to the manage backups page in the plugin description.
+* Other general fixes.
 
 #### 1.1
 

@@ -54,11 +54,11 @@
 
 <?php if ( hmbkp_shell_exec_available() ) : ?>
 
-	<?php if ( hmbkp_zip_path() && defined( 'HMBKP_DATABASE_ONLY' ) && !HMBKP_DATABASE_ONLY || !defined( 'HMBKP_DATABASE_ONLY' ) ) : ?>
+	<?php if ( hmbkp_zip_path() && ( defined( 'HMBKP_DATABASE_ONLY' ) && !HMBKP_DATABASE_ONLY || !defined( 'HMBKP_DATABASE_ONLY' ) ) ) : ?>
 	<p>&#10003; <?php printf( __( 'Your %s will be backed up using the %s command.', 'hmbkp' ), '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<code>' . hmbkp_zip_path() . '</code>' ); ?></p>
 	<?php endif; ?>
 
-	<?php if ( hmbkp_mysqldump_path() && defined( 'HMBKP_FILES_ONLY' ) && !HMBKP_FILES_ONLY || !defined( 'HMBKP_FILES_ONLY' ) ) : ?>
+	<?php if ( hmbkp_mysqldump_path() && ( defined( 'HMBKP_FILES_ONLY' ) && !HMBKP_FILES_ONLY || !defined( 'HMBKP_FILES_ONLY' ) ) ) : ?>
 	<p>&#10003; <?php printf( __( 'Your %s will be backed up using the %s command.', 'hmbkp' ), '<code>' . __( 'database', 'hmbkp' ) . '</code>', '<code>' . hmbkp_mysqldump_path() . '</code>' ); ?></p>
 	<?php endif; ?>
 

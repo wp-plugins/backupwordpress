@@ -105,7 +105,7 @@ function hmbkp_zip_path() {
 
 	endif;
 
-	// Check again incase the saved path has stopped working for some reason
+	// Check again in-case the saved path has stopped working for some reason
 	if ( $path && !shell_exec( 'which ' . $path ) ) :
 		delete_option( 'hmbkp_zip_path' );
 		return hmbkp_zip_path();
