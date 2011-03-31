@@ -3,7 +3,7 @@ Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 
 Simple automated backups of your WordPress powered website.
 
@@ -26,6 +26,10 @@ Contact support@humanmade.co.uk for help/support.
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.1.2
+
+* Fix a bug that stopped `HMBKP_DISABLE_AUTOMATIC_BACKUP` from working.
 
 #### 1.1.1
 
