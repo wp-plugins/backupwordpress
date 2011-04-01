@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://humanmade.co.uk/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.1.2
+Version: 1.1.3
 Author URI: http://humanmade.co.uk/
 */
 
@@ -92,6 +92,7 @@ require_once( HMBKP_PLUGIN_PATH . '/functions/backup.mysql.functions.php' );
 require_once( HMBKP_PLUGIN_PATH . '/functions/backup.files.functions.php' );
 require_once( HMBKP_PLUGIN_PATH . '/functions/backup.mysql.fallback.functions.php' );
 require_once( HMBKP_PLUGIN_PATH . '/functions/backup.files.fallback.functions.php' );
+require_once( HMBKP_PLUGIN_PATH . '/functions/mysql-ping.php' );
 
 // Plugin activation and deactivation
 add_action( 'activate_' . HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_activate' );

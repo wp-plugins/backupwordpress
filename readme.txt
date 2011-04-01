@@ -3,7 +3,7 @@ Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 
 Simple automated backups of your WordPress powered website.
 
@@ -26,6 +26,11 @@ Contact support@humanmade.co.uk for help/support.
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.1.3
+
+* Attempt to re-connect if database connection hits a timeout while a backup is running, should fix issues with the "Back Up Now" button continuing to spin even though the backup is completed.
+* When using `PCLZIP` as the zip fallback don't store the files with absolute paths. Should fix issues unzipping the file archives using "Compressed (zipped) Folders" on Windows XP.
 
 #### 1.1.2
 
