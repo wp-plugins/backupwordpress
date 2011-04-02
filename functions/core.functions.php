@@ -36,17 +36,14 @@ function hmbkp_deactivate() {
 
 }
 
-
 /**
  * Handles anything that needs to be
  * done when the plugin is updated
  */
 function hmbkp_update() {
 
-	global $hmbkp_version;
-	
 	// Every update
-	if ( version_compare( $hmbkp_version, get_option( 'hmbkp_plugin_version' ), '>' ) ) :
+	if ( version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) :
 		delete_transient( 'hmbkp_estimated_filesize' );
 		delete_option( 'hmbkp_running' );
 	endif;
@@ -102,7 +99,7 @@ function hmbkp_update() {
 	endif;
 
 	// Update the stored version
-	update_option( 'hmbkp_plugin_version', $hmbkp_version );
+	update_option( 'hmbkp_plugin_version', HMBKP_VERSION );
 
 }
 

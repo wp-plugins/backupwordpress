@@ -3,7 +3,7 @@ Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
 Tested up to: 3.1
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 
 Simple automated backups of your WordPress powered website.
 
@@ -26,6 +26,16 @@ Contact support@humanmade.co.uk for help/support.
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.1.4
+
+* Fix a rare issue where database backups could fail when using the mysqldump PHP fallback if `mysql.max_links` is set to 2 or less.
+* Don't suppress `mysql_connect` errors in the mysqldump PHP fallback.
+* One time highlight of the most recent completed backup when viewing the manage backups page after a successful backup.
+* Fix a spelling error in the `shell_exec` disabled message.
+* Store the BackUpWordPress version as a `Constant` rather than a `Variable`.
+* Don't `(float)` the BackUpWordPress version number, fixes issues with minor versions numbers being truncated.
+* Minor PHPDoc improvements.
 
 #### 1.1.3
 

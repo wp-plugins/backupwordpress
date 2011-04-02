@@ -49,7 +49,7 @@
 	</p>
 
 <?php if ( !hmbkp_shell_exec_available() ) : ?>
-	<p>&#10007; <?php printf( __( '%s is disabled which means we have to use the slower PHP fallbacks, you could try contacting yout host and asking them to enable it.', 'hmbkp' ), '<code>shell_exec</code>' ); ?>
+	<p>&#10007; <?php printf( __( '%s is disabled which means we have to use the slower PHP fallbacks, you could try contacting your host and asking them to enable it.', 'hmbkp' ), '<code>shell_exec</code>' ); ?>
 <?php endif; ?>
 
 <?php if ( hmbkp_shell_exec_available() ) : ?>

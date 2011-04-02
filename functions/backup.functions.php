@@ -44,6 +44,8 @@ function hmbkp_do_backup() {
     hmbkp_delete_old_backups();
 
     delete_option( 'hmbkp_running' );
+    
+    update_option( 'hmbkp_complete', true );
 
 }
 

@@ -206,7 +206,7 @@ function hmbkp_backup_mysql_fallback( $path ) {
 
 	global $hmbkp_db_connect;
 
-    $hmbkp_db_connect = @mysql_pconnect( DB_HOST, DB_USER, DB_PASSWORD );
+    $hmbkp_db_connect = mysql_pconnect( DB_HOST, DB_USER, DB_PASSWORD );
 
     mysql_select_db( DB_NAME, $hmbkp_db_connect );
 

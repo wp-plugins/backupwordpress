@@ -42,10 +42,8 @@ Class wpdb2 Extends wpdb {
 		endwhile;
 
 		// Ping failed
-		if ( !$ping ) {
-
+		if ( !$ping )
 			$this->print_error( 'Attempted to connect for ' . $retry . ' but failed...' );
-		}
 
 	}
 
@@ -66,13 +64,22 @@ Class wpdb2 Extends wpdb {
 
 }
 
-// Setup the wpdb2 class
-$wpdb2 = new wpdb2( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+/**
+ * If mysql.max_links is 2 or less and we're using the mysqldump fallback
+ * then we need the second link for the backup so we can't include
+ * mysql_ping.
+ */
+if ( ini_get( 'mysql.max_links' > 2 ) && !hmbkp_mysqldump_path() ) :
 
-// Copy over the $wpdb vars
-global $wpdb;
-foreach( get_object_vars( $wpdb ) as $k => $v )
-    if ( is_scalar( $v ) )
-    	$wpdb2->$k = $v;
+	// Setup the wpdb2 class
+	$wpdb2 = new wpdb2( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+	
+	// Copy over the $wpdb vars
+	global $wpdb;
+	foreach( get_object_vars( $wpdb ) as $k => $v )
+	    if ( is_scalar( $v ) )
+	    	$wpdb2->$k = $v;
+	
+	$wpdb =& $wpdb2;
 
-$wpdb =& $wpdb2;
+endif;

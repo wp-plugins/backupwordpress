@@ -8,3 +8,4 @@ tfoot p { margin: 0; font-weight: normal; }
 #hmbkp_advanced-options dd { color: #666; margin-left: 250px;  border-top: 1px solid #DFDFDF; padding: 7px 0; }
 .hmbkp_manage_backups_row .delete { color: #BC0B0B; }
 .hmbkp_manage_backups_row .delete:hover { color: red; }
+.completed th, .completed td { background-color: #FFFFE0; }

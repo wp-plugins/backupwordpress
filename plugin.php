@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://humanmade.co.uk/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.1.3
+Version: 1.1.4
 Author URI: http://humanmade.co.uk/
 */
 
@@ -33,14 +33,12 @@ define( 'HMBKP_PLUGIN_URL', WP_PLUGIN_URL . '/' . HMBKP_PLUGIN_SLUG );
 // Load the admin actions file
 function hmbkp_actions() {
 
-	global $hmbkp_version;
-
 	$plugin_data = get_plugin_data( __FILE__ );
 
-	$hmbkp_version = (float) $plugin_data['Version'];
+	define( 'HMBKP_VERSION', $plugin_data['Version'] );
 
 	// Fire the update action
-	if ( $hmbkp_version > (float) get_option( 'hmbkp_plugin_version' ) )
+	if ( HMBKP_VERSION > get_option( 'hmbkp_plugin_version' ) )
 		hmbkp_update();
 
 	require_once( HMBKP_PLUGIN_PATH . '/admin.actions.php' );
@@ -70,6 +68,12 @@ function hmbkp_actions() {
 }
 add_action( 'admin_init', 'hmbkp_actions' );
 
+/**
+ * Hook in an change the plugin description when BackUpWordPress is activated
+ * 
+ * @param array $plugins
+ * @return $plugins
+ */
 function hmbkp_plugin_row( $plugins ) {
 
 	if ( isset( $plugins[HMBKP_PLUGIN_SLUG . '/plugin.php'] ) )
