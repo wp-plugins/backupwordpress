@@ -7,9 +7,9 @@
 		<?php _e( 'Manage Backups', 'hmbkp' ); ?>
 
 <?php if ( hmbkp_is_in_progress() ) : ?>
-		<a class="button add-new-h2" <?php disabled( true ); ?>><img src="<?php echo site_url( 'wp-admin/images/wpspin_light.gif' ); ?>" width="16" height="16" /><?php _e( 'Backup Running', 'hmbkp' ); ?></a>
+		<a class="button add-new-h2" <?php disabled( true ); ?>><img src="<?php echo site_url( 'wp-admin/images/wpspin_light.gif' ); ?>" width="16" height="16" /><?php echo get_option( 'hmbkp_status' ); ?></a>
 
-<?php elseif ( !is_writable( hmbkp_path() ) || !is_dir( hmbkp_path() ) ) : ?>
+<?php elseif ( !is_writable( hmbkp_path() ) || !is_dir( hmbkp_path() ) || ini_get( 'safe_mode' ) ) : ?>
 		<a class="button add-new-h2" <?php disabled( true ); ?>><?php _e( 'Back Up Now', 'hmbkp' ); ?></a>
 
 <?php else : ?>
@@ -21,7 +21,7 @@
 
 	</h2>
 
-<?php if ( is_dir( hmbkp_path() ) && is_writable( hmbkp_path() ) ) : ?>
+<?php if ( is_dir( hmbkp_path() ) && is_writable( hmbkp_path() ) && !ini_get( 'safe_mode' ) ) : ?>
 
 	<p>
 
@@ -40,11 +40,11 @@
 		else
 			$what_to_backup = '<code>' . __( 'files', 'hmbkp' ) . '</code>'; ?>
 
-		<?php printf( __( 'Your %s will be automatically backed up every day at %s to %s.', 'hmbkp' ), $what_to_backup , '<code title="' . sprintf( __( 'It\'s currently %s on the server.', 'hmbkp' ), date( 'H:i' ) ) . '">' . date( 'H:i', wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) ) . '</code>', '<code>' . trailingslashit( hmbkp_path() ) . '</code>' ); ?>
+		<?php printf( __( 'Your %s will be automatically backed up every day at %s into %s.', 'hmbkp' ), $what_to_backup , '<code title="' . sprintf( __( 'It\'s currently %s on the server.', 'hmbkp' ), date( 'H:i' ) ) . '">' . date( 'H:i', wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) ) . '</code>', '<code>' . trailingslashit( hmbkp_path() ) . '</code>' ); ?>
 
 	<?php endif; ?>
 
-		<span class="hmbkp_estimated-size"><?php printf( __( 'Each backup will be approximately %s.', 'hmbkp' ), get_transient( 'hmbkp_estimated_filesize' ) ? '<code>' . hmbkp_calculate() . '</code>' : '<code class="calculate">' . __( 'Calculating Size...', 'hmbkp' ) . '</code>' ); ?></span>
+		<span class="hmbkp_estimated-size"><?php printf( __( 'Your backups will be roughly %s.', 'hmbkp' ), get_transient( 'hmbkp_estimated_filesize' ) ? '<code>' . hmbkp_calculate() . '</code>' : '<code class="calculate">' . __( 'Calculating Size...', 'hmbkp' ) . '</code>' ); ?></span>
 
 	</p>
 
@@ -89,7 +89,7 @@
 		<tfoot>
 			<tr>
 				<th><?php printf( _n( 'Only the most recent backup will be saved.', 'The %d most recent backups will be saved.', hmbkp_max_backups(), 'hmbkp' ), hmbkp_max_backups() ); ?></th>
-				<th><?php printf( __( 'Total %s', 'hmbkp' ), hmbkp_total_filesize() ); ?></th>
+				<th><?php printf( __( 'Total %s, %s available', 'hmbkp' ), hmbkp_total_filesize(), hmbkp_size_readable( disk_free_space( ABSPATH ), null, '%01u %s' ) ); ?></th>
 				<th></th>
 			</tr>
 		</tfoot>
@@ -119,38 +119,38 @@
 
 		<h4><?php _e( 'Advanced Options', 'hmbkp' ); ?></h4>
 
-		<p><?php printf( __( 'You can %s any of the following %s in your %s to control advanced options.', 'hmbkp' ), '<code>define</code>', '<code>Constants</code>', '<code>wp-config.php</code>' ); ?></p>
+		<p><?php printf( __( 'You can %s any of the following %s in your %s to control advanced options. %s. Defined %s will be highlighted.', 'hmbkp' ), '<code>define</code>', '<code>Constants</code>', '<code>wp-config.php</code>', '<a href="http://codex.wordpress.org/Editing_wp-config.php">' . __( 'The Codex can help', 'hmbkp' ) . '</a>', '<code>Constants</code>' ); ?></p>
 
 		<dl>
 
-		    <dt><code>HMBKP_PATH</code></dt>
-		    <dd><?php printf( __( 'The path to folder you would like to store your backup files in, defaults to %s', 'hmbkp' ), '<code>' . hmbkp_path() . '</code>' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_PATH' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_PATH</code></dt>
+		    <dd><?php printf( __( 'The path to folder you would like to store your backup files in, defaults to %s.', 'hmbkp' ), '<code>' . hmbkp_path() . '</code>' ); ?></dd>
 
-		    <dt><code>HMBKP_MYSQLDUMP_PATH</code></dt>
-		    <dd><?php printf( __( 'The path to your %s executable. Will be used for the %s part of the backup if available.', 'hmbkp' ), '<code>mysqldump</code>', '<code>' . __( 'database', 'hmbkp' ) . '</code>' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_MYSQLDUMP_PATH' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_MYSQLDUMP_PATH</code></dt>
+		    <dd><?php printf( __( 'The path to your %s executable. Will be used for the %s part of the back up if available.', 'hmbkp' ), '<code>mysqldump</code>', '<code>' . __( 'database', 'hmbkp' ) . '</code>' ); ?></dd>
 
-		    <dt><code>HMBKP_ZIP_PATH</code></dt>
-		    <dd><?php printf( __( 'The path to your %s executable. Will be used to zip up your %s if available.', 'hmbkp' ), '<code>zip</code>', '<code>' . __( 'files', 'hmbkp' ) . '</code>' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_ZIP_PATH' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_ZIP_PATH</code></dt>
+		    <dd><?php printf( __( 'The path to your %s executable. Will be used to zip up your %s and %s if available.', 'hmbkp' ), '<code>zip</code>', '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<code>' . __( 'database', 'hmbkp' ) . '</code>' ); ?></dd>
 
-		    <dt><code>HMBKP_DISABLE_AUTOMATIC_BACKUP</code></dt>
-		    <dd><?php _e( 'Completely disables the automatic backup. You can still back up using the "Back Up Now" button.', 'hmbkp' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_DISABLE_AUTOMATIC_BACKUP</code></dt>
+		    <dd><?php printf( __( 'Completely disables the automatic back up. You can still back up using the "Back Up Now" button. Defaults to %s.', 'hmbkp' ), '<code>(bool) false</code>' ); ?></dd>
 
-		    <dt><code>HMBKP_MAX_BACKUPS</code></dt>
-		    <dd><?php _e( 'Number of backups to keep, older backups will be deleted automatically when a new backup is completed.', 'hmbkp' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_MAX_BACKUPS' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_MAX_BACKUPS</code></dt>
+		    <dd><?php printf( __( 'Number of backups to keep, older backups will be deleted automatically when a new backup is completed. Detaults to %s.', 'hmbkp' ), '<code>(int) 10</code>' ); ?></dd>
 
-		    <dt><code>HMBKP_FILES_ONLY</code></dt>
-		    <dd><?php printf( __( 'Backup %s only, your %s will %s be backed up.', 'hmbkp' ), '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<code>' . __( 'database', 'hmbkp' ) . '</code>', '<strong>' . __( 'not', 'hmbkp' ) . '</strong>' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_FILES_ONLY' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_FILES_ONLY</code></dt>
+		    <dd><?php printf( __( 'Backup %s only, your %s will %s be backed up. Defaults to %s.', 'hmbkp' ), '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<code>' . __( 'database', 'hmbkp' ) . '</code>', '<strong>' . __( 'not', 'hmbkp' ) . '</strong>', '<code>(bool) false</code>' ); ?></dd>
 
-		    <dt><code>HMBKP_DATABASE_ONLY</code></dt>
-		    <dd><?php printf( __( 'Backup %s only, your %s will %s be backed up.', 'hmbkp' ), '<code>' . __( 'database', 'hmbkp' ) . '</code>', '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<strong>' . __( 'not', 'hmbkp' ) . '</strong>' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_DATABASE_ONLY' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_DATABASE_ONLY</code></dt>
+		    <dd><?php printf( __( 'Backup %s only, your %s will %s be backed up. Defaults to %s.', 'hmbkp' ), '<code>' . __( 'database', 'hmbkp' ) . '</code>', '<code>' . __( 'files', 'hmbkp' ) . '</code>', '<strong>' . __( 'not', 'hmbkp' ) . '</strong>', '<code>(bool) false</code>' ); ?></dd>
 
-		    <dt><code>HMBKP_DAILY_SCHEDULE_TIME</code></dt>
-		    <dd><?php printf( __( 'The time that the daily backup should run. Uses 24 hour clock format %s.', 'hmbkp' ), '<code>23:00</code>' ); ?></dd>
+		    <dt<?php if ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_DAILY_SCHEDULE_TIME</code></dt>
+		    <dd><?php printf( __( 'The time that the daily back up should run. Defaults to %s.', 'hmbkp' ), '<code>23:00</code>' ); ?></dd>
 
 		</dl>
 
 	</div>
 
-	<p class="howto"><?php printf( __( 'If you need help getting things working you are more than welcome to email us at %s and we\'ll do what we can.', 'hmbkp' ), '<a href="mailto:support@humanmade.co.uk">support@humanmade.co.uk</a>' ); ?></p>
+	<p class="howto"><?php printf( __( 'If you need help getting things working you are more than welcome to email us at %s and we\'ll do what we can to help.', 'hmbkp' ), '<a href="mailto:support@humanmade.co.uk">support@humanmade.co.uk</a>' ); ?></p>
 
 </div>

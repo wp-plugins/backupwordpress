@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://humanmade.co.uk/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.1.4
+Version: 1.2 Beta
 Author URI: http://humanmade.co.uk/
 */
 
@@ -70,7 +70,7 @@ add_action( 'admin_init', 'hmbkp_actions' );
 
 /**
  * Hook in an change the plugin description when BackUpWordPress is activated
- * 
+ *
  * @param array $plugins
  * @return $plugins
  */
@@ -132,8 +132,20 @@ if ( is_dir( hmbkp_path() ) && !is_writable( hmbkp_path() ) ) :
 
 endif;
 
-// Hook in on update core and do a backup
-function hmbkp_backup_on_upgrade() {
+if ( ini_get( 'safe_mode' ) ) :
 
-}
-add_filter( 'update_feedback', 'hmbkp_backup_on_upgrade' );
+    function hmbkp_safe_mode_warning() {
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress can\'t run', 'hmbkp' ) . '</strong> ' . sprintf( __( 'because %s is running in %s. Please contact your host and ask them to disable %s.', 'hmbkp' ), '<code>PHP</code>', '<a href="http://php.net/manual/en/features.safe-mode.php"><code>Safe Mode</code></a>', '<code>Safe Mode</code>' ) . '</p></div>';
+    }
+    add_action( 'admin_notices', 'hmbkp_safe_mode_warning' );
+
+endif;
+
+if ( defined( 'HMBKP_FILES_ONLY' ) && HMBKP_FILES_ONLY && defined( 'HMBKP_DATABASE_ONLY' ) && HMBKP_DATABASE_ONLY ) :
+
+    function hmbkp_nothing_to_backup_warning() {
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress is almost ready.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'You have both %s and %s defined so there isn\'t anything to back up.', 'hmbkp' ), '<code>HMBKP_DATABASE_ONLY</code>', '<code>HMBKP_FILES_ONLY</code>' ) . '</p></div>';
+    }
+    add_action( 'admin_notices', 'hmbkp_nothing_to_backup_warning' );
+
+endif;

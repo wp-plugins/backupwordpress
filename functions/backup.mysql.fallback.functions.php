@@ -225,8 +225,7 @@ function hmbkp_backup_mysql_fallback( $path ) {
     	$curr_table = mysql_tablename( $tables, $i );
 
     	// Increase script execution time-limit to 15 min for every table.
-    	if ( !ini_get( 'safe_mode' ) )
-    		@set_time_limit( 15 * 60 );
+		set_time_limit( 0 );
 
     	// Create the SQL statements
     	$sql_file .= "# --------------------------------------------------------\n";

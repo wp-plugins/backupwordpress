@@ -4,9 +4,7 @@
  * Setup the default options on plugin activation
  */
 function hmbkp_activate() {
-
 	hmbkp_setup_daily_schedule();
-
 }
 
 /**
@@ -24,11 +22,15 @@ function hmbkp_deactivate() {
 		'hmbkp_max_backups',
 		'hmbkp_running',
 		'_transient_hmbkp_estimated_filesize',
-		'_transient_timeout_hmbkp_estimated_filesize'
+		'_transient_timeout_hmbkp_estimated_filesize',
+		'hmbkp_status',
+		'hmbkp_complete'
 	);
 
 	foreach ( $options as $option )
 		delete_option( $option );
+
+	delete_transient( 'hmvkp_running' );
 
 	// Clear cron
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
@@ -46,6 +48,14 @@ function hmbkp_update() {
 	if ( version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) :
 		delete_transient( 'hmbkp_estimated_filesize' );
 		delete_option( 'hmbkp_running' );
+		delete_option( 'hmbkp_complete' );
+		delete_option( 'hmbkp_status' );
+		delete_transient( 'hmbkp_running' );
+
+		// Check whether we have a logs directory to delete
+		if ( is_dir( hmbkp_path() . '/logs' ) )
+			hmbkp_rmdirtree( hmbkp_path() . '/logs' );
+
 	endif;
 
 	// 1.0.x to 1.1
@@ -328,8 +338,8 @@ function hmbkp_calculate() {
     ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
 
     // Check cache
-    if ( $filesize = get_transient( 'hmbkp_estimated_filesize' ) )
-    	return hmbkp_size_readable( $filesize, null, '%01u %s' );
+	if ( $filesize = get_transient( 'hmbkp_estimated_filesize' ) )
+		return hmbkp_size_readable( $filesize, null, '%01u %s' );
 
 	$filesize = 0;
 
@@ -338,13 +348,10 @@ function hmbkp_calculate() {
 
     	global $wpdb;
 
-    	$sql = 'SHOW TABLE STATUS FROM ' . DB_NAME;
-    	$res = $wpdb->get_results( $sql, ARRAY_A );
+    	$res = $wpdb->get_results( 'SHOW TABLE STATUS FROM ' . DB_NAME, ARRAY_A );
 
-    	foreach ( $res as $r ) :
-    		$filesize += $r['Data_free'];
-    		$filesize += $r['Data_length'];
-    	endforeach;
+    	foreach ( $res as $r )
+    		$filesize += $r['Data_free'] += $r['Data_length'];
 
     endif;
 
@@ -353,12 +360,7 @@ function hmbkp_calculate() {
     	// Get rid of any cached filesizes
     	clearstatcache();
 
-    	$files = hmbkp_ls( hmbkp_conform_dir( ABSPATH ) );
-
-    	foreach ( $files as $f ) :
-    		$str = hmbkp_conform_dir( $f, true );
-    		$filesize += @filesize( $f );
-    	endforeach;
+    	$filesize += hmbkp_dirsize( ABSPATH );
 
 	endif;
 
@@ -378,7 +380,12 @@ function hmbkp_shell_exec_available() {
 
 	$disable_functions = ini_get( 'disable_functions' );
 
+	// Is shell_exec disabled?
 	if ( strpos( $disable_functions, 'shell_exec' ) !== false )
+		return false;
+
+	// Are we in Safe Mode
+	if ( ini_get( 'safe_mode' ) )
 		return false;
 
 	return true;
@@ -401,5 +408,37 @@ function hmbkp_total_filesize() {
 		$filesize += @filesize( $f['file'] );
 
 	return hmbkp_size_readable( $filesize );
+
+}
+
+/**
+ * Efficiant way to calculate the size of a directory
+ * or file
+ *
+ * @param string $dir
+ * @return float space
+ */
+function hmbkp_dirsize( $pointer )  {
+
+   $stat = @stat( $pointer );
+   $space = $stat['blocks'] * 512;
+
+   if ( is_dir( $pointer ) ) :
+
+		// Skip the backups dir
+		if ( strpos( $pointer, hmbkp_path() ) !== false )
+			return 0;
+
+		$handle = opendir( $pointer );
+
+		while ( ( $file = readdir( $handle ) ) !== false )
+			if ( !in_array( $file, array( '..', '.' ) ) )
+				$space += hmbkp_dirsize( trailingslashit( $pointer ) . $file );
+
+		closedir( $handle );
+
+   endif;
+
+   return $space;
 
 }

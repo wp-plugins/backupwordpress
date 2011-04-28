@@ -7,7 +7,9 @@ Stable tag: 1.1.4
 
 Simple automated backups of your WordPress powered website.
 
-BackUpWordPress will back up your entire site including your database and all your files once every day.
+== Description ==
+
+BackUpWordPress will back up your entire site including your database and all your files once every day. It has several advanced options for power users.
 
 == Installation ==
 
@@ -26,6 +28,19 @@ Contact support@humanmade.co.uk for help/support.
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.2 Beta
+
+* Show live backup status in the back up now button when a backup is running.
+* Show free disk space after total used by backups.
+* Some langauge changes.
+* Work around the 1 cron every 60 seconds limit.
+* Store backup status in a 2 hour transient as a last ditch attempt to work around the "stuck on backup running" issue.
+* Show a warning and disable backups when PHP is in Safe Mode.
+* Highlight defined Constants.
+* Show defaults for all Constants.
+* Show a warning if both HMBKP_FILES_ONLY and HMBKP_DATABASE_ONLY are defined at the same time.
+* Make sure options added in 1.1.4 are cleared on de-activate.
 
 #### 1.1.4
 

@@ -14,7 +14,7 @@ function hmbkp_setup_daily_schedule() {
 	// Allow it to be overridden
 	if ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) && HMBKP_DAILY_SCHEDULE_TIME )
 		$time = HMBKP_DAILY_SCHEDULE_TIME;
-		
+
 	if ( time() > strtotime( $time ) )
 		$time = 'tomorrow ' . $time;
 
@@ -60,6 +60,7 @@ function hmbkp_path() {
 
 /**
  * The maximum number of backups to keep
+ * defaults to 10
  *
  * @return int
  */

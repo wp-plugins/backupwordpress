@@ -12,23 +12,34 @@ jQuery( document ).ready( function( $ ) {
 	    	} ).fadeIn();
 	    }
 	);
-	
+
 	$( '.hmbkp_advanced-options-toggle' ).click( function() {
-		
+
 		$( '#hmbkp_advanced-options' ).toggle();
-	
+
 	} );
 
 } );
 
 function hmbkpRedirectOnBackupComplete() {
 
+	img = jQuery( '<div>' ).append( jQuery( '.hmbkp_running a.button[disabled]:first img' ).clone() ).remove().html();
+
 	jQuery.get( ajaxurl, { 'action' : 'hmbkp_is_in_progress' },
+
 		function( data ) {
-			if ( data == 0 )
+
+			if ( data == 0 ) {
+
 				location.reload( true );
-			else
+
+			} else {
+
 				setTimeout( 'hmbkpRedirectOnBackupComplete();', 5000 );
+
+				jQuery( '.hmbkp_running a.button[disabled]:first' ).html( img + data );
+
+			}
 		}
 	);
 

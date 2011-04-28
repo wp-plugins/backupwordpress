@@ -24,15 +24,18 @@ add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_request_delete_backup
 function hmbkp_request_do_backup() {
 
 	// Are we sure
-	if ( !isset( $_GET['action'] ) || $_GET['action'] !== 'hmbkp_backup_now' || hmbkp_is_in_progress() || !is_writable( hmbkp_path() ) || !is_dir( hmbkp_path() ) )
+	if ( !isset( $_GET['action'] ) || $_GET['action'] !== 'hmbkp_backup_now' || hmbkp_is_in_progress() || !is_writable( hmbkp_path() ) || !is_dir( hmbkp_path() ) || ini_get( 'safe_mode' ) )
 		return false;
-	
+
 	// Schedule a single backup
 	wp_schedule_single_event( time(), 'hmbkp_schedule_single_backup_hook' );
 	
-	// Fire the cron now
-	wp_cron();
+	// Remove the once every 60 seconds limitation
+	delete_transient( 'doing_cron' );
 	
+	// Fire the cron now
+	spawn_cron();
+
 	// Redirect back
 	wp_redirect( remove_query_arg( 'action' ) );
 	exit;
@@ -55,7 +58,16 @@ function hmbkp_request_download_backup() {
 add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_request_download_backup' );
 
 function hmbkp_ajax_is_backup_in_progress() {
-	echo (int) hmbkp_is_in_progress();
+
+	if ( !hmbkp_is_in_progress() )
+		echo 0;
+
+	elseif ( get_option( 'hmbkp_status' ) )
+		echo get_option( 'hmbkp_status' );
+
+	else
+		echo 1;
+
 	exit;
 }
 add_action( 'wp_ajax_hmbkp_is_in_progress', 'hmbkp_ajax_is_backup_in_progress' );
