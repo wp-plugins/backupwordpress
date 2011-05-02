@@ -13,10 +13,16 @@ jQuery( document ).ready( function( $ ) {
 	    }
 	);
 
+	$.get( ajaxurl, { 'action' : 'hmbkp_cron_test' },
+	    function( data ) {
+	    	if ( data != 1 ) {
+		    	$( '.wrap > h2' ).after( data );
+		    }
+	    }
+	);
+
 	$( '.hmbkp_advanced-options-toggle' ).click( function() {
-
 		$( '#hmbkp_advanced-options' ).toggle();
-
 	} );
 
 } );

@@ -135,7 +135,7 @@ endif;
 if ( ini_get( 'safe_mode' ) ) :
 
     function hmbkp_safe_mode_warning() {
-    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress can\'t run', 'hmbkp' ) . '</strong> ' . sprintf( __( 'because %s is running in %s. Please contact your host and ask them to disable %s.', 'hmbkp' ), '<code>PHP</code>', '<a href="http://php.net/manual/en/features.safe-mode.php"><code>Safe Mode</code></a>', '<code>Safe Mode</code>' ) . '</p></div>';
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( ' %s is running in %s. Please contact your host and ask them to disable %s.', 'hmbkp' ), '<code>PHP</code>', '<a href="http://php.net/manual/en/features.safe-mode.php"><code>Safe Mode</code></a>', '<code>Safe Mode</code>' ) . '</p></div>';
     }
     add_action( 'admin_notices', 'hmbkp_safe_mode_warning' );
 
@@ -144,8 +144,17 @@ endif;
 if ( defined( 'HMBKP_FILES_ONLY' ) && HMBKP_FILES_ONLY && defined( 'HMBKP_DATABASE_ONLY' ) && HMBKP_DATABASE_ONLY ) :
 
     function hmbkp_nothing_to_backup_warning() {
-    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress is almost ready.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'You have both %s and %s defined so there isn\'t anything to back up.', 'hmbkp' ), '<code>HMBKP_DATABASE_ONLY</code>', '<code>HMBKP_FILES_ONLY</code>' ) . '</p></div>';
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'You have both %s and %s defined so there isn\'t anything to back up.', 'hmbkp' ), '<code>HMBKP_DATABASE_ONLY</code>', '<code>HMBKP_FILES_ONLY</code>' ) . '</p></div>';
     }
     add_action( 'admin_notices', 'hmbkp_nothing_to_backup_warning' );
+
+endif;
+
+if ( get_transient( 'hmbkp_estimated_filesize' ) && disk_free_space( ABSPATH ) <= ( 2 * get_transient( 'hmbkp_estimated_filesize' ) ) ) :
+
+    function hmbkp_low_space_warning() {
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'You only have %s of free space left on your server.', 'hmbkp' ), '<code>' . hmbkp_size_readable( disk_free_space( ABSPATH ), null, '%01u %s' ) . '</code>' ) . '</p></div>';
+    }
+    add_action( 'admin_notices', 'hmbkp_low_space_warning' );
 
 endif;
