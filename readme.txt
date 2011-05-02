@@ -2,7 +2,7 @@
 Contributors: willmot, humanmade
 Tags: back up, backup, backups
 Requires at least: 3.0
-Tested up to: 3.1
+Tested up to: 3.1.2
 Stable tag: 1.1.4
 
 Simple automated backups of your WordPress powered website.
@@ -31,16 +31,18 @@ Contact support@humanmade.co.uk for help/support.
 
 #### 1.2 Beta
 
-* Show live backup status in the back up now button when a backup is running.
+* Show live backup status in the back up now button when a back up is running.
 * Show free disk space after total used by backups.
 * Some langauge changes.
 * Work around the 1 cron every 60 seconds limit.
 * Store backup status in a 2 hour transient as a last ditch attempt to work around the "stuck on backup running" issue.
-* Show a warning and disable backups when PHP is in Safe Mode.
-* Highlight defined Constants.
-* Show defaults for all Constants.
-* Show a warning if both HMBKP_FILES_ONLY and HMBKP_DATABASE_ONLY are defined at the same time.
+* Show a warning and disable backups when PHP is in Safe Mode, may try to work round issues and re-enable in the future.
+* Highlight defined `Constants`.
+* Show defaults for all `Constants`.
+* Show a warning if both `HMBKP_FILES_ONLY` and `HMBKP_DATABASE_ONLY` are defined at the same time.
 * Make sure options added in 1.1.4 are cleared on de-activate.
+* Normalize slashes on Windows, stops backup directory from being included in backup on Windows.
+* Support `mysqldump on` Windows if it's available.
 
 #### 1.1.4
 

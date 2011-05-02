@@ -55,7 +55,7 @@ function hmbkp_path() {
 		insert_with_markers( $htaccess, 'BackUpWordPress', array( 'deny from all' ) );
 	endif;
 
-    return $path;
+    return hmbkp_conform_dir( $path );
 }
 
 /**

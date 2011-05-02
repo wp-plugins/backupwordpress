@@ -40,11 +40,11 @@
 		else
 			$what_to_backup = '<code>' . __( 'files', 'hmbkp' ) . '</code>'; ?>
 
-		<?php printf( __( 'Your %s will be automatically backed up every day at %s into %s.', 'hmbkp' ), $what_to_backup , '<code title="' . sprintf( __( 'It\'s currently %s on the server.', 'hmbkp' ), date( 'H:i' ) ) . '">' . date( 'H:i', wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) ) . '</code>', '<code>' . trailingslashit( hmbkp_path() ) . '</code>' ); ?>
+		<?php printf( __( 'Your %s will be automatically backed up every day at %s into %s.', 'hmbkp' ), $what_to_backup , '<code title="' . sprintf( __( 'It\'s currently %s on the server.', 'hmbkp' ), date( 'H:i' ) ) . '">' . date( 'H:i', wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) ) . '</code>', '<code>' . hmbkp_path() . '</code>' ); ?>
 
 	<?php endif; ?>
 
-		<span class="hmbkp_estimated-size"><?php printf( __( 'Your backups will be roughly %s.', 'hmbkp' ), get_transient( 'hmbkp_estimated_filesize' ) ? '<code>' . hmbkp_calculate() . '</code>' : '<code class="calculate">' . __( 'Calculating Size...', 'hmbkp' ) . '</code>' ); ?></span>
+		<span class="hmbkp_estimated-size"><?php printf( __( 'Each backup will be roughly %s.', 'hmbkp' ), get_transient( 'hmbkp_estimated_filesize' ) ? '<code>' . hmbkp_calculate() . '</code>' : '<code class="calculate">' . __( 'Calculating Size...', 'hmbkp' ) . '</code>' ); ?></span>
 
 	</p>
 

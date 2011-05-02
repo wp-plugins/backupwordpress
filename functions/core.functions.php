@@ -30,7 +30,7 @@ function hmbkp_deactivate() {
 	foreach ( $options as $option )
 		delete_option( $option );
 
-	delete_transient( 'hmvkp_running' );
+	delete_transient( 'hmbkp_running' );
 
 	// Clear cron
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
@@ -130,18 +130,23 @@ function hmbkp_timestamp() {
  * @return string $dir
  */
 function hmbkp_conform_dir( $dir, $rel = false ) {
-
+	
+	// Normalise slashes
 	$dir = str_replace( '\\', '/', $dir );
 	$dir = str_replace( '//', '/', $dir );
-
+	
+	// Remove the trailingslash
 	$dir = untrailingslashit( $dir );
+	
+	// If we're on Windows
+	if ( strpos( ABSPATH, '\\' ) !== false )
+		$dir = str_replace( '/', '\\', $dir );
 
 	if ( $rel == true )
 		$dir = str_replace( hmbkp_conform_dir( ABSPATH ), '', $dir );
 
 	return $dir;
 }
-
 /**
  * Take a file size and return a human readable
  * version
@@ -264,7 +269,7 @@ function hmbkp_ls( $dir, $files = array() ) {
 	while ( $file = readdir( $d ) ) :
 
 		// Ignore current dir and containing dir as well as files in the backups dir
-		if ( $file == '.' || $file == '..' || strpos( trailingslashit( $dir ) . $file, hmbkp_path() ) !== false || strpos( trailingslashit( $dir ) . $file, WP_CONTENT_DIR . '/backups' ) !== false )
+		if ( $file == '.' || $file == '..' || strpos( hmbkp_conform_dir( trailingslashit( $dir ) ) . $file, hmbkp_path() ) !== false || strpos( hmbkp_conform_dir( trailingslashit( $dir ) ) . $file, hmbkp_conform_dir( trailingslashit( WP_CONTENT_DIR ) . 'backups' ) ) !== false )
 			continue;
 
 		$files[] = trailingslashit( $dir ) . $file;
@@ -426,7 +431,7 @@ function hmbkp_dirsize( $pointer )  {
    if ( is_dir( $pointer ) ) :
 
 		// Skip the backups dir
-		if ( strpos( $pointer, hmbkp_path() ) !== false )
+		if ( strpos( hmbkp_conform_dir( $pointer ), hmbkp_path() ) !== false )
 			return 0;
 
 		$handle = opendir( $pointer );

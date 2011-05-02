@@ -51,9 +51,17 @@ function hmbkp_mysqldump_path() {
 		'/usr/bin/mysqldump',
 		'/opt/local/lib/mysql6/bin/mysqldump',
 		'/opt/local/lib/mysql5/bin/mysqldump',
-		'/opt/local/lib/mysql4/bin/mysqldump'
+		'/opt/local/lib/mysql4/bin/mysqldump',
+		'C:\xampp\mysql\bin\mysqldump',
+		'C:\Program Files\xampp\mysql\bin\mysqldump',
+		'C:\Program Files\MySQL\MySQL Server 6.0\bin\mysqldump',
+		'C:\Program Files\MySQL\MySQL Server 5.5\bin\mysqldump',
+		'C:\Program Files\MySQL\MySQL Server 5.4\bin\mysqldump',
+		'C:\Program Files\MySQL\MySQL Server 5.1\bin\mysqldump',
+		'C:\Program Files\MySQL\MySQL Server 5.0\bin\mysqldump',
+		'C:\Program Files\MySQL\MySQL Server 4.1\bin\mysqldump'
 	);
-
+	
 	// Allow the path to be overridden
 	if ( defined( 'HMBKP_MYSQLDUMP_PATH' ) && HMBKP_MYSQLDUMP_PATH )
 		array_unshift( $mysqldump_locations, HMBKP_MYSQLDUMP_PATH );
@@ -63,7 +71,7 @@ function hmbkp_mysqldump_path() {
 
 		// Try to find out where mysqldump is
 		foreach ( $mysqldump_locations as $location )
-	 		if ( shell_exec( 'which ' . $location ) )
+	 		if ( shell_exec( $location ) )
  				$path = $location;
 
 		// Save it for later
@@ -73,7 +81,7 @@ function hmbkp_mysqldump_path() {
 	endif;
 
 	// Check again in-case the saved path has stopped working for some reason
-	if ( $path && !shell_exec( 'which ' . $path ) ) :
+	if ( $path && !shell_exec( $path ) ) :
 		delete_option( 'hmbkp_mysqldump_path' );
 		return hmbkp_mysqldump_path();
 
