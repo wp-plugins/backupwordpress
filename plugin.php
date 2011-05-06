@@ -157,3 +157,18 @@ if ( get_transient( 'hmbkp_estimated_filesize' ) && disk_free_space( ABSPATH ) <
     add_action( 'admin_notices', 'hmbkp_low_space_warning' );
 
 endif;
+
+if( defined( 'HMBKP_EMAIL' ) && !is_email( HMBKP_EMAIL ) ) :
+	function hmbkp_email_invalid(){
+		echo '<div id="hmbkp-email_invalid" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( '%s is not a valid email address.', 'hmbkp' ), '<code>' . HMBKP_EMAIL . '</code>' ) . '</p></div>';
+	}
+	add_action( 'admin_notices', 'hmbkp_email_invalid' );
+endif; 
+
+
+if ( defined( 'HMBKP_EMAIL' ) && get_option( 'hmbkp_email_error' ) ) :
+	function hmbkp_email_error(){
+		echo '<div id="hmbkp-email_invalid" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . __( 'The last backup email failed to send.', 'hmbkp' ) . '</p></div>';
+	}
+	add_action( 'admin_notices', 'hmbkp_email_error' );
+endif; 
