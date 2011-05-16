@@ -36,6 +36,8 @@ function hmbkp_deactivate() {
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
 	wp_clear_scheduled_hook( 'hmbkp_schedule_single_backup_hook' );
 
+	hmbkp_cleanup();
+
 }
 
 /**
@@ -46,7 +48,9 @@ function hmbkp_update() {
 
 	// Every update
 	if ( version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) :
-		
+
+		hmbkp_cleanup();
+
 		delete_transient( 'hmbkp_estimated_filesize' );
 		delete_option( 'hmbkp_running' );
 		delete_option( 'hmbkp_complete' );
@@ -61,7 +65,7 @@ function hmbkp_update() {
 
 	// Pre 1.1
 	if ( !get_option( 'hmbkp_plugin_version' ) ) :
-		
+
 		// Delete the obsolete max backups option
 		delete_option( 'hmbkp_max_backups' );
 
@@ -107,7 +111,8 @@ function hmbkp_update() {
 	endif;
 
 	// Update the stored version
-	update_option( 'hmbkp_plugin_version', HMBKP_VERSION );
+	if ( get_option( 'hmbkp_plugin_version' ) !== HMBKP_VERSION )
+		update_option( 'hmbkp_plugin_version', HMBKP_VERSION );
 
 }
 
@@ -138,7 +143,7 @@ function hmbkp_conform_dir( $dir, $rel = false ) {
 
 	// If we're on Windows
 	if ( strpos( ABSPATH, '\\' ) !== false )
-		$dir = str_replace( '/', '\\', $dir );
+		$dir = str_replace( '\\', '/', $dir );
 
 	if ( $rel == true )
 		$dir = str_replace( hmbkp_conform_dir( ABSPATH ), '', $dir );
@@ -217,7 +222,7 @@ function hmbkp_send_file( $path ) {
 		return false;
 
 	// Overide max_execution_time
-	set_time_limit( 0 );
+	@set_time_limit( 0 );
 
 	$name = basename( $path );
 
@@ -286,25 +291,28 @@ function hmbkp_ls( $dir, $files = array() ) {
  * Recursively delete a directory including
  * all the files and sub-directories.
  *
- * @param string $dirname
+ * @param string $dir
  */
-function hmbkp_rmdirtree( $dirname ) {
+function hmbkp_rmdirtree( $dir ) {
 
-    if ( !is_dir( $dirname ) )
+	if ( is_file( $dir ) )
+		unlink( $dir );
+
+    if ( !is_dir( $dir ) )
     	return false;
 
     $result = array();
 
-    $dirname = trailingslashit( $dirname );
+    $dir = trailingslashit( $dir );
 
-    $handle = opendir( $dirname );
+    $handle = opendir( $dir );
 
     while ( false !== ( $file = readdir( $handle ) ) ) :
 
         // Ignore . and ..
         if ( $file != '.' && $file != '..' ) :
 
-        	$path = $dirname . $file;
+        	$path = $dir . $file;
 
         	// Recurse if subdir, Delete if file
         	if ( is_dir( $path ) ) :
@@ -322,9 +330,9 @@ function hmbkp_rmdirtree( $dirname ) {
 
     closedir( $handle );
 
-    rmdir( $dirname );
+    rmdir( $dir );
 
-    $result[] .= $dirname;
+    $result[] .= $dir;
 
     return $result;
 
@@ -340,7 +348,7 @@ function hmbkp_rmdirtree( $dirname ) {
  */
 function hmbkp_calculate() {
 
-    ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
+    @ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
 
     // Check cache
 	if ( $filesize = get_transient( 'hmbkp_estimated_filesize' ) )
@@ -414,7 +422,7 @@ function hmbkp_total_filesize() {
 	clearstatcache();
 
    	foreach ( $files as $f )
-		$filesize += @filesize( $f['file'] );
+		$filesize += @filesize( $f );
 
 	return hmbkp_size_readable( $filesize );
 
@@ -458,24 +466,52 @@ function hmbkp_path() {
 		$path = HMBKP_PATH;
 
 	// If the dir doesn't exist or isn't writable then use wp-content/backups instead
-	if ( ( !$path || !is_writable( $path ) ) && $path != WP_CONTENT_DIR . '/backups' ) :
-    	$path = WP_CONTENT_DIR . '/backups';
-		update_option( 'hmbkp_path', $path );
-	endif;
+	if ( ( !$path || !is_writable( $path ) ) && hmbkp_conform_dir( $path ) != hmbkp_path_default() )
+    	$path = hmbkp_path_default();
 
 	// Create the backups directory if it doesn't exist
-	if ( is_writable( WP_CONTENT_DIR ) && !is_dir( $path ) )
+	if ( is_writable( dirname( $path ) ) && !is_dir( $path ) )
 		mkdir( $path, 0755 );
+
+	if ( get_option( 'hmbkp_path' ) != $path )
+		update_option( 'hmbkp_path', $path );
 
 	// Secure the directory with a .htaccess file
 	$htaccess = $path . '/.htaccess';
 
-	if ( !file_exists( $htaccess ) && is_writable( $path ) ) :
-		require_once( ABSPATH . '/wp-admin/includes/misc.php' );
+	if ( !file_exists( $htaccess ) && is_writable( $path ) && require_once( ABSPATH . '/wp-admin/includes/misc.php' ) )
 		insert_with_markers( $htaccess, 'BackUpWordPress', array( 'deny from all' ) );
-	endif;
 
     return hmbkp_conform_dir( $path );
+}
+
+function hmbkp_path_default() {
+	return hmbkp_conform_dir( WP_CONTENT_DIR . '/backups' );
+}
+
+function hmbkp_path_move( $from, $to ) {
+
+	// Create the custom backups directory if it doesn't exist
+	if ( is_writable( dirname( $to ) ) && !is_dir( $to ) )
+	    mkdir( $to, 0755 );
+
+	if ( !is_dir( $to ) || !is_writable( $to ) || !is_dir( $from ) )
+	    return false;
+
+	hmbkp_cleanup();
+
+	if ( $handle = opendir( $from ) ) :
+
+	    while ( false !== ( $file = readdir( $handle ) ) )
+	    	if ( $file != '.' && $file != '..' )
+	    		rename( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file );
+
+	    closedir( $handle );
+
+	endif;
+
+	hmbkp_rmdirtree( $from );
+
 }
 
 /**
@@ -490,5 +526,79 @@ function hmbkp_max_backups() {
 		return (int) HMBKP_MAX_BACKUPS;
 
 	return 10;
+
+}
+
+/**
+ * Check if a backup is possible with regards to file
+ * permissions etc.
+ *
+ * @return bool
+ */
+function hmbkp_possible() {
+
+	if ( is_writable( hmbkp_path() ) || is_dir( hmbkp_path() ) || !ini_get( 'safe_mode' ) )
+		return true;
+
+	return false;
+}
+
+/**
+ * Remove any non backup.zip files from the backups dir.
+ *
+ * @return void
+ */
+function hmbkp_cleanup() {
+
+	$hmbkp_path = hmbkp_path();
+
+	if ( $handle = opendir( $hmbkp_path ) ) :
+
+    	while ( false !== ( $file = readdir( $handle ) ) )
+    		if ( $file != '.' && $file != '..' && $file != '.htaccess' && strpos( $file, '.zip' ) === false )
+				hmbkp_rmdirtree( trailingslashit( $hmbkp_path ) . $file );
+
+    	closedir( $handle );
+
+    endif;
+
+}
+
+/**
+ * Handles changes in the defined Constants
+ * that users can define to control advanced
+ * settings
+ *
+ * @return void
+ */
+function hmbkp_constant_changes() {
+
+	// Check whether we need to disable the cron
+	if ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) && HMBKP_DISABLE_AUTOMATIC_BACKUP && wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) )
+		wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
+
+	// Or whether we need to re-enable it
+	if ( ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) && !HMBKP_DISABLE_AUTOMATIC_BACKUP || !defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) ) && !wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) )
+		hmbkp_setup_daily_schedule();
+
+	// Allow the time of the daily backup to be changed
+	if ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) && HMBKP_DAILY_SCHEDULE_TIME && wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) != strtotime( HMBKP_DAILY_SCHEDULE_TIME ) && wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) )
+		hmbkp_setup_daily_schedule();
+
+	// Reset if custom time is removed
+	if ( ( ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) && !HMBKP_DAILY_SCHEDULE_TIME ) || !defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) ) && date( 'H:i', wp_next_scheduled( 'hmbkp_schedule_backup_hook' ) ) != '23:00' && ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) && !HMBKP_DISABLE_AUTOMATIC_BACKUP || !defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) ) )
+		hmbkp_setup_daily_schedule();
+
+	// If a custom backup path has been set or changed
+	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && hmbkp_conform_dir( HMBKP_PATH ) != ( $from = hmbkp_conform_dir( get_option( 'hmbkp_path' ) ) ) )
+		hmbkp_path_move( $from, HMBKP_PATH );
+
+	// If a custom backup path has been removed
+	if ( ( ( defined( 'HMBKP_PATH' ) && !HMBKP_PATH ) || !defined( 'HMBKP_PATH' ) && hmbkp_conform_dir( hmbkp_path_default() ) != ( $from = hmbkp_conform_dir( get_option( 'hmbkp_path' ) ) ) ) )
+		hmbkp_path_move( $from, hmbkp_path_default() );
+
+	// If the custom path has changed and the new directory isn't writable
+	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && hmbkp_conform_dir( HMBKP_PATH ) != ( $from = hmbkp_conform_dir( get_option( 'hmbkp_path' ) ) ) && $from != hmbkp_path_default() && !is_writable( HMBKP_PATH ) && is_dir( $from ) )
+		hmbkp_path_move( $from, hmbkp_path_default() );
 
 }

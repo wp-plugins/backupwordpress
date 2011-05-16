@@ -12,48 +12,39 @@
  */
 function hmbkp_do_backup() {
 
-	// Make sure it's safe to do a backup
-	if ( !is_writable( hmbkp_path() ) || !is_dir( hmbkp_path() ) || ini_get( 'safe_mode' ) )
+	// Make sure it's possible to do a backup
+	if ( !hmbkp_possible() )
 		return false;
+
+	// Clean up any mess left by the last backup
+	hmbkp_cleanup();
 
     $time_start = date( 'Y-m-d-H-i-s' );
 
-	$filename = $time_start . '.zip';
+	$filename = sanitize_file_name( get_bloginfo( 'name' ) . '.backup.' . $time_start . '.zip' );
 	$filepath = trailingslashit( hmbkp_path() ) . $filename;
 
-	// Set as running for a max of 2 hours
-	set_transient( 'hmbkp_running', $time_start, 7200 );
+	// Set as running for a max of 1 hour
+	set_transient( 'hmbkp_running', $time_start, 3600 );
 
 	// Raise the memory limit
-	ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
-	set_time_limit( 0 );
+	@ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
+	@set_time_limit( 0 );
 
-    update_option( 'hmbkp_status', __( 'Creating tmp directory', 'hmbkp' ) );
-
-	// Create a temporary directory for this backup
-    $backup_tmp_dir = hmbkp_create_tmp_dir( $time_start );
-
-    update_option( 'hmbkp_status', __( 'Dumping database to tmp directory', 'hmbkp' ) );
+    update_option( 'hmbkp_status', __( 'Dumping database', 'hmbkp' ) );
 
 	// Backup database
 	if ( ( defined( 'HMBKP_FILES_ONLY' ) && !HMBKP_FILES_ONLY ) || !defined( 'HMBKP_FILES_ONLY' ) )
-	    hmbkp_backup_mysql( $backup_tmp_dir );
+	    hmbkp_backup_mysql();
 
-	update_option( 'hmbkp_status', __( 'Copying files to tmp directory', 'hmbkp' ) );
+    update_option( 'hmbkp_status', __( 'Creating zip archive', 'hmbkp' ) );
 
-	// Backup files
+	// Zip everything up
+	hmbkp_archive_files( $filepath );
+
+	// Delete the database dump file
 	if ( ( defined( 'HMBKP_DATABASE_ONLY' ) && !HMBKP_DATABASE_ONLY ) || !defined( 'HMBKP_DATABASE_ONLY' ) )
-		hmbkp_backup_files( $backup_tmp_dir );
-
-    update_option( 'hmbkp_status', __( 'Zipping up tmp directory', 'hmbkp' ) );
-
-	// Zip up the files
-	hmbkp_archive_files( $backup_tmp_dir, $filepath );
-
-    update_option( 'hmbkp_status', __( 'Removing tmp directory', 'hmbkp' ) );
-
-	// Remove the temporary directory
-	hmbkp_rmdirtree( $backup_tmp_dir );
+		unlink( hmbkp_path() . '/database_' . DB_NAME . '.sql' );
 
 	// Email Backup
 	hmbkp_email_backup( $filepath );
@@ -80,9 +71,8 @@ function hmbkp_delete_old_backups() {
     if ( count( $files ) <= hmbkp_max_backups() )
     	return;
 
-    foreach ( $files as $key => $f )
-        if ( ( $key + 1 ) > hmbkp_max_backups() )
-        	hmbkp_delete_backup( base64_encode( $f['file'] ) );
+    foreach( array_slice( $files, hmbkp_max_backups() ) as $file )
+       	hmbkp_delete_backup( base64_encode( $file ) );
 
 }
 
@@ -95,26 +85,32 @@ function hmbkp_get_backups() {
 
     $hmbkp_path = hmbkp_path();
 
-    if ( !is_writable( $hmbkp_path ) )
-    	return;
-
     if ( $handle = opendir( $hmbkp_path ) ) :
 
     	while ( false !== ( $file = readdir( $handle ) ) )
-    		if ( ( substr( $file, 0, 1 ) != '.' ) && !is_dir( trailingslashit( $hmbkp_path ) . $file ) && strpos( $file, '.zip' ) !== false )
-    			$files[] = array( 'file' => trailingslashit( $hmbkp_path ) . $file, 'filename' => $file );
+    		if ( strpos( $file, '.zip' ) !== false )
+	   			$files[filemtime( trailingslashit( $hmbkp_path ) . $file )] = trailingslashit( $hmbkp_path ) . $file;
 
     	closedir( $handle );
 
     endif;
 
-    if ( count( $files ) < 1 )
-    	return;
+    // If there is a custom backups directory and it's not writable then include those backups as well
+    if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && is_dir( HMBKP_PATH ) && !is_writable( HMBKP_PATH ) ) :
 
-    foreach ( $files as $key => $row )
-    	$filename[$key] = $row['filename'];
+    	if ( $handle = opendir( HMBKP_PATH ) ) :
 
-    array_multisort( $filename, SORT_DESC, $files );
+    		while ( false !== ( $file = readdir( $handle ) ) )
+    			if ( strpos( $file, '.zip' ) !== false )
+		   			$files[filemtime( trailingslashit( HMBKP_PATH ) . $file )] = trailingslashit( HMBKP_PATH ) . $file;
+
+    		closedir( $handle );
+
+    	endif;
+
+	endif;
+
+    krsort( $files );
 
     return $files;
 }
@@ -131,23 +127,6 @@ function hmbkp_delete_backup( $file ) {
 	// Delete the file
 	if ( strpos( $file, hmbkp_path() ) !== false || strpos( $file, WP_CONTENT_DIR . '/backups' ) !== false )
 	  unlink( $file );
-
-}
-
-/**
- * Create and return the path to the tmp directory
- *
- * @param string $date
- * @return string
- */
-function hmbkp_create_tmp_dir( $date ) {
-
-    $backup_tmp_dir = trailingslashit( hmbkp_path() ) . $date;
-
-    if ( !is_dir( $backup_tmp_dir ) )
-		mkdir( $backup_tmp_dir );
-
-    return $backup_tmp_dir;
 
 }
 
@@ -172,9 +151,9 @@ function hmbkp_email_backup( $file ) {
 		return;
 
 	// Raise the memory and time limit
-	ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
-	set_time_limit( 0 );
-	
+	@ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
+	@set_time_limit( 0 );
+
 	$download = get_bloginfo( 'wpurl' ) . '/wp-admin/tools.php?page=' . HMBKP_PLUGIN_SLUG . '&hmbkp_download=' . base64_encode( $file );
 	$domain = parse_url( get_bloginfo( 'url' ), PHP_URL_HOST ) . parse_url( get_bloginfo( 'url' ), PHP_URL_PATH );
 
