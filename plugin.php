@@ -2,11 +2,11 @@
 
 /*
 Plugin Name: BackUpWordPress
-Plugin URI: http://humanmade.co.uk/
+Plugin URI: http://hmn.md/backupwordpress/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.3.2
-Author URI: http://humanmade.co.uk/
+Version: 1.4 beta
+Author URI: http://hmn.md/
 */
 
 /*  Copyright 2011 Human Made Limited  (email : hello@humanmade.co.uk)
@@ -31,7 +31,7 @@ define( 'HMBKP_PLUGIN_PATH', WP_PLUGIN_DIR . '/' . HMBKP_PLUGIN_SLUG );
 define( 'HMBKP_PLUGIN_URL', WP_PLUGIN_URL . '/' . HMBKP_PLUGIN_SLUG );
 define( 'HMBKP_REQUIRED_WP_VERSION', '3.1' );
 
-// Don't activate on anything less than PHP5
+// Don't activate on anything less than PHP 5.2.4
 if ( version_compare( phpversion(), '5.2.4', '<' ) ) {
 
 	require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
@@ -95,9 +95,6 @@ require_once( HMBKP_PLUGIN_PATH . '/functions/backup.files.fallback.functions.ph
 // Plugin activation and deactivation
 add_action( 'activate_' . HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_activate' );
 add_action( 'deactivate_' . HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_deactivate' );
-
-// Add more cron schedules
-add_filter( 'cron_schedules', 'hmbkp_more_reccurences' );
 
 // Cron hook for backups
 add_action( 'hmbkp_schedule_backup_hook', 'hmbkp_do_backup' );
