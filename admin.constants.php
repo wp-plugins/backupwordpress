@@ -1,8 +1,6 @@
-<div id="hmbkp_advanced-options">
+<div id="hmbkp-constants">
 
-    <h4><?php _e( 'Advanced Options', 'hmbkp' ); ?></h4>
-
-    <p><?php printf( __( 'You can %s any of the following %s in your %s to control advanced options. %s. Defined %s will be highlighted.', 'hmbkp' ), '<code>define</code>', '<code>Constants</code>', '<code>wp-config.php</code>', '<a href="http://codex.wordpress.org/Editing_wp-config.php">' . __( 'The Codex can help', 'hmbkp' ) . '</a>', '<code>Constants</code>' ); ?></p>
+    <p><?php printf( __( 'You can %s any of the following %s in your %s to control advanced settings. %s. Defined %s will be highlighted.', 'hmbkp' ), '<code>define</code>', '<code>Constants</code>', '<code>wp-config.php</code>', '<a href="http://codex.wordpress.org/Editing_wp-config.php">' . __( 'The Codex can help', 'hmbkp' ) . '</a>', '<code>Constants</code>' ); ?></p>
 
     <dl>
 
@@ -33,11 +31,14 @@
     	<dt<?php if ( defined( 'HMBKP_EMAIL' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_EMAIL</code></dt>
         <dd><p><?php printf( __( 'Attempt to email a copy of your backups. Value should be email address to send backups to. Defaults to %s.', 'hmbkp' ), '<code>(bool) false</code>' ); ?><p class="example">e.g. <code>define( 'HMBKP_EMAIL', 'email@example.com' );</code></p></dd>
 
-        <dt<?php if ( hmbkp_get_excludes() ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_EXCLUDE</code></dt>
+        <dt<?php if ( defined( 'HMBKP_EXCLUDE' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_EXCLUDE</code></dt>
         <dd><p><?php _e( 'Comma separated list of files or directories to exclude, the backups directory is automatically excluded.', 'hmbkp' ); ?><p class="example">e.g. <code>define( 'HMBKP_EXCLUDE', '/wp-content/uploads/, /stats/, .svn/, *.txt' );</code></p></dd>
 
         <dt<?php if ( defined( 'HMBKP_DISABLE_MANUAL_BACKUP_CRON' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_DISABLE_MANUAL_BACKUP_CRON</code></dt>
         <dd><p><?php _e( 'Disable the use of wp-cron for manual backups.', 'hmbkp' ); ?><p class="example">e.g. <code>define( 'HMBKP_DISABLE_MANUAL_BACKUP_CRON', true );</code></p></dd>
+        
+        <dt<?php if ( defined( 'HMBKP_CAPABILITY' ) ) { ?> class="hmbkp_active"<?php } ?>><code>HMBKP_CAPABILITY</code></dt>
+        <dd><p><?php printf( __( 'The capability to use when calling %s. Defaults to %s.', 'hmbkp' ), '<code>add_menu_page</code>', '<code>manage_options</code>' ); ?><p class="example">e.g. <code>define( 'HMBKP_CAPABILITY', 'edit_posts' );</code></p></dd>
 
     </dl>
 

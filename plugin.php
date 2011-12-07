@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://hmn.md/backupwordpress/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.4.1
+Version: 1.5
 Author URI: http://hmn.md/
 */
 
@@ -31,6 +31,9 @@ define( 'HMBKP_PLUGIN_PATH', WP_PLUGIN_DIR . '/' . HMBKP_PLUGIN_SLUG );
 define( 'HMBKP_PLUGIN_URL', WP_PLUGIN_URL . '/' . HMBKP_PLUGIN_SLUG );
 define( 'HMBKP_REQUIRED_WP_VERSION', '3.1' );
 
+if ( ! defined( 'WP_MAX_MEMORY_LIMIT' ) )
+	define( 'WP_MAX_MEMORY_LIMIT', '256M' );
+
 // Don't activate on anything less than PHP 5.2.4
 if ( version_compare( phpversion(), '5.2.4', '<' ) ) {
 
@@ -53,13 +56,17 @@ if ( version_compare( get_bloginfo('version'), HMBKP_REQUIRED_WP_VERSION, '<' ) 
 
 }
 
-// Load the admin actions file
+/**
+ * Plugin setup
+ * 
+ * @return null
+ */
 function hmbkp_actions() {
 
 	$plugin_data = get_plugin_data( __FILE__ );
 
 	define( 'HMBKP_VERSION', $plugin_data['Version'] );
-	
+
 	load_plugin_textdomain( 'hmbkp', false, HMBKP_PLUGIN_SLUG . '/languages/' );
 
 	// Fire the update action
@@ -69,10 +76,10 @@ function hmbkp_actions() {
 	require_once( HMBKP_PLUGIN_PATH . '/admin.actions.php' );
 
 	// Load admin css and js
-	if ( isset( $_GET['page'] ) && $_GET['page'] == HMBKP_PLUGIN_SLUG ) :
+	if ( isset( $_GET['page'] ) && $_GET['page'] == HMBKP_PLUGIN_SLUG ) {
 		wp_enqueue_script( 'hmbkp', HMBKP_PLUGIN_URL . '/assets/hmbkp.js' );
 		wp_enqueue_style( 'hmbkp', HMBKP_PLUGIN_URL . '/assets/hmbkp.css' );
-	endif;
+	}
 
 	// Handle any advanced option changes
 	hmbkp_constant_changes();
@@ -80,17 +87,42 @@ function hmbkp_actions() {
 }
 add_action( 'admin_init', 'hmbkp_actions' );
 
+/**
+ * Setup the HM_Backup class
+ * 
+ * @return null
+ */
+function hmbkp_setup_hm_backup() {
+
+	$hm_backup = HM_Backup::get_instance();
+	
+	$hm_backup->path = hmbkp_path();
+	$hm_backup->root = ABSPATH;
+	$hm_backup->files_only = hmbkp_get_files_only();
+	$hm_backup->database_only = hmbkp_get_database_only();
+	
+	if ( defined( 'HMBKP_MYSQLDUMP_PATH' ) )
+		$hm_backup->mysql_command_path = HMBKP_MYSQLDUMP_PATH;
+	
+	if ( defined( 'HMBKP_ZIP_PATH' ) )
+		$hm_backup->zip_command_path = HMBKP_ZIP_PATH;
+	
+	$hm_backup->excludes = hmbkp_valid_custom_excludes();
+
+}
+add_action( 'init', 'hmbkp_setup_hm_backup' );
+
 // Load the admin menu
 require_once( HMBKP_PLUGIN_PATH . '/admin.menus.php' );
 
+// Load hm-backup
+require_once( HMBKP_PLUGIN_PATH . '/hm-backup/hm-backup.php' );
+
 // Load the core functions
+require_once( HMBKP_PLUGIN_PATH . '/functions/backup.actions.php' );
 require_once( HMBKP_PLUGIN_PATH . '/functions/core.functions.php' );
 require_once( HMBKP_PLUGIN_PATH . '/functions/interface.functions.php' );
 require_once( HMBKP_PLUGIN_PATH . '/functions/backup.functions.php' );
-require_once( HMBKP_PLUGIN_PATH . '/functions/backup.mysql.functions.php' );
-require_once( HMBKP_PLUGIN_PATH . '/functions/backup.files.functions.php' );
-require_once( HMBKP_PLUGIN_PATH . '/functions/backup.mysql.fallback.functions.php' );
-require_once( HMBKP_PLUGIN_PATH . '/functions/backup.files.fallback.functions.php' );
 
 // Plugin activation and deactivation
 add_action( 'activate_' . HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_activate' );

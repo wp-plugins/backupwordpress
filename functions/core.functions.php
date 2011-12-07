@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Setup the default options on plugin activation
+ * Setup the plugin defaults on activation
  */
 function hmbkp_activate() {
 
@@ -17,6 +17,8 @@ function hmbkp_activate() {
  * Removes options and clears all cron schedules
  */
 function hmbkp_deactivate() {
+
+	hmbkp_setup_hm_backup();
 
 	// Options to delete
 	$options = array(
@@ -71,7 +73,7 @@ function hmbkp_update() {
 	endif;
 
 	// Pre 1.1
-	if ( !get_option( 'hmbkp_plugin_version' ) ) :
+	if ( ! get_option( 'hmbkp_plugin_version' ) ) :
 
 		// Delete the obsolete max backups option
 		delete_option( 'hmbkp_max_backups' );
@@ -123,31 +125,6 @@ function hmbkp_update() {
 
 }
 
-/**
- * Sanitize a directory path
- *
- * @param string $dir
- * @param bool $rel. (default: false)
- * @return string $dir
- */
-function hmbkp_conform_dir( $dir, $rel = false ) {
-
-	// Normalise slashes
-	$dir = str_replace( '\\', '/', $dir );
-	$dir = str_replace( '//', '/', $dir );
-
-	// Remove the trailingslash
-	$dir = untrailingslashit( $dir );
-
-	// If we're on Windows
-	if ( strpos( ABSPATH, '\\' ) !== false )
-		$dir = str_replace( '\\', '/', $dir );
-
-	if ( $rel == true )
-		$dir = str_replace( hmbkp_conform_dir( ABSPATH ), '', $dir );
-
-	return $dir;
-}
 /**
  * Take a file size and return a human readable
  * version
@@ -266,7 +243,7 @@ function hmbkp_send_file( $path ) {
  */
 function hmbkp_ls( $dir, $files = array() ) {
 
-	if ( !is_readable( $dir ) )
+	if ( ! is_readable( $dir ) )
 		return $files;
 
 	$d = opendir( $dir );
@@ -275,7 +252,7 @@ function hmbkp_ls( $dir, $files = array() ) {
 	$excludes = hmbkp_exclude_string( 'pclzip' );
 
 	while ( $file = readdir( $d ) ) :
-
+	
 		// Ignore current dir and containing dir and any unreadable files or directories
 		if ( $file == '.' || $file == '..' )
 			continue;
@@ -283,7 +260,7 @@ function hmbkp_ls( $dir, $files = array() ) {
 		$file = hmbkp_conform_dir( trailingslashit( $dir ) . $file );
 
 		// Skip the backups dir and any excluded paths
-		if ( ( $file == hmbkp_path() || preg_match( '(' . $excludes . ')', $file ) || !is_readable( $file ) ) )
+		if ( ! is_readable( $file ) || $file == hmbkp_path() || preg_match( '(' . $excludes . ')', str_replace( ABSPATH, '', $file ) ) )
 			continue;
 
 		$files[] = $file;
@@ -357,7 +334,7 @@ function hmbkp_rmdirtree( $dir ) {
  */
 function hmbkp_calculate() {
 
-    @ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
+    @ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', WP_MAX_MEMORY_LIMIT ) );
 
     // Check cache
 	if ( $filesize = get_transient( 'hmbkp_estimated_filesize' ) )
@@ -395,43 +372,6 @@ function hmbkp_calculate() {
 }
 
 /**
- * Check whether shell_exec has been disabled.
- *
- * @return bool
- */
-function hmbkp_shell_exec_available() {
-
-	$disable_functions = ini_get( 'disable_functions' );
-
-	// Is shell_exec disabled?
-	if ( strpos( $disable_functions, 'shell_exec' ) !== false )
-		return false;
-
-	// Are we in Safe Mode
-	if ( hmbkp_is_safe_mode_active() )
-		return false;
-
-	return true;
-
-}
-
-/**
- * Check whether safe mode if active or not
- *
- * @return bool
- */
-function hmbkp_is_safe_mode_active() {
-
-	$safe_mode = ini_get( 'safe_mode' );
-
-	if ( $safe_mode && strtolower( $safe_mode ) != 'off' )
-		return true;
-
-	return false;
-
-}
-
-/**
  * Calculate the total filesize of all backups
  *
  * @return string
@@ -463,8 +403,8 @@ function hmbkp_setup_schedule() {
 	// Clear any old schedules
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
 
-	if( hmbkp_get_disable_automatic_backup() ) 
-		return; 
+	if( hmbkp_get_disable_automatic_backup() )
+		return;
 
 	// Default to 11 in the evening
 	$time = '23:00';
@@ -628,9 +568,8 @@ function hmbkp_get_database_only() {
 
 /**
  *	Returns defined email address or email address saved in options.
- *	If none set, return false.
+ *	If none set, return empty string.
  */
-
 function hmbkp_get_email_address() {
 
 	if ( defined( 'HMBKP_EMAIL' ) && HMBKP_EMAIL )
@@ -640,12 +579,12 @@ function hmbkp_get_email_address() {
 		$email = get_option( 'hmbkp_email_address' );
 
 	else
-		return false;
+		return '';
 
 	if ( is_email( $email ) )
 		return $email;
 
-	return false;
+	return '';
 
 }
 
@@ -661,23 +600,6 @@ function hmbkp_get_disable_automatic_backup() {
 
 	if ( get_option( 'hmbkp_disable_automatic_backup' ) )
 		return true;
-
-	return false;
-
-}
-
-/**
- * Get the list of excludes
- *
- * @return bool
- */
-function hmbkp_get_excludes() {
-
-	if ( defined( 'HMBKP_EXCLUDE' ) && HMBKP_EXCLUDE )
-		return HMBKP_EXCLUDE;
-
-	if ( get_option( 'hmbkp_excludes' ) )
-		return get_option( 'hmbkp_excludes' );
 
 	return false;
 
@@ -722,4 +644,12 @@ function hmbkp_cleanup() {
 
     endif;
 
+}
+
+function hmbkp_conform_dir( $dir ) {
+	return HM_Backup::get_instance()->conform_dir( $dir );
+}
+
+function hmbkp_is_safe_mode_active() {
+	return HM_Backup::get_instance()->is_safe_mode_active();
 }
