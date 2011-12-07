@@ -22,15 +22,24 @@ jQuery( document ).ready( function( $ ) {
 	    }
 	);
 
-	$( '.hmbkp_advanced-options-toggle' ).click( function() {
-		$( '#hmbkp_advanced-options' ).toggle();
+	$( '.hmbkp-settings-toggle' ).click( function() {
+		$( '#hmbkp-settings' ).toggle();
 	} );
+	
+	if ( typeof( screenMeta ) != 'undefined' ) {
+		$( '.hmbkp-show-help-tab' ).click( screenMeta.toggleEvent );
+	}
+	
+	if ( window.location.hash == '#hmbkp-settings' ){
+		$( '#hmbkp-settings' ).show();		
+	}
+	
 
 } );
 
 function hmbkpRedirectOnBackupComplete() {
 
-	img = jQuery( '<div>' ).append( jQuery( '.hmbkp_running a.button[disabled]:first img' ).clone() ).remove().html();
+	img = jQuery( '<div>' ).append( jQuery( '.hmbkp_running a.add-new-h2[disabled]:first img' ).clone() ).remove().html();
 
 	jQuery.get( ajaxurl, { 'action' : 'hmbkp_is_in_progress' },
 
@@ -44,7 +53,7 @@ function hmbkpRedirectOnBackupComplete() {
 
 				setTimeout( 'hmbkpRedirectOnBackupComplete();', 5000 );
 
-				jQuery( '.hmbkp_running a.button[disabled]:first' ).html( img + data );
+				jQuery( '.hmbkp_running a.add-new-h2[disabled]:first' ).html( img + data );
 
 			}
 		}

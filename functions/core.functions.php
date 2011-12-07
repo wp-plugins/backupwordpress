@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Setup the default options on plugin activation
+ * Setup the plugin defaults on activation
  */
 function hmbkp_activate() {
 
 	hmbkp_deactivate();
 
-	hmbkp_setup_daily_schedule();
+	hmbkp_setup_schedule();
 
 }
 
@@ -18,6 +18,8 @@ function hmbkp_activate() {
  */
 function hmbkp_deactivate() {
 
+	hmbkp_setup_hm_backup();
+
 	// Options to delete
 	$options = array(
 		'hmbkp_zip_path',
@@ -27,7 +29,10 @@ function hmbkp_deactivate() {
 		'hmbkp_running',
 		'hmbkp_status',
 		'hmbkp_complete',
-		'hmbkp_email_error'
+		'hmbkp_email_error',
+		'hmbkp_email_address',
+		'hmbkp_schedule_frequency',
+		'hmbkp_excludes'
 	);
 
 	foreach ( $options as $option )
@@ -68,7 +73,7 @@ function hmbkp_update() {
 	endif;
 
 	// Pre 1.1
-	if ( !get_option( 'hmbkp_plugin_version' ) ) :
+	if ( ! get_option( 'hmbkp_plugin_version' ) ) :
 
 		// Delete the obsolete max backups option
 		delete_option( 'hmbkp_max_backups' );
@@ -121,40 +126,6 @@ function hmbkp_update() {
 }
 
 /**
- * Simply wrapper function for creating timestamps
- *
- * @return timestamp
- */
-function hmbkp_timestamp() {
-	return date( get_option( 'date_format' ) ) . ' ' . date( 'H:i:s' );
-}
-
-/**
- * Sanitize a directory path
- *
- * @param string $dir
- * @param bool $rel. (default: false)
- * @return string $dir
- */
-function hmbkp_conform_dir( $dir, $rel = false ) {
-
-	// Normalise slashes
-	$dir = str_replace( '\\', '/', $dir );
-	$dir = str_replace( '//', '/', $dir );
-
-	// Remove the trailingslash
-	$dir = untrailingslashit( $dir );
-
-	// If we're on Windows
-	if ( strpos( ABSPATH, '\\' ) !== false )
-		$dir = str_replace( '\\', '/', $dir );
-
-	if ( $rel == true )
-		$dir = str_replace( hmbkp_conform_dir( ABSPATH ), '', $dir );
-
-	return $dir;
-}
-/**
  * Take a file size and return a human readable
  * version
  *
@@ -199,17 +170,21 @@ function hmbkp_size_readable( $size, $unit = null, $retstring = '%01.2f %s', $si
 /**
  * Add daily as a cron schedule choice
  *
+ * @todo can we not use the built in schedules
  * @param array $recc
  * @return array $recc
  */
 function hmbkp_more_reccurences( $recc ) {
 
 	$hmbkp_reccurrences = array(
-	    'hmbkp_daily' => array( 'interval' => 86400, 'display' => 'every day' )
+	    'hmbkp_weekly' => array( 'interval' => 604800, 'display' => 'every week' ),
+	    'hmbkp_fortnightly' => array( 'interval' => 1209600, 'display' => 'once a fortnight' ),
+	    'hmbkp_monthly' => array( 'interval' => 2629743.83 , 'display' => 'once a month' )
 	);
 
 	return array_merge( $recc, $hmbkp_reccurrences );
 }
+add_filter( 'cron_schedules', 'hmbkp_more_reccurences' );
 
 /**
  * Send a flie to the browser for download
@@ -268,7 +243,7 @@ function hmbkp_send_file( $path ) {
  */
 function hmbkp_ls( $dir, $files = array() ) {
 
-	if ( !is_readable( $dir ) )
+	if ( ! is_readable( $dir ) )
 		return $files;
 
 	$d = opendir( $dir );
@@ -277,7 +252,7 @@ function hmbkp_ls( $dir, $files = array() ) {
 	$excludes = hmbkp_exclude_string( 'pclzip' );
 
 	while ( $file = readdir( $d ) ) :
-
+	
 		// Ignore current dir and containing dir and any unreadable files or directories
 		if ( $file == '.' || $file == '..' )
 			continue;
@@ -285,7 +260,7 @@ function hmbkp_ls( $dir, $files = array() ) {
 		$file = hmbkp_conform_dir( trailingslashit( $dir ) . $file );
 
 		// Skip the backups dir and any excluded paths
-		if ( ( $file == hmbkp_path() || preg_match( '(' . $excludes . ')', $file ) || !is_readable( $file ) ) )
+		if ( ! is_readable( $file ) || $file == hmbkp_path() || preg_match( '(' . $excludes . ')', str_replace( ABSPATH, '', $file ) ) )
 			continue;
 
 		$files[] = $file;
@@ -359,7 +334,7 @@ function hmbkp_rmdirtree( $dir ) {
  */
 function hmbkp_calculate() {
 
-    @ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', '256M' ) );
+    @ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', WP_MAX_MEMORY_LIMIT ) );
 
     // Check cache
 	if ( $filesize = get_transient( 'hmbkp_estimated_filesize' ) )
@@ -368,7 +343,7 @@ function hmbkp_calculate() {
 	$filesize = 0;
 
     // Don't include database if files only
-	if ( ( defined( 'HMBKP_FILES_ONLY' ) && !HMBKP_FILES_ONLY ) || !defined( 'HMBKP_FILES_ONLY' ) ) :
+	if ( ! hmbkp_get_files_only() ) :
 
     	global $wpdb;
 
@@ -379,7 +354,7 @@ function hmbkp_calculate() {
 
     endif;
 
-   	if ( ( defined( 'HMBKP_DATABASE_ONLY' ) && !HMBKP_DATABASE_ONLY ) || !defined( 'HMBKP_DATABASE_ONLY' ) ) :
+   	if ( ! hmbkp_get_database_only() ) :
 
     	// Get rid of any cached filesizes
     	clearstatcache();
@@ -393,43 +368,6 @@ function hmbkp_calculate() {
     set_transient( 'hmbkp_estimated_filesize', $filesize,  604800 );
 
     return hmbkp_size_readable( $filesize, null, '%01u %s' );
-
-}
-
-/**
- * Check whether shell_exec has been disabled.
- *
- * @return bool
- */
-function hmbkp_shell_exec_available() {
-
-	$disable_functions = ini_get( 'disable_functions' );
-
-	// Is shell_exec disabled?
-	if ( strpos( $disable_functions, 'shell_exec' ) !== false )
-		return false;
-
-	// Are we in Safe Mode
-	if ( hmbkp_is_safe_mode_active() )
-		return false;
-
-	return true;
-
-}
-
-/**
- * Check whether safe mode if active or not
- *
- * @return bool
- */
-function hmbkp_is_safe_mode_active() {
-
-	$safe_mode = ini_get( 'safe_mode' );
-
-	if ( $safe_mode && $safe_mode != 'off' && $safe_mode != 'Off' )
-		return true;
-
-	return false;
 
 }
 
@@ -452,13 +390,21 @@ function hmbkp_total_filesize() {
 
 }
 
+
 /**
- * Setup the daily backup schedule
+ * Set Up the shedule.
+ * This should runn according to the Frequency defined, or set in the option.
+ *
+ * @access public
+ * @return void
  */
-function hmbkp_setup_daily_schedule() {
+function hmbkp_setup_schedule() {
 
 	// Clear any old schedules
 	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
+
+	if( hmbkp_get_disable_automatic_backup() )
+		return;
 
 	// Default to 11 in the evening
 	$time = '23:00';
@@ -467,10 +413,24 @@ function hmbkp_setup_daily_schedule() {
 	if ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) && HMBKP_DAILY_SCHEDULE_TIME )
 		$time = HMBKP_DAILY_SCHEDULE_TIME;
 
-	if ( time() > strtotime( $time ) )
-		$time = 'tomorrow ' . $time;
+	$offset = current_time( 'timestamp' ) - time();
+	$scheduletime_UTC = strtotime( $time ) - $offset;
 
-	wp_schedule_event( strtotime( $time ), 'hmbkp_daily', 'hmbkp_schedule_backup_hook' );
+	if( defined( 'HMBKP_SCHEDULE_FREQUENCY' ) && HMBKP_SCHEDULE_FREQUENCY )
+		$schedule_frequency = HMBKP_SCHEDULE_FREQUENCY;
+	elseif( get_option('hmbkp_schedule_frequency') )
+		$schedule_frequency = get_option('hmbkp_schedule_frequency');
+	else
+		$schedule_frequency = 'daily';
+
+	// Advance by the interval. (except daily, when it will only happen if shcheduled time is in the past. )
+	if( $schedule_frequency != 'daily' || $schedule_frequency == 'daily' && $scheduletime_UTC < time() ) {
+		$interval =  wp_get_schedules('hmbkp_schedule_backup_hook');
+		$interval = $interval[ $schedule_frequency ]['interval'];
+		$scheduletime_UTC = $scheduletime_UTC + $interval;
+	}
+
+	wp_schedule_event( $scheduletime_UTC, $schedule_frequency, 'hmbkp_schedule_backup_hook' );
 }
 
 /**
@@ -502,8 +462,13 @@ function hmbkp_path() {
 	// Secure the directory with a .htaccess file
 	$htaccess = $path . '/.htaccess';
 
+	$contents[]	= '# ' . __( 'This .htaccess file ensures that other people cannot download your backup files.', 'hmbkp' );
+	$contents[] = '';
+	$contents[] = 'deny from all';
+	$contents[] = '';
+
 	if ( !file_exists( $htaccess ) && is_writable( $path ) && require_once( ABSPATH . '/wp-admin/includes/misc.php' ) )
-		insert_with_markers( $htaccess, 'BackUpWordPress', array( 'deny from all' ) );
+		insert_with_markers( $htaccess, 'BackUpWordPress', $contents );
 
     return hmbkp_conform_dir( $path );
 }
@@ -561,7 +526,82 @@ function hmbkp_max_backups() {
 	if ( defined( 'HMBKP_MAX_BACKUPS' ) && is_numeric( HMBKP_MAX_BACKUPS ) )
 		return (int) HMBKP_MAX_BACKUPS;
 
+	if ( get_option( 'hmbkp_max_backups' ) )
+		return (int) get_option( 'hmbkp_max_backups', 10 );
+
 	return 10;
+
+}
+
+/**
+ * Whether to only backup files
+ *
+ * @return bool
+ */
+function hmbkp_get_files_only() {
+
+	if ( defined( 'HMBKP_FILES_ONLY' ) && HMBKP_FILES_ONLY )
+		return true;
+
+	if ( get_option( 'hmbkp_files_only' ) )
+		return true;
+
+	return false;
+}
+
+/**
+ * Whether to only backup the database
+ *
+ * @return bool
+ */
+function hmbkp_get_database_only() {
+
+	if ( defined( 'HMBKP_DATABASE_ONLY' ) && HMBKP_DATABASE_ONLY )
+		return true;
+
+	if ( get_option( 'hmbkp_database_only' ) )
+		return true;
+
+	return false;
+
+}
+
+/**
+ *	Returns defined email address or email address saved in options.
+ *	If none set, return empty string.
+ */
+function hmbkp_get_email_address() {
+
+	if ( defined( 'HMBKP_EMAIL' ) && HMBKP_EMAIL )
+		$email = HMBKP_EMAIL;
+
+	elseif ( get_option( 'hmbkp_email_address' ) )
+		$email = get_option( 'hmbkp_email_address' );
+
+	else
+		return '';
+
+	if ( is_email( $email ) )
+		return $email;
+
+	return '';
+
+}
+
+/**
+ * Are automatic backups disabled
+ *
+ * @return bool
+ */
+function hmbkp_get_disable_automatic_backup() {
+
+	if ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) && HMBKP_DISABLE_AUTOMATIC_BACKUP )
+		return true;
+
+	if ( get_option( 'hmbkp_disable_automatic_backup' ) )
+		return true;
+
+	return false;
 
 }
 
@@ -604,4 +644,12 @@ function hmbkp_cleanup() {
 
     endif;
 
+}
+
+function hmbkp_conform_dir( $dir ) {
+	return HM_Backup::get_instance()->conform_dir( $dir );
+}
+
+function hmbkp_is_safe_mode_active() {
+	return HM_Backup::get_instance()->is_safe_mode_active();
 }
