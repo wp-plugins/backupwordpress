@@ -2,7 +2,7 @@
 Contributors: humanmade, joehoyle, mattheu, tcrsavage, willmot
 Tags: back up, backup, backups, database, zip, db, files, archive, humanmade
 Requires at least: 3.1
-Tested up to: 3.2.1
+Tested up to: 3.3
 Stable tag: 1.5
 
 Simple automated back ups of your WordPress powered website.
