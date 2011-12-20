@@ -241,43 +241,23 @@ function hmbkp_rmdirtree( $dir ) {
 	if ( is_file( $dir ) )
 		unlink( $dir );
 
-    if ( !is_dir( $dir ) )
+    if ( ! is_dir( $dir ) )
     	return false;
 
-    $result = array();
+    $files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir ), RecursiveIteratorIterator::CHILD_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
 
-    $dir = trailingslashit( $dir );
+	foreach ( $files as $file ) {
 
-    $handle = opendir( $dir );
+      if ( $file->isDir() )
+         rmdir( $file->getPathname() );
 
-    while ( false !== ( $file = readdir( $handle ) ) ) :
+      else
+         unlink( $file->getPathname() );
 
-        // Ignore . and ..
-        if ( $file != '.' && $file != '..' ) :
 
-        	$path = $dir . $file;
+   }
 
-        	// Recurse if subdir, Delete if file
-        	if ( is_dir( $path ) ) :
-        		$result = array_merge( $result, hmbkp_rmdirtree( $path ) );
-
-        	else :
-        		unlink( $path );
-        		$result[] .= $path;
-
-        	endif;
-
-        endif;
-
-    endwhile;
-
-    closedir( $handle );
-
-    rmdir( $dir );
-
-    $result[] .= $dir;
-
-    return $result;
+   rmdir( $dir );
 
 }
 
@@ -316,21 +296,20 @@ function hmbkp_calculate() {
     	// Get rid of any cached filesizes
     	clearstatcache();
 
-    	$files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( ABSPATH ), RecursiveIteratorIterator::SELF_FIRST );
+    	$files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( ABSPATH ), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
 
 		$excludes = hmbkp_exclude_string( 'regex' );
 
 		foreach ( $files as $file ) {
 
-		    // Skip bad files
-		    if ( ! is_readable( $file ) || ! file_exists( $file ) || is_link( $file ) )
-		    	continue;
+			if ( ! $file->isReadable() )
+				continue;
 
 		    // Excludes
-		    if ( $excludes && preg_match( '(' . $excludes . ')', str_replace( ABSPATH, '', $file ) ) )
+		    if ( $excludes && preg_match( '(' . $excludes . ')', str_replace( ABSPATH, '', $file->getPathname() ) ) )
 		    	continue;
 
-			$filesize += (float) @filesize( $file );
+			$filesize += (float) @$file->getSize();
 
 		}
 
@@ -585,7 +564,7 @@ function hmbkp_get_disable_automatic_backup() {
  */
 function hmbkp_possible() {
 
-	if ( !is_writable( hmbkp_path() ) || !is_dir( hmbkp_path() ) || hmbkp_is_safe_mode_active() )
+	if ( ! is_writable( hmbkp_path() ) || ! is_dir( hmbkp_path() ) || hmbkp_is_safe_mode_active() )
 		return false;
 
 	if ( defined( 'HMBKP_FILES_ONLY' ) && HMBKP_FILES_ONLY && defined( 'HMBKP_DATABASE_ONLY' ) && HMBKP_DATABASE_ONLY )
