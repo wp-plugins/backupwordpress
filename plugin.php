@@ -97,7 +97,6 @@ function hmbkp_setup_hm_backup() {
 	$hm_backup = HM_Backup::get_instance();
 
 	$hm_backup->path = hmbkp_path();
-	$hm_backup->root = ABSPATH;
 	$hm_backup->files_only = hmbkp_get_files_only();
 	$hm_backup->database_only = hmbkp_get_database_only();
 
@@ -110,7 +109,7 @@ function hmbkp_setup_hm_backup() {
 	$hm_backup->excludes = hmbkp_valid_custom_excludes();
 
 	// If the backup path is inside ABSPATH then exclude it by default
-	if ( strpos( hmbkp_path(), ABSPATH ) === 0 )
+	if ( strpos( hmbkp_path(), hmbkp_conform_dir( ABSPATH ) ) === 0 )
 		$hm_backup->excludes[] = trailingslashit( str_replace( untrailingslashit( ABSPATH ), '', hmbkp_path() ) );
 
 }
