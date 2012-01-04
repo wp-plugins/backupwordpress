@@ -94,7 +94,48 @@ class HM_Backup {
 	 * @static
 	 * @access public
 	 */
-	public static $instance;
+	private static $instance;
+
+	/**
+	 * An array of all the files in root
+	 * excluding excludes
+	 *
+	 * @var array
+	 * @access private
+	 */
+	private $files;
+
+	/**
+	 * Contains an array of errors
+	 *
+	 * @var mixed
+	 * @access private
+	 */
+	private $errors;
+
+	/**
+	 * Contains an array of warnings
+	 *
+	 * @var mixed
+	 * @access private
+	 */
+	private $warnings;
+
+	/**
+	 * The archive method used
+	 *
+	 * @var string
+	 * @access private
+	 */
+	private $archive_method;
+
+	/**
+	 * The mysqldump method used
+	 *
+	 * @var string
+	 * @access private
+	 */
+	private $mysqldump_method;
 
 	/**
 	 * Sets up the default properties
@@ -108,8 +149,12 @@ class HM_Backup {
 		@ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', WP_MAX_MEMORY_LIMIT ) );
 		@set_time_limit( 0 );
 
+		$this->errors = array();
+
+		set_error_handler( array( &$this, 'error_handler' ) );
+
 		// Defaults
-		$this->root = ABSPATH;
+		$this->root = $this->conform_dir( ABSPATH );
 
 		$this->path = $this->conform_dir( WP_CONTENT_DIR . '/backups' );
 
@@ -148,7 +193,17 @@ class HM_Backup {
 	 * @return string
 	 */
 	public function archive_filepath() {
-		return trailingslashit( $this->path ) . $this->archive_filename;
+		return trailingslashit( $this->path() ) . $this->archive_filename();
+	}
+
+	/**
+	 * The full filepath to the archive file.
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function archive_filename() {
+		return strtolower( sanitize_file_name( remove_accents( $this->archive_filename ) ) );
 	}
 
 	/**
@@ -158,7 +213,27 @@ class HM_Backup {
 	 * @return string
 	 */
 	public function database_dump_filepath() {
-		return trailingslashit( $this->path ) . $this->database_dump_filename;
+		return trailingslashit( $this->path() ) . $this->database_dump_filename();
+	}
+
+	public function database_dump_filename() {
+		return strtolower( sanitize_file_name( remove_accents( $this->database_dump_filename ) ) );
+	}
+
+    public function root() {
+        return $this->conform_dir( $this->root );
+    }
+
+    public function path() {
+        return $this->conform_dir( $this->path );
+    }
+
+	public function archive_method() {
+		return $this->archive_method;
+	}
+
+	public function mysqldump_method() {
+		return $this->mysqldump_method;
 	}
 
 	/**
@@ -178,7 +253,7 @@ class HM_Backup {
 		// Zip everything up
 		$this->archive();
 
-		do_action( 'hmbkp_backup_complete' );
+		do_action( 'hmbkp_backup_complete', $this );
 
 	}
 
@@ -194,6 +269,8 @@ class HM_Backup {
 	public function mysqldump() {
 
 		do_action( 'hmbkp_mysqldump_started' );
+
+		$this->mysqldump_method = 'mysqldump';
 
 		// Use mysqldump if we can
 		if ( $this->mysqldump_command_path ) {
@@ -246,13 +323,15 @@ class HM_Backup {
 	 */
 	public function mysqldump_fallback() {
 
+		$this->mysqldump_method = 'mysqldump_fallback';
+
 	    $this->db = mysql_pconnect( DB_HOST, DB_USER, DB_PASSWORD );
 
 	    mysql_select_db( DB_NAME, $this->db );
 	    mysql_set_charset( DB_CHARSET, $this->db );
 
 	    // Begin new backup of MySql
-	    $tables = mysql_list_tables( DB_NAME );
+	    $tables = mysql_query( 'SHOW TABLES' );
 
 	    $sql_file  = "# WordPress : " . get_bloginfo( 'url' ) . " MySQL database backup\n";
 	    $sql_file .= "#\n";
@@ -295,11 +374,11 @@ class HM_Backup {
 			$this->zip();
 
 		// If not or if the shell zip failed then use ZipArchive
-		if ( ! file_exists( $this->archive_filepath() ) && class_exists( 'ZipArchive' ) && empty( $this->skip_zip_archive ) )
+		if ( ( empty( $this->archive_verified ) || $this->errors() ) && class_exists( 'ZipArchive' ) && empty( $this->skip_zip_archive ) )
 			$this->zip_archive();
 
 		// If ZipArchive is unavailable or one of the above failed
-		if ( ! file_exists( $this->archive_filepath() ) )
+		if ( ( empty( $this->archive_verified ) || $this->errors() ) )
 			$this->pcl_zip();
 
 		// Delete the database dump file
@@ -318,17 +397,21 @@ class HM_Backup {
 	 */
 	public function zip() {
 
+		$this->archive_method = 'zip';
+
 		// Zip up $this->root with excludes
 		if ( ! $this->database_only && $this->exclude_string( 'zip' ) )
-		    shell_exec( 'cd ' . escapeshellarg( $this->root ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' -x ' . $this->exclude_string( 'zip' ) . ' 2> /dev/null' );
-
+		    $this->error( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->root() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' -x ' . $this->exclude_string( 'zip' ) . ' 2>&1' ) );
+				
 		// Zip up $this->root without excludes
 		elseif ( ! $this->database_only )
-		    shell_exec( 'cd ' . escapeshellarg( $this->root ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' 2> /dev/null' );
-
+		    $this->error( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->root() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' 2>&1' ) );
+			
 		// Add the database dump to the archive
 		if ( ! $this->files_only )
-		    shell_exec( 'cd ' . escapeshellarg( $this->path ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -uq ' . escapeshellarg( $this->archive_filepath() ) . ' ' . escapeshellarg( $this->database_dump_filename ) . ' 2> /dev/null' );
+		    $this->error( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->path() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -uq ' . escapeshellarg( $this->archive_filepath() ) . ' ' . escapeshellarg( $this->database_dump_filename() ) . ' 2>&1' ) );
+		
+		$this->check_archive();
 
 	}
 
@@ -341,6 +424,8 @@ class HM_Backup {
 	 */
 	public function zip_archive() {
 
+		$this->archive_method = 'ziparchive';
+
     	$zip = new ZipArchive();
 
     	if ( ! class_exists( 'ZipArchive' ) || ! $zip->open( $this->archive_filepath(), ZIPARCHIVE::CREATE ) )
@@ -348,26 +433,15 @@ class HM_Backup {
 
 		if ( ! $this->database_only ) {
 
-			$files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $this->root ), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
-
 			$files_added = 0;
 
-			$excludes = $this->exclude_string( 'regex' );
+			foreach ( $this->files() as $file ) {
 
-			foreach ( $files as $file ) {
+			    if ( is_dir( trailingslashit( $this->root() ) . $file ) )
+					$zip->addEmptyDir( trailingslashit( $file ) );
 
-				if ( ! $file->isReadable() )
-					continue;
-
-			    // Excludes
-			    if ( $excludes && preg_match( '(' . $excludes . ')', str_replace( $this->root, '', $this->conform_dir( $file->getPathname() ) ) ) )
-			    	continue;
-
-			    if ( $file->isDir() )
-					$zip->addEmptyDir( str_replace( trailingslashit( $this->root ), '', trailingslashit( $file->getPathname() ) ) );
-
-			    elseif ( $file->isFile() )
-					$zip->addFile( $file, str_replace( trailingslashit( $this->root ), '', $file->getPathname() ) );
+			    elseif ( is_file( trailingslashit( $this->root() ) . $file ) )
+					$zip->addFile( trailingslashit( $this->root() ) . $file, $file );
 
 				if ( ++$files_added % 500 === 0 )
 					if ( ! $zip->close() || ! $zip->open( $this->archive_filepath(), ZIPARCHIVE::CREATE ) )
@@ -379,9 +453,17 @@ class HM_Backup {
 
 		// Add the database
 		if ( ! $this->files_only )
-			$zip->addFile( $this->database_dump_filepath(), $this->database_dump_filename );
+			$zip->addFile( $this->database_dump_filepath(), $this->database_dump_filename() );
+
+		if ( $zip->status )
+			$this->error( 'ziparchive', $zip->status );
+
+		if ( $zip->statusSys )
+			$this->error( 'ziparchive', $zip->statusSys );
 
 		$zip->close();
+
+		$this->check_archive();
 
 	}
 
@@ -396,26 +478,201 @@ class HM_Backup {
 	 */
 	public function pcl_zip() {
 
+		$this->archive_method = 'pclzip';
+
 		global $_hmbkp_exclude_string;
 
 		$_hmbkp_exclude_string = $this->exclude_string( 'regex' );
 
-		if ( ! defined( 'PCLZIP_TEMPORARY_DIR' ) )
-			define( 'PCLZIP_TEMPORARY_DIR', $this->path );
-
-		require_once( ABSPATH . 'wp-admin/includes/class-pclzip.php' );
+		$this->load_pclzip();
 
 		$archive = new PclZip( $this->archive_filepath() );
 
 		// Zip up everything
 		if ( ! $this->database_only )
-			$archive->add( $this->root, PCLZIP_OPT_REMOVE_PATH, $this->root, PCLZIP_CB_PRE_ADD, 'hmbkp_pclzip_callback' );
+			if ( ! $archive->add( $this->root(), PCLZIP_OPT_REMOVE_PATH, $this->root(), PCLZIP_CB_PRE_ADD, 'hmbkp_pclzip_callback' ) )
+				$this->error( 'pclzip', $archive->errorInfo( true ) );
 
 		// Add the database
 		if ( ! $this->files_only )
-			$archive->add( $this->database_dump_filepath(), PCLZIP_OPT_REMOVE_PATH, $this->path );
+			if ( ! $archive->add( $this->database_dump_filepath(), PCLZIP_OPT_REMOVE_PATH, $this->path() ) )
+				$this->error( 'pclzip', $archive->errorInfo( true ) );
 
 		unset( $GLOBALS['_hmbkp_exclude_string'] );
+
+		$this->check_archive();
+
+	}
+
+	/**
+	 * Verify that the archive is valid and contains all the files it should contain.
+	 *
+	 * @access public
+	 * @return bool
+	 */
+	public function check_archive() {
+
+		// If we've already passed then no need to check again
+		if ( ! empty( $this->archive_verified ) )
+			return true;
+
+		if ( ! file_exists( $this->archive_filepath() ) )
+			$this->error( $this->archive_method(), __( 'The backup file was not created', 'hmbkp' ) );
+
+		// Verify using the zip command if possible
+		if ( ! $this->errors() && $this->zip_command_path ) {
+
+			$verify = shell_exec( escapeshellarg( $this->zip_command_path ) . ' -T ' . escapeshellarg( $this->archive_filepath() ) . ' 2> /dev/null' );
+
+			if ( strpos( $verify, 'OK' ) === false )
+				$this->error( $this->archive_method(), $verify );
+
+		}
+		
+		/* Comment out for now as causes memory issues on large sites */
+		
+		//if ( ! $this->errors() ) {
+		//
+		//	// If it's a file backup, get an array of all the files that should have been backed up
+		//	if ( ! $this->database_only )
+		//		$files = $this->files();
+		//
+		//	// Check that the database was backed up
+		//	if ( ! $this->files_only )
+		//		$files[] = $this->database_dump_filename();
+		//
+		//	$this->load_pclzip();
+		//
+		//	$archive = new PclZip( $this->archive_filepath() );
+		//	$filesystem = $archive->extract( PCLZIP_OPT_EXTRACT_AS_STRING );
+		//
+		//	foreach( $filesystem as $file )
+		//		$archive_files[] = untrailingslashit( $file['filename'] );
+		//
+		//	// Check that the array of files that should have been backed up matches the array of files in the zip
+		//	if ( $files !== $archive_files )
+		//		$this->error( $this->archive_method(), __( 'Backup file doesn\'t contain the the following files: ', 'hmbkp' ) . implode( ', ', array_diff( $files, $archive_files ) ) );
+		//
+		//}
+
+		// If there are errors delete the backup file.
+		if ( $this->errors() && file_exists( $this->archive_filepath() ) )
+			unlink( $this->archive_filepath() );
+
+		if ( $this->errors() )
+			return false;
+
+		return $this->archive_verified = true;
+
+	}
+
+	/**
+	 * Generate the array of files to be backed up by looping through
+	 * root, ignored unreadable files and excludes
+	 *
+	 * @access public
+	 * @return array
+	 */
+	public function files() {
+
+		if ( ! empty( $this->files ) )
+			return $this->files;
+
+		$this->files = array();
+
+		if ( defined( 'RecursiveDirectoryIterator::FOLLOW_SYMLINKS' ) ) {
+
+			$filesystem = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $this->root(), RecursiveDirectoryIterator::FOLLOW_SYMLINKS ), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
+
+			$excludes = $this->exclude_string( 'regex' );
+
+			foreach ( $filesystem as $file ) {
+
+			    if ( ! $file->isReadable() ) {
+			        $this->unreadable_files[] = $file->getPathName();
+			        continue;
+			    }
+
+			    $pathname = str_ireplace( trailingslashit( $this->root() ), '', $this->conform_dir( $file->getPathname() ) );
+
+			    // Excludes
+			    if ( $excludes && preg_match( '(' . $excludes . ')', $pathname ) )
+			        continue;
+
+			    // Don't include database dump as it's added separately
+			    if ( basename( $pathname ) == $this->database_dump_filename() )
+			    	continue;
+
+			    $this->files[] = $pathname;
+
+			}
+
+		} else {
+
+			$this->files = $this->files_fallback( $this->root() );
+
+		}
+
+		if ( ! empty( $this->unreadable_files ) )
+			$this->warning( $this->archive_method(), __( 'The following files are unreadable and couldn\'t be backed up: ', 'hmbkp' ) . implode( ', ', $this->unreadable_files ) );
+
+		return $this->files;
+
+	}
+
+	/**
+	 * Fallback function for generating a filesystem
+	 * array
+	 *
+	 * Used if RecursiveDirectoryIterator::FOLLOW_SYMLINKS isn't available
+	 *
+	 * @access private
+	 * @param stromg $dir
+	 * @param array $files. (default: array())
+	 * @return array
+	 */
+	private function files_fallback( $dir, $files = array() ) {
+
+	    $handle = opendir( $dir );
+
+	    $excludes = $this->exclude_string( 'regex' );
+
+	    while ( $file = readdir( $handle ) ) :
+
+	    	// Ignore current dir and containing dir and any unreadable files or directories
+	    	if ( $file == '.' || $file == '..' )
+	    		continue;
+
+	    	$filepath = $this->conform_dir( trailingslashit( $dir ) . $file );
+	    	$file = str_ireplace( trailingslashit( $this->root() ), '', $filepath );
+
+	    	if ( ! is_readable( $filepath ) ) {
+				$this->unreadable_files[] = $filepath;
+				continue;
+	    	}
+
+	    	// Skip the backups dir and any excluded paths
+	    	if ( ( $excludes && preg_match( '(' . $excludes . ')', $file ) ) )
+	    		continue;
+
+	    	$files[] = $file;
+
+	    	if ( is_dir( $filepath ) )
+	    		$files = $this->files_fallback( $filepath, $files );
+
+		endwhile;
+
+		return $files;
+
+	}
+
+	private function load_pclzip() {
+
+		// Load PclZip
+		if ( ! defined( 'PCLZIP_TEMPORARY_DIR' ) )
+			define( 'PCLZIP_TEMPORARY_DIR', $this->path() );
+
+		require_once( ABSPATH . 'wp-admin/includes/class-pclzip.php' );
 
 	}
 
@@ -517,6 +774,10 @@ class HM_Backup {
 		// Sanitize the excludes
 		$excludes = array_filter( array_unique( array_map( 'trim', (array) $this->excludes ) ) );
 
+		// If path() is inside root(), exclude it
+		if ( strpos( $this->path(), $this->root() ) !== false )
+			$excludes[] = trailingslashit( $this->path() );
+
 		foreach( $excludes as $key => &$rule ) {
 
 			$file = $absolute = $fragment = false;
@@ -534,7 +795,7 @@ class HM_Backup {
 				$fragment = true;
 
 			// Strip $this->root and conform
-			$rule = str_replace( $this->conform_dir( $this->root ), '', untrailingslashit( $this->conform_dir( $rule ) ) );
+			$rule = str_ireplace( $this->root(), '', untrailingslashit( $this->conform_dir( $rule ) ) );
 
 			// Strip the preceeding slash
 			if ( in_array( substr( $rule, 0, 1 ), array( '\\', '/' ) ) )
@@ -568,7 +829,7 @@ class HM_Backup {
 
 		// Escape shell args for zip command
 		if ( $context == 'zip' )
-			$excludes = array_map( 'escapeshellarg', $excludes );
+			$excludes = array_map( 'escapeshellarg', array_unique( $excludes ) );
 
 		return implode( $separator, $excludes );
 
@@ -682,7 +943,7 @@ class HM_Backup {
 	private function make_sql( $sql_file, $table ) {
 
 	    // Add SQL statement to drop existing table
-	    $sql_file = "\n";
+	    $sql_file .= "\n";
 	    $sql_file .= "\n";
 	    $sql_file .= "#\n";
 	    $sql_file .= "# Delete any existing table " . $this->sql_backquote( $table ) . "\n";
@@ -736,11 +997,13 @@ class HM_Backup {
 
 	    // Checks whether the field is an integer or not
 	    for ( $j = 0; $j < $fields_cnt; $j++ ) {
+
 	    	$field_set[$j] = $this->sql_backquote( mysql_field_name( $result, $j ) );
 	    	$type = mysql_field_type( $result, $j );
 
 	    	if ( $type == 'tinyint' || $type == 'smallint' || $type == 'mediumint' || $type == 'int' || $type == 'bigint'  || $type == 'timestamp')
 	    		$field_num[$j] = true;
+
 	    	else
 	    		$field_num[$j] = false;
 
@@ -855,6 +1118,94 @@ class HM_Backup {
 
 	}
 
+	/**
+	 * Get the errors
+	 *
+	 * @access public
+	 * @return null
+	 */
+	public function errors() {
+
+		return $this->errors;
+
+	}
+
+
+	/**
+	 * Add an error to the errors stack
+	 *
+	 * @access private
+	 * @param string $context
+	 * @param mixed $error
+	 * @return null
+	 */
+	private function error( $context, $error ) {
+
+		if ( empty( $context ) || empty( $error ) )
+			return;
+
+		if ( $context == 'zip' && strpos( $error, 'zip warning' ) !== false )
+			return $this->warning( $context, $error );
+
+
+		$this->errors[$context][$_key = md5( implode( ':' , (array) $error ) )] = $error;
+
+	}
+
+	/**
+	 * Get the warnings
+	 *
+	 * @access public
+	 * @return null
+	 */
+	public function warnings() {
+
+		return $this->warnings;
+
+	}
+
+
+	/**
+	 * Add an warning to the warnings stack
+	 *
+	 * @access private
+	 * @param string $context
+	 * @param mixed $warning
+	 * @return null
+	 */
+	private function warning( $context, $warning ) {
+
+		if ( empty( $context ) || empty( $warning ) )
+			return;
+
+		$this->warnings[$context][$_key = md5( implode( ':' , (array) $warning ) )] = $warning;
+
+	}
+
+
+	/**
+	 * Custom error handler for catching errors
+	 *
+	 * @access private
+	 * @param string $type
+	 * @param string $message
+	 * @param string $file
+	 * @param string $line
+	 * @return null
+	 */
+	public function error_handler( $type ) {
+
+		if ( in_array( $type, array( E_STRICT, E_DEPRECATED ) ) || error_reporting() === 0 )
+			return false;
+
+		$args = func_get_args();
+
+		$this->warning( 'php', array_splice( $args, 0, 4 ) );
+
+		return false;
+
+	}
+
 }
 
 /**
@@ -872,7 +1223,7 @@ function hmbkp_pclzip_callback( $event, &$file ) {
 	global $_hmbkp_exclude_string;
 
     // Don't try to add unreadable files.
-    if ( ! is_readable( $file['filename'] ) || ! file_exists( $file['filename'] ) || is_link( $file['filename'] ) )
+    if ( ! is_readable( $file['filename'] ) || ! file_exists( $file['filename'] ) )
     	return false;
 
     // Match everything else past the exclude list
