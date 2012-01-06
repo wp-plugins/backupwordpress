@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://hmn.md/backupwordpress/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.6.2
+Version: 1.6.3
 Author URI: http://hmn.md/
 */
 
@@ -30,6 +30,7 @@ define( 'HMBKP_PLUGIN_SLUG', 'backupwordpress' );
 define( 'HMBKP_PLUGIN_PATH', WP_PLUGIN_DIR . '/' . HMBKP_PLUGIN_SLUG );
 define( 'HMBKP_PLUGIN_URL', WP_PLUGIN_URL . '/' . HMBKP_PLUGIN_SLUG );
 define( 'HMBKP_REQUIRED_WP_VERSION', '3.1' );
+define( 'HMBKP_SECURE_KEY', md5( ABSPATH . time() ) );
 
 if ( ! defined( 'WP_MAX_MEMORY_LIMIT' ) )
 	define( 'WP_MAX_MEMORY_LIMIT', '256M' );
@@ -106,10 +107,6 @@ function hmbkp_setup_hm_backup() {
 
 	$hm_backup->excludes = hmbkp_valid_custom_excludes();
 
-	// If the backup path is inside ABSPATH then exclude it by default
-	if ( strpos( hmbkp_path(), hmbkp_conform_dir( ABSPATH ) ) === 0 )
-		$hm_backup->excludes[] = trailingslashit( str_replace( untrailingslashit( ABSPATH ), '', hmbkp_path() ) );
-
 }
 add_action( 'init', 'hmbkp_setup_hm_backup' );
 
@@ -129,6 +126,9 @@ require_once( HMBKP_PLUGIN_PATH . '/functions/backup.functions.php' );
 // Load the wp cli command
 if ( defined( 'WP_CLI' ) && WP_CLI )
 	include( HMBKP_PLUGIN_PATH . '/functions/wp-cli.php' );
+	
+if ( ! defined( 'PCLZIP_TEMPORARY_DIR' ) )
+	define( 'PCLZIP_TEMPORARY_DIR', trailingslashit( hmbkp_path() ) );
 
 // Plugin activation and deactivation
 add_action( 'activate_' . HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_activate' );

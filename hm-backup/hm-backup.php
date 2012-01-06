@@ -301,9 +301,9 @@ class HM_Backup {
 			$cmd .= ' ' . escapeshellarg( DB_NAME );
 
 			// Send stdout to null
-			$cmd .= ' 2> /dev/null';
+			$cmd .= ' 2>&1';
 
-			shell_exec( $cmd );
+			$this->warning( 'mysqldump', shell_exec( $cmd ) );
 
 		}
 
@@ -374,11 +374,11 @@ class HM_Backup {
 			$this->zip();
 
 		// If not or if the shell zip failed then use ZipArchive
-		if ( ( empty( $this->archive_verified ) || $this->errors() ) && class_exists( 'ZipArchive' ) && empty( $this->skip_zip_archive ) )
+		if ( empty( $this->archive_verified ) && class_exists( 'ZipArchive' ) && empty( $this->skip_zip_archive ) )
 			$this->zip_archive();
 
 		// If ZipArchive is unavailable or one of the above failed
-		if ( ( empty( $this->archive_verified ) || $this->errors() ) )
+		if ( empty( $this->archive_verified ) )
 			$this->pcl_zip();
 
 		// Delete the database dump file
@@ -401,16 +401,16 @@ class HM_Backup {
 
 		// Zip up $this->root with excludes
 		if ( ! $this->database_only && $this->exclude_string( 'zip' ) )
-		    $this->error( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->root() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' -x ' . $this->exclude_string( 'zip' ) . ' 2>&1' ) );
-				
+		    $this->warning( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->root() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' -x ' . $this->exclude_string( 'zip' ) . ' 2>&1' ) );
+
 		// Zip up $this->root without excludes
 		elseif ( ! $this->database_only )
-		    $this->error( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->root() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' 2>&1' ) );
-			
+		    $this->warning( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->root() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -rq ' . escapeshellarg( $this->archive_filepath() ) . ' ./' . ' 2>&1' ) );
+
 		// Add the database dump to the archive
 		if ( ! $this->files_only )
-		    $this->error( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->path() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -uq ' . escapeshellarg( $this->archive_filepath() ) . ' ' . escapeshellarg( $this->database_dump_filename() ) . ' 2>&1' ) );
-		
+		    $this->warning( 'zip', shell_exec( 'cd ' . escapeshellarg( $this->path() ) . ' && ' . escapeshellarg( $this->zip_command_path ) . ' -uq ' . escapeshellarg( $this->archive_filepath() ) . ' ' . escapeshellarg( $this->database_dump_filename() ) . ' 2>&1' ) );
+
 		$this->check_archive();
 
 	}
@@ -456,10 +456,10 @@ class HM_Backup {
 			$zip->addFile( $this->database_dump_filepath(), $this->database_dump_filename() );
 
 		if ( $zip->status )
-			$this->error( 'ziparchive', $zip->status );
+			$this->warning( 'ziparchive', $zip->status );
 
 		if ( $zip->statusSys )
-			$this->error( 'ziparchive', $zip->statusSys );
+			$this->warning( 'ziparchive', $zip->statusSys );
 
 		$zip->close();
 
@@ -491,12 +491,12 @@ class HM_Backup {
 		// Zip up everything
 		if ( ! $this->database_only )
 			if ( ! $archive->add( $this->root(), PCLZIP_OPT_REMOVE_PATH, $this->root(), PCLZIP_CB_PRE_ADD, 'hmbkp_pclzip_callback' ) )
-				$this->error( 'pclzip', $archive->errorInfo( true ) );
+				$this->warning( 'pclzip', $archive->errorInfo( true ) );
 
 		// Add the database
 		if ( ! $this->files_only )
 			if ( ! $archive->add( $this->database_dump_filepath(), PCLZIP_OPT_REMOVE_PATH, $this->path() ) )
-				$this->error( 'pclzip', $archive->errorInfo( true ) );
+				$this->warning( 'pclzip', $archive->errorInfo( true ) );
 
 		unset( $GLOBALS['_hmbkp_exclude_string'] );
 
@@ -520,7 +520,7 @@ class HM_Backup {
 			$this->error( $this->archive_method(), __( 'The backup file was not created', 'hmbkp' ) );
 
 		// Verify using the zip command if possible
-		if ( ! $this->errors() && $this->zip_command_path ) {
+		if ( ! $this->errors( 'zip' ) && $this->zip_command_path ) {
 
 			$verify = shell_exec( escapeshellarg( $this->zip_command_path ) . ' -T ' . escapeshellarg( $this->archive_filepath() ) . ' 2> /dev/null' );
 
@@ -528,9 +528,9 @@ class HM_Backup {
 				$this->error( $this->archive_method(), $verify );
 
 		}
-		
+
 		/* Comment out for now as causes memory issues on large sites */
-		
+
 		//if ( ! $this->errors() ) {
 		//
 		//	// If it's a file backup, get an array of all the files that should have been backed up
@@ -556,10 +556,10 @@ class HM_Backup {
 		//}
 
 		// If there are errors delete the backup file.
-		if ( $this->errors() && file_exists( $this->archive_filepath() ) )
+		if ( $this->errors( $this->archive_method() ) && file_exists( $this->archive_filepath() ) )
 			unlink( $this->archive_filepath() );
 
-		if ( $this->errors() )
+		if ( $this->errors( $this->archive_method() ) )
 			return false;
 
 		return $this->archive_verified = true;
@@ -670,7 +670,7 @@ class HM_Backup {
 
 		// Load PclZip
 		if ( ! defined( 'PCLZIP_TEMPORARY_DIR' ) )
-			define( 'PCLZIP_TEMPORARY_DIR', $this->path() );
+			define( 'PCLZIP_TEMPORARY_DIR', trailingslashit( $this->path() ) );
 
 		require_once( ABSPATH . 'wp-admin/includes/class-pclzip.php' );
 
@@ -689,7 +689,6 @@ class HM_Backup {
 
 		// List of possible mysqldump locations
 		$mysqldump_locations = array(
-			'mysqldump',
 			'/usr/local/bin/mysqldump',
 			'/usr/local/mysql/bin/mysqldump',
 			'/usr/mysql/bin/mysqldump',
@@ -697,19 +696,22 @@ class HM_Backup {
 			'/opt/local/lib/mysql6/bin/mysqldump',
 			'/opt/local/lib/mysql5/bin/mysqldump',
 			'/opt/local/lib/mysql4/bin/mysqldump',
-			'\xampp\mysql\bin\mysqldump',
-			'\Program Files\xampp\mysql\bin\mysqldump',
-			'\Program Files\MySQL\MySQL Server 6.0\bin\mysqldump',
-			'\Program Files\MySQL\MySQL Server 5.5\bin\mysqldump',
-			'\Program Files\MySQL\MySQL Server 5.4\bin\mysqldump',
-			'\Program Files\MySQL\MySQL Server 5.1\bin\mysqldump',
-			'\Program Files\MySQL\MySQL Server 5.0\bin\mysqldump',
-			'\Program Files\MySQL\MySQL Server 4.1\bin\mysqldump'
+			'/xampp/mysql/bin/mysqldump',
+			'/Program Files/xampp/mysql/bin/mysqldump',
+			'/Program Files/MySQL/MySQL Server 6.0/bin/mysqldump',
+			'/Program Files/MySQL/MySQL Server 5.5/bin/mysqldump',
+			'/Program Files/MySQL/MySQL Server 5.4/bin/mysqldump',
+			'/Program Files/MySQL/MySQL Server 5.1/bin/mysqldump',
+			'/Program Files/MySQL/MySQL Server 5.0/bin/mysqldump',
+			'/Program Files/MySQL/MySQL Server 4.1/bin/mysqldump'
 		);
+
+		if ( is_null( shell_exec( 'hash mysqldump 2>&1' ) ) )
+			return 'mysqldump';
 
 		// Find the one which works
 		foreach ( $mysqldump_locations as $location )
-		    if ( ! shell_exec( 'hash ' . $location . ' 2>&1' ) )
+		    if ( file_exists( $this->conform_dir( $location ) ) )
 	 	    	return $location;
 
 		return '';
@@ -730,9 +732,11 @@ class HM_Backup {
 
 		// List of possible zip locations
 		$zip_locations = array(
-			'zip',
 			'/usr/bin/zip'
 		);
+
+		if ( is_null( shell_exec( 'hash zip 2>&1' ) ) )
+			return 'zip';
 
 		// Find the one which works
 		foreach ( $zip_locations as $location )
@@ -1124,7 +1128,10 @@ class HM_Backup {
 	 * @access public
 	 * @return null
 	 */
-	public function errors() {
+	public function errors( $context = null ) {
+
+		if ( ! empty( $context ) )
+			return isset( $this->errors[$context] ) ? $this->errors[$context] : array();
 
 		return $this->errors;
 
@@ -1144,10 +1151,6 @@ class HM_Backup {
 		if ( empty( $context ) || empty( $error ) )
 			return;
 
-		if ( $context == 'zip' && strpos( $error, 'zip warning' ) !== false )
-			return $this->warning( $context, $error );
-
-
 		$this->errors[$context][$_key = md5( implode( ':' , (array) $error ) )] = $error;
 
 	}
@@ -1158,7 +1161,10 @@ class HM_Backup {
 	 * @access public
 	 * @return null
 	 */
-	public function warnings() {
+	public function warnings( $context = null ) {
+
+		if ( ! empty( $context ) )
+			return isset( $this->warnings[$context] ) ? $this->warnings[$context] : array();
 
 		return $this->warnings;
 
