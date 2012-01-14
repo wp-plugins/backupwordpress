@@ -71,7 +71,7 @@ class BackUpCommand extends WP_CLI_Command {
 
 		$hm_backup->backup();
 
-	    WP_CLI::line( 'Backup: deleting old backups...' );
+	    WP_CLI::line( 'Backup: Deleting old backups...' );
 
 		// Delete any old backup files
 	    hmbkp_delete_old_backups();
@@ -80,7 +80,7 @@ class BackUpCommand extends WP_CLI_Command {
 			WP_CLI::success( 'Backup Complete: ' . HM_Backup::get_instance()->archive_filepath() );
 
 		else
-			WP_CLI::success( 'Backup Failed' );
+			WP_CLI::error( 'Backup Failed' );
 
 	}
 
