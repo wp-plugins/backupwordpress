@@ -16,9 +16,6 @@ function hmbkp_do_backup() {
 
 	HM_Backup::get_instance()->backup();
 
-	// Email Backup
-	hmbkp_email_backup( HM_Backup::get_instance()->archive_filepath() );
-
     hmbkp_set_status( __( 'Removing old backups', 'hmbkp' ) );
 
 	// Delete any old backup files
@@ -31,8 +28,8 @@ function hmbkp_do_backup() {
 
 		$file = hmbkp_path() . '/.backup_complete';
 
-		if ( !$handle = @fopen( $file, 'w' ) )
-			return false;
+		if ( ! $handle = @fopen( $file, 'w' ) )
+			return;
 
 		fwrite( $handle, '' );
 
@@ -72,7 +69,7 @@ function hmbkp_get_backups() {
 
     $hmbkp_path = hmbkp_path();
 
-    if ( $handle = opendir( $hmbkp_path ) ) :
+    if ( $handle = @opendir( $hmbkp_path ) ) :
 
     	while ( false !== ( $file = readdir( $handle ) ) )
     		if ( end( explode( '.', $file ) ) == 'zip' )
@@ -83,7 +80,7 @@ function hmbkp_get_backups() {
     endif;
 
     // If there is a custom backups directory and it's not writable then include those backups as well
-    if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && is_dir( HMBKP_PATH ) && !is_writable( HMBKP_PATH ) ) :
+    if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && is_dir( HMBKP_PATH ) && ! is_writable( HMBKP_PATH ) ) :
 
     	if ( $handle = opendir( HMBKP_PATH ) ) :
 
@@ -113,7 +110,7 @@ function hmbkp_delete_backup( $file ) {
 
 	// Delete the file
 	if ( strpos( $file, hmbkp_path() ) !== false || strpos( $file, WP_CONTENT_DIR . '/backups' ) !== false )
-	  unlink( $file );
+		unlink( $file );
 
 }
 
@@ -123,9 +120,9 @@ function hmbkp_delete_backup( $file ) {
   *	@param $file
   * @return bool
   */
-function hmbkp_email_backup( $file ) {
+function hmbkp_email_backup() {
 
-	if ( ! hmbkp_get_email_address() )
+	if ( ! hmbkp_get_email_address() || ! file_exists( HM_Backup::get_instance()->archive_filepath() ) )
 		return;
 
 	// Raise the memory and time limit
@@ -163,6 +160,7 @@ function hmbkp_email_backup( $file ) {
 	return true;
 
 }
+add_action( 'hmbkp_backup_complete', 'hmbkp_email_backup', 11 );
 
 /**
  * Set the status of the running backup
@@ -210,7 +208,7 @@ function hmbkp_get_excludes() {
 	if ( get_option( 'hmbkp_excludes' ) )
 		return get_option( 'hmbkp_excludes' );
 
-	return false;
+	return '';
 
 }
 
@@ -227,7 +225,7 @@ function hmbkp_invalid_custom_excludes() {
 	if ( $excludes = hmbkp_get_excludes() )
 
 		foreach ( explode( ',', $excludes ) as $rule )
-			if ( ( $rule = trim( $rule ) ) && in_array( substr( $rule, 0, 1 ), array( '/', '\\' ) ) && !file_exists( $rule ) && ! file_exists( ABSPATH . $rule ) && ! file_exists( trailingslashit( ABSPATH ) . $rule ) )
+			if ( ( $rule = trim( $rule ) ) && in_array( substr( $rule, 0, 1 ), array( '/', '\\' ) ) && ! file_exists( $rule ) && ! file_exists( ABSPATH . $rule ) && ! file_exists( trailingslashit( ABSPATH ) . $rule ) )
 				$invalid_rules[] = $rule;
 
 	return array_filter( $invalid_rules );
@@ -268,4 +266,22 @@ function hmbkp_is_in_progress() {
  */
 function hmbkp_exclude_string( $context ) {
 	return HM_Backup::get_instance()->exclude_string( $context );
+}
+
+function hmbkp_backup_errors() {
+
+	if ( ! file_exists( hmbkp_path() . '/.backup_errors' ) )
+		return '';
+
+	return file_get_contents( hmbkp_path() . '/.backup_errors' );
+
+}
+
+function hmbkp_backup_warnings() {
+
+	if ( ! file_exists( hmbkp_path() . '/.backup_warnings' ) )
+		return '';
+
+	return file_get_contents( hmbkp_path() . '/.backup_warnings' );
+
 }
