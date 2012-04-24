@@ -28,13 +28,13 @@ function hmbkp_option_save() {
 
 	} else {
 		delete_option( 'hmbkp_disable_automatic_backup');
-	
+
 	}
 
 	// Update schedule frequency settings. Or reset to default of daily.
 	if ( isset( $_POST['hmbkp_frequency'] ) && $_POST['hmbkp_frequency'] != 'daily' )
 		update_option( 'hmbkp_schedule_frequency', esc_attr( $_POST['hmbkp_frequency'] ) );
-	
+
 	else
 		delete_option( 'hmbkp_schedule_frequency' );
 
@@ -71,14 +71,19 @@ function hmbkp_option_save() {
 
 	}
 
-	if ( isset( $_POST['hmbkp_email_address'] ) && !is_email( $_POST['hmbkp_email_address'] ) && !empty( $_POST['hmbkp_email_address'] ) ) {
-		$hmbkp_errors->add( 'invalid_email', __( 'You have entered an invalid email address.', 'hmbkp' ) );
 
-	} elseif( isset( $_POST['hmbkp_email_address'] ) && !empty( $_POST['hmbkp_email_address'] ) ) {
-		update_option( 'hmbkp_email_address', $_POST['hmbkp_email_address'] );
+	if ( isset( $_POST['hmbkp_email_address'] ) ) {
 
-	} else {
-		delete_option( 'hmbkp_email_address' );
+		foreach( array_filter( array_map( 'trim', explode( ',', $_POST['hmbkp_email_address'] ) ) ) as $email_address )
+			if ( ! is_email( $email_address ) )
+				$email_error = $hmbkp_errors->add( 'invalid_email', sprintf( __( '%s is an invalid email address.', 'hmbkp' ), $email_address ) );
+
+		if ( ! isset( $email_error ) && ! empty( $_POST['hmbkp_email_address'] ) )
+			update_option( 'hmbkp_email_address', $_POST['hmbkp_email_address'] );
+
+		if ( isset( $_POST['hmbkp_email_address'] ) && empty( $_POST['hmbkp_email_address'] ) )
+			delete_option( 'hmbkp_email_address' );
+
 	}
 
 	if ( isset( $_POST['hmbkp_excludes'] ) && ! empty( $_POST['hmbkp_excludes'] ) ) {
@@ -88,7 +93,7 @@ function hmbkp_option_save() {
 		delete_option( 'hmbkp_excludes' );
 
 	}
-	
+
 	delete_transient( 'hmbkp_estimated_filesize' );
 
 	if ( $hmbkp_errors->get_error_code() )
@@ -106,67 +111,98 @@ add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_option_save' );
 function hmbkp_request_delete_backup() {
 
 	if ( ! isset( $_GET['hmbkp_delete'] ) || empty( $_GET['hmbkp_delete'] ) )
-		return false;
+		return;
 
 	hmbkp_delete_backup( $_GET['hmbkp_delete'] );
 
 	wp_redirect( remove_query_arg( 'hmbkp_delete' ), 303 );
+
 	exit;
 
 }
 add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_request_delete_backup' );
 
 /**
- * Schedule a one time backup and then
+ * Perform a manual backup and then
  * redirect back to the backups page
  */
 function hmbkp_request_do_backup() {
 
-	// Are we sure
-	if ( ! isset( $_GET['action'] ) || $_GET['action'] !== 'hmbkp_backup_now' || hmbkp_is_in_progress() || ! hmbkp_possible() )
-		return false;
+	if ( ! isset( $_GET['action'] ) || $_GET['action'] !== 'hmbkp_backup_now' )
+		return;
 
-	// If cron is disabled for manual backups
-	if ( ( defined( 'HMBKP_DISABLE_MANUAL_BACKUP_CRON' ) && HMBKP_DISABLE_MANUAL_BACKUP_CRON ) || ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) ) {
+	hmbkp_do_backup();
 
-		hmbkp_do_backup();
-
-	// If not fire the cron
-	} else {
-
-		// Schedule a single backup
-		wp_schedule_single_event( time(), 'hmbkp_schedule_single_backup_hook' );
-
-		// Remove the once every 60 seconds limitation
-		delete_transient( 'doing_cron' );
-		
-		// Fire the cron now
-		spawn_cron();
-
-	}
-
-	// Redirect back
 	wp_redirect( remove_query_arg( 'action' ), 303 );
+
 	exit;
 
 }
 add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_request_do_backup' );
 
 /**
+ * Perform a manual backup via ajax
+ */
+function hmbkp_ajax_request_do_backup() {
+
+	ignore_user_abort( true );
+
+	hmbkp_do_backup();
+
+	exit;
+
+}
+add_action( 'wp_ajax_hmbkp_backup', 'hmbkp_ajax_request_do_backup' );
+
+/**
  * Send the download file to the browser and
  * then redirect back to the backups page
- *
- * @todo We need to find a way to do this without streaming the file through PHP, move file to tmp location and then http download, then delete
  */
 function hmbkp_request_download_backup() {
 
-	if ( ! isset( $_GET['hmbkp_download'] ) || empty( $_GET['hmbkp_download'] ) )
-		return false;
+	if ( empty( $_GET['hmbkp_download'] ) )
+		return;
 
-	hmbkp_send_file( base64_decode( $_GET['hmbkp_download'] ) );
+	// Force the .htaccess to be rebuilt
+	if ( file_exists( hmbkp_path() . '/.htaccess' ) )
+		unlink( hmbkp_path() . '/.htaccess' );
+
+	hmbkp_path();
+
+	wp_redirect( add_query_arg( 'key', md5( HMBKP_SECURE_KEY ), str_replace( hmbkp_conform_dir( ABSPATH ), site_url(), base64_decode( $_GET['hmbkp_download'] ) ) ), 303 );
+
+	exit;
 
 }
 add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_request_download_backup' );
+
+function hmbkp_request_cancel_backup() {
+
+	if ( ! isset( $_GET['action'] ) || $_GET['action'] !== 'hmbkp_cancel' )
+		return;
+
+	hmbkp_cleanup();
+
+	wp_redirect( remove_query_arg( 'action' ), 303 );
+
+	exit;
+
+}
+add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_request_cancel_backup' );
+
+function hmbkp_dismiss_error() {
+
+	if ( empty( $_GET['action'] ) || $_GET['action'] !== 'hmbkp_dismiss_error' )
+		return;
+
+	hmbkp_cleanup();
+
+	wp_redirect( remove_query_arg( 'action' ), 303 );
+
+	exit;
+
+}
+add_action( 'admin_init', 'hmbkp_dismiss_error' );
 
 /**
  * Display the running status via ajax
@@ -175,16 +211,14 @@ add_action( 'load-tools_page_' . HMBKP_PLUGIN_SLUG, 'hmbkp_request_download_back
  */
 function hmbkp_ajax_is_backup_in_progress() {
 
-	if ( ! hmbkp_is_in_progress() )
+	if ( ! hmbkp_in_progress() )
 		echo 0;
 
-	elseif ( $status = hmbkp_get_status() )
-		echo $status;
-
 	else
-		echo 1;
+		include( HMBKP_PLUGIN_PATH . '/admin.backup-button.php' );
 
 	exit;
+
 }
 add_action( 'wp_ajax_hmbkp_is_in_progress', 'hmbkp_ajax_is_backup_in_progress' );
 
@@ -194,8 +228,11 @@ add_action( 'wp_ajax_hmbkp_is_in_progress', 'hmbkp_ajax_is_backup_in_progress' )
  * @return void
  */
 function hmbkp_ajax_calculate_backup_size() {
+
 	echo hmbkp_calculate();
+
 	exit;
+
 }
 add_action( 'wp_ajax_hmbkp_calculate', 'hmbkp_ajax_calculate_backup_size' );
 
@@ -209,11 +246,13 @@ function hmbkp_ajax_cron_test() {
 	$response = wp_remote_get( site_url( 'wp-cron.php' ) );
 
 	if ( ! is_wp_error( $response ) && $response['response']['code'] != '200' )
-    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( '%s is returning a %s response which could mean cron jobs aren\'t getting fired properly. BackUpWordPress relies on wp-cron to run back ups in a separate process.', 'hmbkp' ), '<code>wp-cron.php</code>', '<code>' . $response['response']['code'] . '</code>' ) . '</p></div>';
+    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( '%s is returning a %s response which could mean cron jobs aren\'t getting fired properly. BackUpWordPress relies on wp-cron to run scheduled back ups. See the %s for more details.', 'hmbkp' ), '<code>wp-cron.php</code>', '<code>' . $response['response']['code'] . '</code>', '<a href="http://wordpress.org/extend/plugins/backupwordpress/faq/">FAQ</a>' ) . '</p></div>';
+
 	else
 		echo 1;
 
 	exit;
+
 }
 add_action( 'wp_ajax_hmbkp_cron_test', 'hmbkp_ajax_cron_test' );
 
@@ -247,7 +286,7 @@ function hmbkp_constant_changes() {
 		hmbkp_path_move( $from, HMBKP_PATH );
 
 	// If a custom backup path has been removed
-	if ( ( ( defined( 'HMBKP_PATH' ) && ! HMBKP_PATH ) || !defined( 'HMBKP_PATH' ) && hmbkp_conform_dir( hmbkp_path_default() ) != ( $from = hmbkp_conform_dir( get_option( 'hmbkp_path' ) ) ) ) )
+	if ( ( ( defined( 'HMBKP_PATH' ) && ! HMBKP_PATH ) || ! defined( 'HMBKP_PATH' ) && hmbkp_conform_dir( hmbkp_path_default() ) != ( $from = hmbkp_conform_dir( get_option( 'hmbkp_path' ) ) ) ) )
 		hmbkp_path_move( $from, hmbkp_path_default() );
 
 	// If the custom path has changed and the new directory isn't writable

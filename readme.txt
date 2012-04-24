@@ -1,9 +1,9 @@
 === BackUpWordPress ===
 Contributors: humanmade, joehoyle, mattheu, tcrsavage, willmot
-Tags: back up, backup, backups, database, zip, db, files, archive, humanmade
+Tags: back up, backup, backups, database, zip, db, files, archive, wp-cli, humanmade
 Requires at least: 3.1
 Tested up to: 3.3
-Stable tag: 1.5.1
+Stable tag: 1.6.7
 
 Simple automated back ups of your WordPress powered website.
 
@@ -49,6 +49,8 @@ Backups are stored on your server in `/wp-content/backups`, you can change the d
 
 You need to download the latest backup file either by clicking download on the backups page or via `FTP`. `Unzip` the files and upload all the files to your server overwriting your site. You can then import the database using your hosts database management tool (likely `phpMyAdmin`).
 
+See this post for more details http://hmn.md/backupwordpress/
+
 **Does BackUpWordPress back up the backups directory?**
 
 No.
@@ -74,11 +76,14 @@ Some things you can test are.
 * Are scheduled posts working? (They use wp-cron too).
 * Are you hosted on Heart Internet? (wp-cron is known not to work with them).
 * If you click manual backup does it work?
-* Try adding `define( 'HMBKP_DISABLE_MANUAL_BACKUP_CRON', true );` to your `wp-config.php`, does your manual backup work then?
-* Try adding `define( 'ALTERNATE_WP_CRON', true ); to your `wp-config.php`, do backups (manual and automatic) work?
+* Try adding `define( 'ALTERNATE_WP_CRON', true ); to your `wp-config.php`, do automatic backups work?
 * Is your site private (I.E. is it behind some kind of authentication, maintenance plugin, .htaccess) if so wp-cron won't work until you remove it, if you are and you temporarily remove the authentication, do backups start working?
 
 If you have tried all these then feel free to contact support.
+
+**How to get BackUpWordPress working in Heart Internet**
+
+The script to be entered into the Heart Internet cPanel is: `/usr/bin/php5 /home/sites/yourdomain.com/public_html/wp-cron.php` (note the space between php5 and the location of the file). The file `wp-cron.php` `chmod` must be set to `711`.
 
 **Further Support & Feedbask**
 
@@ -93,6 +98,82 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 1. Simple Automated Backups
 
 == Changelog ==
+
+#### 1.6.7
+
+* Fix issue with backups being listed in reverse chronological order.
+* Fix issue with newest backup being deleted when you hit your max backups limit.
+* It's now possible to have backups sent to multiple email address's by entering them as a comma separated list.
+* Fix a bug which broke the ability to override the `mysqldump` path with `HMBKP_MYSQLDUMP_PATH`.
+* Use `echo` rather than `pwd` when testing `shell_exec` as it's supported cross platform.
+* Updated Spanish translation.
+* Fix a minor spelling mistake.
+* Speed up the manage backups page by caching the FAQ data for 24 hours.
+
+#### 1.6.6
+
+* Fix backup path issue with case sensitive filesystems.
+
+#### 1.6.5
+
+* Fix an issue with emailing backups that could cause the backup file to not be attached.
+* Fix an issue that could cause the backup to be marked as running for ever if emailing the backup `FATAL` error'd.
+* Never show the running backup in the list of backups.
+* Show an error backup email failed to send.
+* Fix possible notice when deleting a backup file which doesn't exist.
+* Fix possible notice on older versions of `PHP` which don't define `E_DEPRECATED`.
+* Make `HMBKP_SECURE_KEY` override-able.
+* BackUpWordPress should now work when `ABSPATH` is `/`.
+
+#### 1.6.4
+
+* Don't show warning message as they cause to much panic.
+* Move previous methods errors to warnings in fallback methods.
+* Wrap `.htaccess` rewrite rules in if `mod_rewrite` check.
+* Add link to new restore help article to FAQ.
+* Fix issue that could cause "not using latest stable version" message to show when you were in-fact using the latest version.
+* Bug fix in `zip command` check that could cause an incorrect `zip` path to be used.
+* Detect and pass `MySQL` port to `mysqldump`.
+
+#### 1.6.3
+
+* Don't fail archive verification for errors in previous archive methods.
+* Improved detection of the `zip` and `mysqldump` commands.
+* Fix issues when `ABSPATH` is `/`.
+* Remove reliance on `SECURE_AUTH_KEY` as it's often not defined.
+* Use `warning()` not `error()` for issues reported by `zip`, `ZipArchive` & `PclZip`.
+* Fix download zip on Windows when `ABSPATH` contains a trailing forward slash.
+* Send backup email after backup completes so that fatal errors in email code don't stop the backup from completing.
+* Add missing / to `PCLZIP_TEMPORARY_DIR` define.
+* Catch and display errors during `mysqldump`.
+
+#### 1.6.2
+
+* Track `PHP` errors as backup warnings not errors.
+* Only show warning message for `PHP` errors in BackUpWordPress files.
+* Ability to dismiss the error / warning messages.
+* Disable use of `PclZip` for full archive checking for now as it causes memory issues on some large sites.
+* Don't delete "number of backups" setting on update.
+* Better handling of multibyte characters in archive and database dump filenames.
+* Mark backup as running and increase callback timeout to `500` when firing backup via ajax.
+* Don't send backup email if backup failed.
+* Filter out duplicate exclude rules.
+
+#### 1.6.1
+
+* Fix fatal error on PHP =< 5.3
+
+#### 1.6
+
+* Fixes issue with backups dir being included in backups on some Windows Servers.
+* Consistent handling of symlinks across all archive methods (they are followed).
+* Use .htaccess rewrite cond authentication to allow for secure http downloads of backup files.
+* Track errors and warnings that happen during backup and expose them through admin.
+* Fire manual backups using ajax instead of wp-cron, `HMBKP_DISABLE_MANUAL_BACKUP_CRON` is no longer needed and has been removed.
+* Ability to cancel a running backup.
+* Zip files are now integrity checked after every backup.
+* More robust handling of failed / corrupt zips, backup process now fallsback through the various zip methods until one works.
+* Use `mysql_query` instead of the depreciated `mysql_list_tables`.
 
 #### 1.5.2
 
@@ -146,7 +227,7 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 
 #### 1.3.1
 
-* Check for PHP version. Deactivate plugin if running on PHP version 4. 
+* Check for PHP version. Deactivate plugin if running on PHP version 4.
 
 #### 1.3
 

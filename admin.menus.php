@@ -39,21 +39,29 @@ function hmbkp_plugin_action_link( $links, $file ) {
 add_filter('plugin_action_links', 'hmbkp_plugin_action_link', 10, 2 );
 
 /**
- *	Add Contextual Help to Backups tools page.
+ * Add Contextual Help to Backups tools page.
  *
- *	Help is pulled from the readme FAQ.
+ * Help is pulled from the readme FAQ.
  *
  * @return null
  */
 function hmbkp_contextual_help() {
 
 	require_once( ABSPATH . 'wp-admin/includes/plugin-install.php' );
-	$plugin = plugins_api( 'plugin_information', array( 'slug' => 'backupwordpress' ) );
+	
+	if ( ! $plugin = get_transient( 'hmbkp_plugin_data' ) ) {
+
+		$plugin = plugins_api( 'plugin_information', array( 'slug' => 'backupwordpress' ) );
+		
+		// Cache for one day
+		set_transient( 'hmbkp_plugin_data', $plugin, 86400 );
+		
+	}
 	
 	$warning = '';
 
 	// Check if help is for the right version.
-	if ( ! empty( $plugin->version ) && version_compare( HMBKP_VERSION, $plugin->version, '=' ) )
+	if ( ! empty( $plugin->version ) && version_compare( HMBKP_VERSION, $plugin->version, '!=' ) )
 	    $warning = sprintf( '<div id="message" class="updated inline"><p><strong>' . __( 'You are not using the latest stable version of BackUpWordPress', 'hmbkp' ) . '</strong>' . __( ' &mdash; The information below is for version %s. View the readme.txt file for help specific to version %s.', 'hmbkp' ) . '</p></div>', '<code>' . $plugin->version . '</code>', '<code>' . HMBKP_VERSION . '</code>' );
 
 	ob_start();
