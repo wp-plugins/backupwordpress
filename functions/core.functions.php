@@ -25,7 +25,6 @@ function hmbkp_deactivate() {
 		'hmbkp_zip_path',
 		'hmbkp_mysqldump_path',
 		'hmbkp_path',
-		'hmbkp_max_backups',
 		'hmbkp_running',
 		'hmbkp_status',
 		'hmbkp_complete',
@@ -34,12 +33,6 @@ function hmbkp_deactivate() {
 
 	foreach ( $options as $option )
 		delete_option( $option );
-
-	// If there is a backup running file we should delete it on activate.
-    $file = hmbkp_path() . '/.backup_running';
-
-    if ( file_exists( $file ) )
-    	unlink( $file );
 
 	delete_transient( 'hmbkp_running' );
 	delete_transient( 'hmbkp_estimated_filesize' );
@@ -59,25 +52,17 @@ function hmbkp_deactivate() {
 function hmbkp_update() {
 
 	// Every update
-	if ( version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) :
+	if ( version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) {
 
 		hmbkp_deactivate();
 
-		// Check whether we have a logs directory to delete
-		if ( is_dir( hmbkp_path() . '/logs' ) )
-			hmbkp_rmdirtree( hmbkp_path() . '/logs' );
+		// Force .htaccess to be re-written
+		if ( file_exists( hmbkp_path() . '/.htaccess' ) )
+			unlink( hmbkp_path() . '/.htaccess' );
 
-	endif;
+	}
 
-	// Pre 1.1
-	if ( ! get_option( 'hmbkp_plugin_version' ) ) :
-
-		// Delete the obsolete max backups option
-		delete_option( 'hmbkp_max_backups' );
-
-	endif;
-
-	// Update from backUpWordPress
+	// Update from backUpWordPress 0.4.5
 	if ( get_option( 'bkpwp_max_backups' ) ) :
 
 		// Carry over the custom path
@@ -184,53 +169,6 @@ function hmbkp_more_reccurences( $recc ) {
 add_filter( 'cron_schedules', 'hmbkp_more_reccurences' );
 
 /**
- * Send a flie to the browser for download
- *
- * @param string $path
- */
-function hmbkp_send_file( $path ) {
-
-	session_write_close();
-
-	ob_end_clean();
-
-	if ( !is_file( $path ) || connection_status() != 0 )
-		return false;
-
-	// Overide max_execution_time
-	@set_time_limit( 0 );
-
-	$name = basename( $path );
-
-	// Filenames in IE containing dots will screw up the filename unless we add this
-	if ( strstr( $_SERVER['HTTP_USER_AGENT'], 'MSIE' ) )
-		$name = preg_replace( '/\./', '%2e', $name, substr_count( $name, '.' ) - 1 );
-
-	// Force
-	header( 'Cache-Control: ' );
-	header( 'Pragma: ' );
-	header( 'Content-Type: application/octet-stream' );
-	header( 'Content-Length: ' . (string) ( filesize( $path ) ) );
-	header(	'Content-Disposition: attachment; filename=" ' . $name . '"' );
-	header( 'Content-Transfer-Encoding: binary\n' );
-
-	if ( $file = fopen( $path, 'rb' ) ) :
-
-		while ( ( !feof( $file ) ) && ( connection_status() == 0) ) :
-
-			print( fread( $file, 1024 * 8 ) );
-			flush();
-
-		endwhile;
-
-		fclose( $file );
-
-	endif;
-
-	return ( connection_status() == 0 ) and !connection_aborted();
-}
-
-/**
  * Recursively delete a directory including
  * all the files and sub-directories.
  *
@@ -248,16 +186,15 @@ function hmbkp_rmdirtree( $dir ) {
 
 	foreach ( $files as $file ) {
 
-      if ( $file->isDir() )
-         rmdir( $file->getPathname() );
+		if ( $file->isDir() )
+			@rmdir( $file->getPathname() );
 
-      else
-         unlink( $file->getPathname() );
+		else
+			@unlink( $file->getPathname() );
 
+	}
 
-   }
-
-   rmdir( $dir );
+	@rmdir( $dir );
 
 }
 
@@ -296,22 +233,8 @@ function hmbkp_calculate() {
     	// Get rid of any cached filesizes
     	clearstatcache();
 
-    	$files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( ABSPATH ), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
-
-		$excludes = hmbkp_exclude_string( 'regex' );
-
-		foreach ( $files as $file ) {
-
-			if ( ! $file->isReadable() )
-				continue;
-
-		    // Excludes
-		    if ( $excludes && preg_match( '(' . $excludes . ')', str_replace( ABSPATH, '', $file->getPathname() ) ) )
-		    	continue;
-
-			$filesize += (float) @$file->getSize();
-
-		}
+		foreach ( HM_Backup::get_instance()->files() as $file )
+			$filesize += (float) @filesize( ABSPATH . $file );
 
 	}
 
@@ -400,11 +323,11 @@ function hmbkp_path() {
 		$path = HMBKP_PATH;
 
 	// If the dir doesn't exist or isn't writable then use wp-content/backups instead
-	if ( ( !$path || !is_writable( $path ) ) && hmbkp_conform_dir( $path ) != hmbkp_path_default() )
+	if ( ( ! $path || ! is_writable( $path ) ) && hmbkp_conform_dir( $path ) != hmbkp_path_default() )
     	$path = hmbkp_path_default();
 
 	// Create the backups directory if it doesn't exist
-	if ( is_writable( dirname( $path ) ) && !is_dir( $path ) )
+	if ( is_writable( dirname( $path ) ) && ! is_dir( $path ) )
 		mkdir( $path, 0755 );
 
 	if ( get_option( 'hmbkp_path' ) != $path )
@@ -413,12 +336,16 @@ function hmbkp_path() {
 	// Secure the directory with a .htaccess file
 	$htaccess = $path . '/.htaccess';
 
-	$contents[]	= '# ' . __( 'This .htaccess file ensures that other people cannot download your backup files.', 'hmbkp' );
+	$contents[]	= '# ' . sprintf( __( 'This %s file ensures that other people cannot download your backup files.', 'hmbkp' ), '.htaccess' );
 	$contents[] = '';
-	$contents[] = 'deny from all';
+	$contents[] = '<IfModule mod_rewrite.c>';
+	$contents[] = 'RewriteEngine On';
+	$contents[] = 'RewriteCond %{QUERY_STRING} !key=' . md5( HMBKP_SECURE_KEY );
+	$contents[] = 'RewriteRule (.*) - [F]';
+	$contents[] = '</IfModule>';
 	$contents[] = '';
 
-	if ( !file_exists( $htaccess ) && is_writable( $path ) && require_once( ABSPATH . '/wp-admin/includes/misc.php' ) )
+	if ( ! file_exists( $htaccess ) && is_writable( $path ) && require_once( ABSPATH . '/wp-admin/includes/misc.php' ) )
 		insert_with_markers( $htaccess, 'BackUpWordPress', $contents );
 
     return hmbkp_conform_dir( $path );
@@ -444,10 +371,10 @@ function hmbkp_path_default() {
 function hmbkp_path_move( $from, $to ) {
 
 	// Create the custom backups directory if it doesn't exist
-	if ( is_writable( dirname( $to ) ) && !is_dir( $to ) )
+	if ( is_writable( dirname( $to ) ) && ! is_dir( $to ) )
 	    mkdir( $to, 0755 );
 
-	if ( !is_dir( $to ) || !is_writable( $to ) || !is_dir( $from ) )
+	if ( ! is_dir( $to ) || ! is_writable( $to ) || ! is_dir( $from ) )
 	    return false;
 
 	hmbkp_cleanup();
@@ -521,7 +448,9 @@ function hmbkp_get_database_only() {
  *	Returns defined email address or email address saved in options.
  *	If none set, return empty string.
  */
-function hmbkp_get_email_address() {
+function hmbkp_get_email_address( $type = 'array' ) {
+
+	$email = '';
 
 	if ( defined( 'HMBKP_EMAIL' ) && HMBKP_EMAIL )
 		$email = HMBKP_EMAIL;
@@ -529,13 +458,10 @@ function hmbkp_get_email_address() {
 	elseif ( get_option( 'hmbkp_email_address' ) )
 		$email = get_option( 'hmbkp_email_address' );
 
-	else
-		return '';
+	if ( ! empty( $email ) && $type == 'array' )
+		$email = array_filter( array_map( 'trim', explode( ',', $email ) ) );
 
-	if ( is_email( $email ) )
-		return $email;
-
-	return '';
+	return $email;
 
 }
 
@@ -580,15 +506,17 @@ function hmbkp_possible() {
  */
 function hmbkp_cleanup() {
 
+	delete_option( 'hmbkp_email_error' );
+
 	$hmbkp_path = hmbkp_path();
 
-	if ( !is_dir( $hmbkp_path ) )
+	if ( ! is_dir( $hmbkp_path ) )
 		return;
 
 	if ( $handle = opendir( $hmbkp_path ) ) :
 
     	while ( false !== ( $file = readdir( $handle ) ) )
-    		if ( $file != '.' && $file != '..' && $file != '.htaccess' && strpos( $file, '.zip' ) === false )
+    		if ( ! in_array( $file, array( '.', '..', '.htaccess' ) ) && pathinfo( $file, PATHINFO_EXTENSION ) !== 'zip' )
 				hmbkp_rmdirtree( trailingslashit( $hmbkp_path ) . $file );
 
     	closedir( $handle );
