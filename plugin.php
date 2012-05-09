@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://hmn.md/backupwordpress/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 1.6.7
+Version: 1.6.8
 Author URI: http://hmn.md/
 */
 
@@ -107,6 +107,9 @@ function hmbkp_setup_hm_backup() {
 	if ( defined( 'HMBKP_ZIP_PATH' ) )
 		$hm_backup->zip_command_path = HMBKP_ZIP_PATH;
 
+	if ( defined( 'HMBKP_ROOT' ) )
+		$hm_backup->root = HMBKP_ROOT;
+
 	$hm_backup->excludes = hmbkp_valid_custom_excludes();
 
 }
@@ -117,7 +120,8 @@ require_once( HMBKP_PLUGIN_PATH . '/admin.menus.php' );
 require_once( HMBKP_PLUGIN_PATH . '/admin.actions.php' );
 
 // Load hm-backup
-require_once( HMBKP_PLUGIN_PATH . '/hm-backup/hm-backup.php' );
+if ( ! class_exists( 'HM_Backup' ) )
+	require_once( HMBKP_PLUGIN_PATH . '/hm-backup/hm-backup.php' );
 
 // Load the core functions
 require_once( HMBKP_PLUGIN_PATH . '/functions/backup.actions.php' );
