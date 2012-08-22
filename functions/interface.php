@@ -5,9 +5,9 @@
  *
  * @param string $file
  */
-function hmbkp_get_backup_row( $file ) {
+function hmbkp_get_backup_row( $file, HMBKP_Scheduled_Backup $schedule ) {
 
-	$encode = base64_encode( $file );
+	$encoded_file = urlencode( base64_encode( $file ) );
 	$offset = current_time( 'timestamp' ) - time(); ?>
 
 	<tr class="hmbkp_manage_backups_row<?php if ( file_exists( hmbkp_path() . '/.backup_complete' ) ) : ?> completed<?php unlink( hmbkp_path() . '/.backup_complete' ); endif; ?>">
@@ -16,14 +16,16 @@ function hmbkp_get_backup_row( $file ) {
 			<?php echo date_i18n( get_option( 'date_format' ) . ' - ' . get_option( 'time_format' ), @filemtime( $file ) + $offset ); ?>
 		</th>
 
-		<td>
-			<?php echo hmbkp_size_readable( filesize( $file ) ); ?>
+		<td class="code">
+			<?php echo HMBKP_Scheduled_Backup::human_filesize( @filesize( $file ) ); ?>
 		</td>
 
+		<td><?php echo hmbkp_human_get_type( $file, $schedule ); ?></td>
+
 		<td>
 
-			<a href="tools.php?page=<?php echo HMBKP_PLUGIN_SLUG; ?>&amp;hmbkp_download=<?php echo $encode; ?>"><?php _e( 'Download', 'hmbkp' ); ?></a> |
-			<a href="tools.php?page=<?php echo HMBKP_PLUGIN_SLUG; ?>&amp;hmbkp_delete=<?php echo $encode ?>" class="delete"><?php _e( 'Delete', 'hmbkp' ); ?></a>
+			<a href="tools.php?page=<?php echo HMBKP_PLUGIN_SLUG; ?>&amp;hmbkp_download_backup=<?php echo $encoded_file; ?>&amp;hmbkp_schedule_id=<?php echo $schedule->get_id(); ?>"><?php _e( 'Download', 'hmbkp' ); ?></a> |
+			<a href="tools.php?page=<?php echo HMBKP_PLUGIN_SLUG; ?>&amp;hmbkp_delete_backup=<?php echo $encoded_file ?>&amp;hmbkp_schedule_id=<?php echo $schedule->get_id(); ?>" class="delete-action"><?php _e( 'Delete', 'hmbkp' ); ?></a>
 
 		</td>
 
@@ -38,25 +40,6 @@ function hmbkp_get_backup_row( $file ) {
  * @return void
  */
 function hmbkp_admin_notices() {
-
-	// If the form has been submitted, display updated notification
-	// Display  notifications for any errors in the settings form.
-	if ( ! empty( $_POST['hmbkp_settings_submit'] ) ) :
-
-		function hmbkp_advanced_settings_saved() { ?>
-
-			<div id="setting-error-settings_updated" class="updated settings-error"><p><strong><?php _e( 'Settings saved.', 'hmbkp' ); ?></strong></p></div>
-
-			<?php global $hmbkp_errors;
-
-			if ( ! empty( $hmbkp_errors ) && $hmbkp_errors->get_error_code() )
-				foreach( $hmbkp_errors->get_error_messages() as $hmbkp_error )
-					echo '<div class="error"><p>' . $hmbkp_error . '</p></div>';
-
-		}
-		add_action( 'admin_notices', 'hmbkp_advanced_settings_saved' );
-
-	endif;
 
 	// If the backups directory doesn't exist and can't be automatically created
 	if ( ! is_dir( hmbkp_path() ) ) :
@@ -83,43 +66,12 @@ function hmbkp_admin_notices() {
 	endif;
 
 	// If safe mode is active
-	if ( hmbkp_is_safe_mode_active() ) :
+	if ( HM_Backup::is_safe_mode_active() ) :
 
 	    function hmbkp_safe_mode_warning() {
 	    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( '%1$s is running in %2$s. Please contact your host and ask them to disable %3$s.', 'hmbkp' ), '<code>PHP</code>', sprintf( '<a href="%1$s">%2$s</a>', __( 'http://php.net/manual/en/features.safe-mode.php', 'hmbkp' ), __( 'Safe Mode', 'hmbkp' ) ), '<code>' . __( 'Safe Mode', 'hmbkp' ) . '</code>' ) . '</p></div>';
 	    }
 	    add_action( 'admin_notices', 'hmbkp_safe_mode_warning' );
-
-	endif;
-
-	// If both HMBKP_FILES_ONLY & HMBKP_DATABASE_ONLY are defined at the same time
-	if ( hmbkp_get_files_only() && hmbkp_get_database_only() ) :
-
-	    function hmbkp_nothing_to_backup_warning() {
-	    	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'You have both %1$s and %2$s defined so there isn\'t anything to back up.', 'hmbkp' ), '<code>HMBKP_DATABASE_ONLY</code>', '<code>HMBKP_FILES_ONLY</code>' ) . '</p></div>';
-	    }
-	    add_action( 'admin_notices', 'hmbkp_nothing_to_backup_warning' );
-
-	endif;
-
-	// If the email address is invalid
-	if ( hmbkp_get_email_address() && array_diff( hmbkp_get_email_address(), array_filter( hmbkp_get_email_address(), 'is_email' ) ) ) :
-
-		function hmbkp_email_invalid_warning() {
-			$invalid_emails = array_diff( hmbkp_get_email_address(), array_filter( hmbkp_get_email_address(), 'is_email' ) );
-			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( _n( 'The following email address is not valid: %s.', 'The following email addresses are not valid: %s.', count( $invalid_emails ), 'hmbkp' ), '<code>' . implode( '</code>, <code>', $invalid_emails ) . '</code>' ) . '</p></div>';
-		}
-		add_action( 'admin_notices', 'hmbkp_email_invalid_warning' );
-
-	endif;
-
-	// If the email failed to send
-	if ( hmbkp_get_email_address() && get_option( 'hmbkp_email_error' ) ) :
-
-		function hmbkp_email_failed_warning() {
-			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . __( 'The last backup email failed to send. It\'s likely that the file is too large.', 'hmbkp' ) . '</p></div>';
-		}
-		add_action( 'admin_notices', 'hmbkp_email_failed_warning' );
 
 	endif;
 
@@ -140,16 +92,6 @@ function hmbkp_admin_notices() {
 			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'Your custom backups directory %1$s isn\'t writable, new backups will be saved to %2$s instead.', 'hmbkp' ), '<code>' . HMBKP_PATH . '</code>', '<code>' . hmbkp_path() . '</code>' ) . '</p></div>';
 		}
 		add_action( 'admin_notices', 'hmbkp_custom_path_writable_notice' );
-
-	endif;
-
-	// If there are custom excludes defined and any of the files or directories don't exist
-	if ( hmbkp_invalid_custom_excludes() ) :
-
-		function hmbkp_invalid_exclude_notice() {
-			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'You have defined a custom exclude list but the following paths don\'t exist %s, are you sure you entered them correctly?', 'hmbkp' ), '<code>' . implode( '</code>, <code>', (array) hmbkp_invalid_custom_excludes() ) . '</code>' ) . '</p></div>';
-		}
-		add_action( 'admin_notices', 'hmbkp_invalid_exclude_notice' );
 
 	endif;
 
@@ -198,5 +140,82 @@ function hmbkp_backup_errors_message() {
 			$message .= '<p><strong>' . $key . '</strong>: <code>' . implode( ':', (array) $error ) . '</code></p>';
 
 	return $message;
+
+}
+function hmbkp_file_list( HMBKP_Scheduled_Backup $schedule, $excludes = null, $file_method = 'get_files' ) {
+
+	if ( ! is_null( $excludes ) )
+		$schedule->set_excludes( $excludes );
+
+	$files = $schedule->$file_method();
+
+	if ( $files ) : ?>
+
+	<ul class="hmbkp_file_list code">
+
+		<?php foreach( $files as $file ) :
+
+			if ( ! is_null( $excludes ) && strpos( $file, str_ireplace( $schedule->get_root(), '', $schedule->get_path() ) ) !== false )
+				continue; ?>
+
+			<?php if ( $file->isDir() ) { ?>
+
+		<li title="<?php echo trailingslashit( $file->getPathName() ); ?>"><?php echo trailingslashit( str_ireplace( trailingslashit( $schedule->get_root() ), '', $file->getPathName() ) ); ?></li>
+
+			<?php } else { ?>
+
+		<li title="<?php echo $file->getPathName(); ?>"><?php echo str_ireplace( trailingslashit( $schedule->get_root() ), '', $file->getPathName() ); ?></li>
+
+			<?php }
+
+		endforeach; ?>
+
+	</ul>
+
+	<?php endif;
+
+}
+
+function hmbkp_human_get_type( $type, HMBKP_Scheduled_Backup $schedule = null ) {
+
+	if ( strpos( $type, 'complete' ) !== false )
+		return __( 'Database and Files', 'hmbkp' );
+
+	if ( strpos( $type, 'file' ) !== false )
+		return __( 'Files', 'hmbkp' );
+
+	if ( strpos( $type, 'database' ) !== false )
+		return __( 'Database', 'hmbkp' );
+
+	if ( ! is_null( $schedule ) )
+		return hmbkp_human_get_type( $schedule->get_type() );
+
+	return __( 'Unknown', 'hmbkp' );
+
+}
+
+function hmbkp_schedule_actions( HMBKP_Scheduled_Backup $schedule ) {
+
+	if ( $status = $schedule->get_status() ) { ?>
+
+		<span class="hmbkp-status"><?php echo $status; ?>[<a href="<?php echo add_query_arg( array( 'action' => 'hmbkp_cancel' ), HMBKP_ADMIN_URL ); ?>"><?php _e( 'cancel', 'hmbkp' ); ?></a>]</span>
+
+	<?php } else { ?>
+
+	<div class="hmbkp-schedule-actions row-actions">
+
+		<a class="fancybox" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_edit_schedule_load', 'hmbkp_schedule_id' => $schedule->get_id() ), HMBKP_ADMIN_URL ); ?>"><?php _e( 'Settings', 'hmbkp' ); ?></a> |
+
+	<?php if ( $schedule->get_type() != 'database' ) { ?>
+		<a class="fancybox" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_edit_schedule_excludes_load', 'hmbkp_schedule_id' => $schedule->get_id() ), HMBKP_ADMIN_URL ); ?>"><?php _e( 'Excludes', 'hmbkp' ); ?></a>  |
+	<?php } ?>
+
+		<a class="hmbkp-run" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_run_schedule', 'hmbkp_schedule_id' => $schedule->get_id() ), HMBKP_ADMIN_URL ); ?>"><?php _e( 'Run now', 'hmbkp' ); ?></a>  |
+
+		<a class="delete-action" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_delete_schedule', 'hmbkp_schedule_id' => $schedule->get_id() ), HMBKP_ADMIN_URL ); ?>"><?php _e( 'Delete', 'hmbkp' ); ?></a>
+
+	</div>
+
+	<?php }
 
 }

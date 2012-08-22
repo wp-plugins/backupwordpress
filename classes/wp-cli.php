@@ -3,22 +3,19 @@
 /**
  * Implement backup command
  *
+ * @todo fix
  * @package wp-cli
  * @subpackage commands/third-party
  */
 class BackUpCommand extends WP_CLI_Command {
 
-	function __construct( $args, $assoc_args ) {
+	public function __construct( $args, $assoc_args ) {
 
 		// Make sure it's possible to do a backup
-		if ( hmbkp_is_safe_mode_active() ) {
+		if ( HM_Backup::is_safe_mode_active() ) {
 			WP_CLI::error( 'Backup not possible when php is running safe_mode on' );
 			return false;
 		}
-
-		remove_action( 'hmbkp_backup_started', 'hmbkp_set_status', 10, 0 );
-		remove_action( 'hmbkp_mysqldump_started', 'hmbkp_set_status_dumping_database' );
-		remove_action( 'hmbkp_archive_started', 'hmbkp_set_status_archiving' );
 
 		add_action( 'hmbkp_mysqldump_started', function() {
 			WP_CLI::line( 'Backup: Dumping database...' );
@@ -31,7 +28,7 @@ class BackUpCommand extends WP_CLI_Command {
 		// Clean up any mess left by a previous backup
 		hmbkp_cleanup();
 
-		$hm_backup = HM_Backup::get_instance();
+		$hm_backup = new HM_Backup();
 
 		if ( ! empty( $assoc_args['path'] ) )
 			$hm_backup->path = $assoc_args['path'];
@@ -74,9 +71,9 @@ class BackUpCommand extends WP_CLI_Command {
 	    WP_CLI::line( 'Backup: Deleting old backups...' );
 
 		// Delete any old backup files
-	    hmbkp_delete_old_backups();
+	    //hmbkp_delete_old_backups();
 
-    	if ( file_exists( HM_Backup::get_instance()->archive_filepath() ) )
+    	if ( file_exists( $hm_backup->archive_filepath() ) )
 			WP_CLI::success( 'Backup Complete: ' . HM_Backup::get_instance()->archive_filepath() );
 
 		else

@@ -1,7 +1,7 @@
 === BackUpWordPress ===
 Contributors: humanmade, joehoyle, mattheu, tcrsavage, willmot
 Tags: back up, backup, backups, database, zip, db, files, archive, wp-cli, humanmade
-Requires at least: 3.1.4
+Requires at least: 3.1
 Tested up to: 3.4.1
 Stable tag: 1.6.9
 
@@ -27,7 +27,9 @@ BackUpWordPress will back up your entire site including your database and all yo
 
 The BackUpWordPress plugin is hosted github, if you want to help out with development or testing then head over to https://github.com/humanmade/backupwordpress/.
 
-We'd also love help translating the plugin into more languages, if you can help then please contact support@hmn.md or send us a pull request.
+= Translations =
+
+We'd also love help translating the plugin into more languages, if you can help then please contact support@hmn.md or visit http://translate.hmn.md/.
 
 == Installation ==
 
@@ -349,7 +351,7 @@ Fix some silly 1.0 bugs
 
 #### 1.0
 
-1.0 represents a total rewrite & rethink of the BackUpWordPress plugin with a focus on making it "Just Work". The management and development of the plugin has been taken over by [humanmade](http://hmn.md) the chaps behind [WP Remote](https://wpremote.com)
+1.0 represents a total rewrite & rethink of the BackUpWordPress plugin with a focus on making it "Just Work". The management and development of the plugin has been taken over by [Human Made Limited](http://hmn.md) the chaps behind [WP Remote](https://wpremote.com)
 
 #### Previous
 
