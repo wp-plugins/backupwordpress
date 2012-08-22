@@ -145,7 +145,7 @@ function hmbkp_email_backup() {
 	$domain = parse_url( get_bloginfo( 'url' ), PHP_URL_HOST ) . parse_url( get_bloginfo( 'url' ), PHP_URL_PATH );
 
 	$subject = sprintf( __( 'Backup of %s', 'hmbkp' ), $domain );
-	$message = sprintf( __( "BackUpWordPress has completed a backup of your site %s.\n\nThe backup file should be attached to this email.\n\nYou can also download the backup file by clicking the link below:\n\n%s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot", 'hmbkp' ), get_bloginfo( 'url' ), $download );
+	$message = sprintf( __( 'BackUpWordPress has completed a backup of your site %1$s.\n\nThe backup file should be attached to this email.\n\nYou can also download the backup file by clicking the link below:\n\n%2$s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot', 'hmbkp' ), get_bloginfo( 'url' ), $download );
 	$headers = 'From: BackUpWordPress <' . get_bloginfo( 'admin_email' ) . '>' . "\r\n";
 
 	// Try to send the email
@@ -155,7 +155,7 @@ function hmbkp_email_backup() {
 	if ( ! $sent ) :
 
 		$subject = sprintf( __( 'Backup of %s', 'hmbkp' ), $domain );
-		$message = sprintf( __( "BackUpWordPress has completed a backup of your site %s.\n\nUnfortunately the backup file was too large to attach to this email.\n\nYou can download the backup file by clicking the link below:\n\n%s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot", 'hmbkp' ), get_bloginfo( 'url' ), $download );
+		$message = sprintf( __( 'BackUpWordPress has completed a backup of your site %1$s.\n\nUnfortunately the backup file was too large to attach to this email.\n\nYou can download the backup file by clicking the link below:\n\n%2$s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot', 'hmbkp' ), get_bloginfo( 'url' ), $download );
 
 		$sent = wp_mail( array_filter( hmbkp_get_email_address(), 'is_email' ), $subject, $message, $headers );
 
@@ -232,7 +232,7 @@ function hmbkp_invalid_custom_excludes() {
 	if ( $excludes = hmbkp_get_excludes() )
 
 		foreach ( explode( ',', $excludes ) as $rule )
-			if ( ( $rule = trim( $rule ) ) && in_array( substr( $rule, 0, 1 ), array( '/', '\\' ) ) && ! file_exists( $rule ) && ! file_exists( ABSPATH . $rule ) && ! file_exists( trailingslashit( ABSPATH ) . $rule ) )
+			if ( ( $rule = trim( $rule ) ) && in_array( substr( $rule, 0, 1 ), array( '/', '\\' ) ) && ! file_exists( $rule ) && ! file_exists( hmbkp_get_home_path() . $rule ) && ! file_exists( trailingslashit( hmbkp_get_home_path() ) . $rule ) )
 				$invalid_rules[] = $rule;
 
 	return array_filter( $invalid_rules );
