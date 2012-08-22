@@ -39,13 +39,13 @@ class BackUpCommand extends WP_CLI_Command {
 		if ( ! empty( $assoc_args['root'] ) )
 			$hm_backup->root = $assoc_args['root'];
 
-		if ( ( ! is_dir( $hm_backup->path ) && ( ! is_writable( dirname( $hm_backup->path ) ) || ! mkdir( $hm_backup->path ) ) ) || ! is_writable( $hm_backup->path ) ) {
+		if ( ( ! is_dir( $hm_backup->path() ) && ( ! is_writable( dirname( $hm_backup->path() ) ) || ! mkdir( $hm_backup->path() ) ) ) || ! is_writable( $hm_backup->path() ) ) {
 			WP_CLI::error( 'Invalid backup path' );
 			return false;
 		}
 
 
-		if ( ! is_dir( $hm_backup->root ) || ! is_readable( $hm_backup->root ) ) {
+		if ( ! is_dir( $hm_backup->root() ) || ! is_readable( $hm_backup->root() ) ) {
 			WP_CLI::error( 'Invalid root path' );
 			return false;
 		}
@@ -71,7 +71,7 @@ class BackUpCommand extends WP_CLI_Command {
 
 		$hm_backup->backup();
 
-	    WP_CLI::line( 'Backup: deleting old backups...' );
+	    WP_CLI::line( 'Backup: Deleting old backups...' );
 
 		// Delete any old backup files
 	    hmbkp_delete_old_backups();
@@ -80,7 +80,7 @@ class BackUpCommand extends WP_CLI_Command {
 			WP_CLI::success( 'Backup Complete: ' . HM_Backup::get_instance()->archive_filepath() );
 
 		else
-			WP_CLI::success( 'Backup Failed' );
+			WP_CLI::error( 'Backup Failed' );
 
 	}
 
@@ -92,7 +92,7 @@ usage: wp backup [--files_only] [--database_only] [--path<dir>] [--root<dir>] [-
 	 --files_only                   Backup files only, default to off
 	 --database_only                Backup database only, defaults to off
 	 --path                         dir that the backup should be save in, defaults to wp-content/backups/
-	 --root                         dir that should be backed up, defaults to ABSPATH
+	 --root                         dir that should be backed up, defaults to site root.
 	 --zip_command_path             path to your zip binary, standard locations are automatically used
 	 --mysqldump_command_path       path to your mysqldump binary, standard locations are automatically used
 

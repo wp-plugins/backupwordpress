@@ -16,9 +16,6 @@ function hmbkp_do_backup() {
 
 	HM_Backup::get_instance()->backup();
 
-	// Email Backup
-	hmbkp_email_backup( HM_Backup::get_instance()->archive_filepath() );
-
     hmbkp_set_status( __( 'Removing old backups', 'hmbkp' ) );
 
 	// Delete any old backup files
@@ -31,14 +28,16 @@ function hmbkp_do_backup() {
 
 		$file = hmbkp_path() . '/.backup_complete';
 
-		if ( !$handle = @fopen( $file, 'w' ) )
-			return false;
+		if ( ! $handle = @fopen( $file, 'w' ) )
+			return;
 
-		fwrite( $handle, '' );
+		fwrite( $handle, HM_Backup::get_instance()->archive_filename() );
 
 		fclose( $handle );
 
 	}
+
+	hmbkp_email_backup();
 
 }
 
@@ -62,7 +61,6 @@ function hmbkp_delete_old_backups() {
 /**
  * Returns an array of backup files
  *
- * @todo exclude the currently running backup
  * @todo use RecursiveDirectoryIterator
  * @return array $files
  */
@@ -72,7 +70,7 @@ function hmbkp_get_backups() {
 
     $hmbkp_path = hmbkp_path();
 
-    if ( $handle = opendir( $hmbkp_path ) ) :
+    if ( $handle = @opendir( $hmbkp_path ) ) :
 
     	while ( false !== ( $file = readdir( $handle ) ) )
     		if ( end( explode( '.', $file ) ) == 'zip' )
@@ -83,7 +81,7 @@ function hmbkp_get_backups() {
     endif;
 
     // If there is a custom backups directory and it's not writable then include those backups as well
-    if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && is_dir( HMBKP_PATH ) && !is_writable( HMBKP_PATH ) ) :
+    if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && is_dir( HMBKP_PATH ) && ! is_writable( HMBKP_PATH ) ) :
 
     	if ( $handle = opendir( HMBKP_PATH ) ) :
 
@@ -97,9 +95,14 @@ function hmbkp_get_backups() {
 
 	endif;
 
-    krsort( $files );
+	krsort( $files );
+
+    // Don't include the currently running backup
+    if ( $key = array_search( trailingslashit( hmbkp_path() ) . hmbkp_in_progress(), $files ) )
+    	unset( $files[$key] );
 
     return $files;
+
 }
 
 /**
@@ -112,8 +115,8 @@ function hmbkp_delete_backup( $file ) {
 	$file = base64_decode( $file );
 
 	// Delete the file
-	if ( strpos( $file, hmbkp_path() ) !== false || strpos( $file, WP_CONTENT_DIR . '/backups' ) !== false )
-	  unlink( $file );
+	if ( ( strpos( $file, hmbkp_path() ) !== false || strpos( $file, WP_CONTENT_DIR . '/backups' ) !== false ) && file_exists( $file ) )
+		unlink( $file );
 
 }
 
@@ -123,10 +126,14 @@ function hmbkp_delete_backup( $file ) {
   *	@param $file
   * @return bool
   */
-function hmbkp_email_backup( $file ) {
+function hmbkp_email_backup() {
 
-	if ( ! hmbkp_get_email_address() )
+	$file = HM_Backup::get_instance()->archive_filepath();
+
+	if ( ! hmbkp_get_email_address() || ! file_exists( $file ) )
 		return;
+
+	update_option( 'hmbkp_email_error', 'hmbkp_email_failed' );
 
 	// Raise the memory and time limit
 	@ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', WP_MAX_MEMORY_LIMIT ) );
@@ -134,30 +141,28 @@ function hmbkp_email_backup( $file ) {
 
 	// @todo admin_url?
 	$download = get_bloginfo( 'wpurl' ) . '/wp-admin/tools.php?page=' . HMBKP_PLUGIN_SLUG . '&hmbkp_download=' . base64_encode( $file );
+
 	$domain = parse_url( get_bloginfo( 'url' ), PHP_URL_HOST ) . parse_url( get_bloginfo( 'url' ), PHP_URL_PATH );
 
 	$subject = sprintf( __( 'Backup of %s', 'hmbkp' ), $domain );
-	$message = sprintf( __( "BackUpWordPress has completed a backup of your site %s.\n\nThe backup file should be attached to this email.\n\nYou can also download the backup file by clicking the link below:\n\n%s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot", 'hmbkp' ), get_bloginfo( 'url' ), $download );
+	$message = sprintf( __( 'BackUpWordPress has completed a backup of your site %1$s.\n\nThe backup file should be attached to this email.\n\nYou can also download the backup file by clicking the link below:\n\n%2$s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot', 'hmbkp' ), get_bloginfo( 'url' ), $download );
 	$headers = 'From: BackUpWordPress <' . get_bloginfo( 'admin_email' ) . '>' . "\r\n";
 
 	// Try to send the email
-	$sent = wp_mail( hmbkp_get_email_address(), $subject, $message, $headers, $file );
+	$sent = wp_mail( array_filter( hmbkp_get_email_address(), 'is_email' ), $subject, $message, $headers, $file );
 
 	// If it failed- Try to send a download link - The file was probably too large.
 	if ( ! $sent ) :
 
 		$subject = sprintf( __( 'Backup of %s', 'hmbkp' ), $domain );
-		$message = sprintf( __( "BackUpWordPress has completed a backup of your site %s.\n\nUnfortunately the backup file was too large to attach to this email.\n\nYou can download the backup file by clicking the link below:\n\n%s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot", 'hmbkp' ), get_bloginfo( 'url' ), $download );
+		$message = sprintf( __( 'BackUpWordPress has completed a backup of your site %1$s.\n\nUnfortunately the backup file was too large to attach to this email.\n\nYou can download the backup file by clicking the link below:\n\n%2$s\n\nKind Regards\n\n The Happy BackUpWordPress Backup Emailing Robot', 'hmbkp' ), get_bloginfo( 'url' ), $download );
 
-		$sent = wp_mail( hmbkp_get_email_address(), $subject, $message, $headers );
+		$sent = wp_mail( array_filter( hmbkp_get_email_address(), 'is_email' ), $subject, $message, $headers );
 
 	endif;
 
 	// Set option for email not sent error
-	if ( ! $sent )
-		update_option( 'hmbkp_email_error', 'hmbkp_email_failed' );
-
-	else
+	if ( $sent )
 		delete_option( 'hmbkp_email_error' );
 
 	return true;
@@ -177,7 +182,7 @@ function hmbkp_set_status( $message = '' ) {
 	if ( ! $handle = @fopen( $file, 'w' ) )
 		return;
 
-	fwrite( $handle, $message );
+	fwrite( $handle, HM_Backup::get_instance()->archive_filename() . '::' . $message );
 
 	fclose( $handle );
 
@@ -193,7 +198,7 @@ function hmbkp_get_status() {
 	if ( ! file_exists( hmbkp_path() . '/.backup_running' ) )
 		return '';
 
-	return file_get_contents( hmbkp_path() .'/.backup_running' );
+	return end( explode( '::', file_get_contents( hmbkp_path() . '/.backup_running' ) ) );
 
 }
 
@@ -210,7 +215,7 @@ function hmbkp_get_excludes() {
 	if ( get_option( 'hmbkp_excludes' ) )
 		return get_option( 'hmbkp_excludes' );
 
-	return false;
+	return '';
 
 }
 
@@ -227,7 +232,7 @@ function hmbkp_invalid_custom_excludes() {
 	if ( $excludes = hmbkp_get_excludes() )
 
 		foreach ( explode( ',', $excludes ) as $rule )
-			if ( ( $rule = trim( $rule ) ) && in_array( substr( $rule, 0, 1 ), array( '/', '\\' ) ) && !file_exists( $rule ) && ! file_exists( ABSPATH . $rule ) && ! file_exists( trailingslashit( ABSPATH ) . $rule ) )
+			if ( ( $rule = trim( $rule ) ) && in_array( substr( $rule, 0, 1 ), array( '/', '\\' ) ) && ! file_exists( $rule ) && ! file_exists( hmbkp_get_home_path() . $rule ) && ! file_exists( trailingslashit( hmbkp_get_home_path() ) . $rule ) )
 				$invalid_rules[] = $rule;
 
 	return array_filter( $invalid_rules );
@@ -256,8 +261,8 @@ function hmbkp_valid_custom_excludes() {
  *
  * @return bool
  */
-function hmbkp_is_in_progress() {
-	return file_exists( hmbkp_path() . '/.backup_running' );
+function hmbkp_in_progress() {
+	return file_exists( hmbkp_path() . '/.backup_running' ) ? reset( explode( '::', file_get_contents( hmbkp_path() .'/.backup_running' ) ) ) : '';
 }
 
 /**
@@ -268,4 +273,22 @@ function hmbkp_is_in_progress() {
  */
 function hmbkp_exclude_string( $context ) {
 	return HM_Backup::get_instance()->exclude_string( $context );
+}
+
+function hmbkp_backup_errors() {
+
+	if ( ! file_exists( hmbkp_path() . '/.backup_errors' ) )
+		return '';
+
+	return file_get_contents( hmbkp_path() . '/.backup_errors' );
+
+}
+
+function hmbkp_backup_warnings() {
+
+	if ( ! file_exists( hmbkp_path() . '/.backup_warnings' ) )
+		return '';
+
+	return file_get_contents( hmbkp_path() . '/.backup_warnings' );
+
 }
