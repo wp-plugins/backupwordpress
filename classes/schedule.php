@@ -153,7 +153,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		$this->set_path( hmbkp_path() );
 
 		// Set the archive filename to site name + schedule slug + date
-		$this->set_archive_filename( strtolower( sanitize_file_name( implode( '-', array( get_bloginfo( 'name' ), $this->get_id(), $this->get_type(), date( 'Y-m-d-H-i-s', current_time( 'timestamp' ) ) ) ) ) ) . '.zip' );
+		$this->set_archive_filename( implode( '-', array( get_bloginfo( 'name' ), $this->get_id(), $this->get_type(), date( 'Y-m-d-H-i-s', current_time( 'timestamp' ) ) ) ) . '.zip' );
 
 	}
 
@@ -216,8 +216,13 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 */
 	public function set_type( $type ) {
 
-		if ( parent::set_type( $type ) !== false )
+		if ( parent::set_type( $type ) !== false ) {
+
 			$this->options['type'] = $type;
+
+			$this->clear_filesize_cache();
+
+		}
 
 	}
 
@@ -246,8 +251,13 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 */
 	public function set_excludes( $excludes, $append = false ) {
 
-		if ( parent::set_excludes( $excludes, $append ) !== false )
+		if ( parent::set_excludes( $excludes, $append ) !== false ) {
+
 			$this->options['excludes'] = parent::get_excludes();
+
+			$this->clear_filesize_cache();
+
+		}
 
 	}
 
@@ -330,7 +340,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 	    		global $wpdb;
 
-	    		$res = $wpdb->get_results( 'SHOW TABLE STATUS FROM ' . DB_NAME, ARRAY_A );
+	    		$res = $wpdb->get_results( 'SHOW TABLE STATUS FROM `' . DB_NAME . '`', ARRAY_A );
 
 	    		foreach ( $res as $r )
 	    			$filesize += (float) $r['Data_length'];
@@ -349,7 +359,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 			}
 
 			// Cache for a day
-			set_transient( time() + 60 * 60 * 24, 'hmbkp_schedule_' . $this->get_id() . '_filesize', $filesize );
+			set_transient( 'hmbkp_schedule_' . $this->get_id() . '_filesize', $filesize, time() + 60 * 60 * 24 );
 
 		}
 
@@ -357,7 +367,27 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 	}
 
+	/**
+	 * Clear the cached filesize, forces the filesize to be re-calculated the next
+	 * time get_filesize is called
+	 *
+	 * @access public
+	 * @return void
+	 */
+	public function clear_filesize_cache() {
+		delete_transient( 'hmbkp_schedule_' . $this->get_id() . '_filesize' );
+	}
+
+	/**
+	 * Get the start time for the schedule
+	 *
+	 * @access public
+	 * @return int timestamp || 0 for manual only schedules
+	 */
 	public function get_schedule_start_time() {
+
+		if ( $this->get_reoccurrence() === 'manually' )
+			return 0;
 
 		if ( ! $this->schedule_start_time )
 			$this->set_schedule_start_time( current_time( 'timestamp' ) );
@@ -366,6 +396,13 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 	}
 
+	/**
+	 * Set the schedule start time.
+	 *
+	 * @access public
+	 * @param int $timestamp
+	 * @return void
+	 */
 	public function set_schedule_start_time( $timestamp ) {
 
 		if ( (string) (int) $timestamp !== (string) $timestamp )
@@ -382,8 +419,9 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 */
 	public function get_reoccurrence() {
 
+		// Default to no reoccurrence
 		if ( empty( $this->options['reoccurrence'] ) )
-			$this->set_reoccurrence( 'weekly' );
+			$this->set_reoccurrence( 'manually' );
 
 		return esc_attr( $this->options['reoccurrence'] );
 
@@ -398,15 +436,19 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	public function set_reoccurrence( $reoccurrence ) {
 
 		// Check it's valid
-		if ( ! is_string( $reoccurrence ) || ! trim( $reoccurrence ) || ! in_array( $reoccurrence, array_keys( wp_get_schedules() ) ) )
-			throw new Exception( 'Argument 1 for ' . __METHOD__ . ' must be a valid cron reoccurrence' );
+		if ( ! is_string( $reoccurrence ) || ! trim( $reoccurrence ) || ( ! in_array( $reoccurrence, array_keys( wp_get_schedules() ) ) ) && $reoccurrence !== 'manually' )
+			throw new Exception( 'Argument 1 for ' . __METHOD__ . ' must be a valid cron reoccurrence or "manually"' );
 
 		if ( isset( $this->options['reoccurrence'] ) && $this->options['reoccurrence'] === $reoccurrence )
 			return;
 
 		$this->options['reoccurrence'] = $reoccurrence;
 
-		$this->schedule();
+		if ( $reoccurrence === 'manually' )
+			$this->unschedule();
+
+		else
+			$this->schedule();
 
 	}
 
@@ -419,6 +461,9 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	public function get_interval() {
 
 		$schedules = wp_get_schedules();
+
+		if ( $this->get_reoccurrence() === 'manually' )
+			return 0;
 
 		return $schedules[$this->get_reoccurrence()]['interval'];
 
@@ -443,13 +488,17 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	public function schedule() {
 
 		// Clear any existing hooks
-		wp_clear_scheduled_hook( $this->schedule_hook );
+		$this->unschedule();
 
 		wp_schedule_event( $this->get_schedule_start_time() + $this->get_interval(), $this->get_reoccurrence(), $this->schedule_hook );
 
 		// Hook the backu into the schedule hook
 		add_action( $this->schedule_hook, array( $this, 'run' ) );
 
+	}
+
+	public function unschedule() {
+		wp_clear_scheduled_hook( $this->schedule_hook );
 	}
 
 	/**
@@ -472,6 +521,12 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 	}
 
+	/**
+	 * Get the status of the running backup.
+	 *
+	 * @access public
+	 * @return string
+	 */
 	public function get_status() {
 
 		if ( ! file_exists( $this->schedule_running_filepath ) )
@@ -481,6 +536,12 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 	}
 
+	/**
+	 * Get the filename that the running status is stored in.
+	 *
+	 * @access public
+	 * @return string
+	 */
 	public function get_running_backup_filename() {
 
 		if ( ! file_exists( $this->schedule_running_filepath ) )
@@ -489,7 +550,14 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		return reset( explode( '::', file_get_contents( $this->schedule_running_filepath ) ) );
 	}
 
-	public function set_status( $message ) {
+	/**
+	 * Set the status of the running backup
+	 *
+	 * @access public
+	 * @param string $message
+	 * @return void
+	 */
+	protected function set_status( $message ) {
 
 		if ( ! $handle = fopen( $this->schedule_running_filepath, 'w' ) )
 			return;
@@ -667,11 +735,14 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 */
 	public function cancel() {
 
-		// Delete the schedule optoins
+		// Delete the schedule options
 		delete_option( 'hmbkp_schedule_' . $this->get_id() );
 
 		// Clear any existing schedules
-		wp_clear_scheduled_hook( $this->schedule_hook );
+		$this->unschedule();
+
+		// Clear the filesize transient
+		$this->clear_filesize_cache();
 
 		// Delete it's backups
 		$this->delete_backups();

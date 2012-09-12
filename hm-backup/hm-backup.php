@@ -3,7 +3,7 @@
 /**
  * Generic file and database backup class
  *
- * @version 2.0 Beta
+ * @version 2.0 Beta 4
  */
 class HM_Backup {
 
@@ -270,7 +270,7 @@ class HM_Backup {
 	public function get_archive_filename() {
 
 		if ( empty( $this->archive_filename ) )
-			$this->set_archive_filename( strtolower( sanitize_file_name( implode( '-', array( get_bloginfo( 'name' ), 'backup', date( 'Y-m-d-H-i-s', current_time( 'timestamp' ) ) ) ) ) ) . '.zip' );
+			$this->set_archive_filename( implode( '-', array( get_bloginfo( 'name' ), 'backup', date( 'Y-m-d-H-i-s', current_time( 'timestamp' ) ) ) ) . '.zip' );
 
 		return $this->archive_filename;
 
@@ -315,7 +315,7 @@ class HM_Backup {
 	public function get_database_dump_filename() {
 
 		if ( empty( $this->database_dump_filename ) )
-			$this->set_database_dump_filename( strtolower( sanitize_file_name( remove_accents(  'database_' . DB_NAME . '.sql' ) ) ) );
+			$this->set_database_dump_filename( 'database_' . DB_NAME . '.sql' );
 
 		return $this->database_dump_filename;
 
@@ -1210,7 +1210,7 @@ class HM_Backup {
 	}
 
 	/**
-	 * Add backquotes to tables and db-names inSQL queries. Taken from phpMyAdmin.
+	 * Add backquotes to tables and db-names in SQL queries. Taken from phpMyAdmin.
 	 *
 	 * @access private
 	 * @param mixed $a_name
@@ -1419,7 +1419,7 @@ class HM_Backup {
 	    // Actually write the sql file
 	    if ( is_writable( $sqlname ) || ! file_exists( $sqlname ) ) {
 
-	    	if ( ! $handle = fopen( $sqlname, 'a' ) )
+	    	if ( ! $handle = @fopen( $sqlname, 'a' ) )
 	    		return;
 
 	    	if ( ! fwrite( $handle, $sql ) )
@@ -1446,7 +1446,6 @@ class HM_Backup {
 		return $this->errors;
 
 	}
-
 
 	/**
 	 * Add an error to the errors stack
@@ -1503,7 +1502,6 @@ class HM_Backup {
 
 	}
 
-
 	/**
 	 * Add an warning to the warnings stack
 	 *
@@ -1519,7 +1517,6 @@ class HM_Backup {
 		$this->warnings[$context][$_key = md5( implode( ':' , (array) $warning ) )] = $warning;
 
 	}
-
 
 	/**
 	 * Custom error handler for catching errors

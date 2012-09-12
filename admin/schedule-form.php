@@ -1,4 +1,4 @@
-<form method="post" class="hmbkp-form" novalidate>
+<form method="post" class="hmbkp-form" novalidate data-schedule-action="<?php if ( isset( $is_new_schedule ) ) { ?>add<?php } else { ?>edit<?php } ?>">
 
 	<input type="hidden" name="hmbkp_schedule_id" value="<?php echo $schedule->get_id(); ?>" />
 
@@ -23,6 +23,8 @@
     		<?php _e( 'Schedule', 'hmbkp' ); ?>
 
     		<select name="hmbkp_schedule_reoccurrence" id="hmbkp_schedule_reoccurrence">
+
+    			<option value="manually">Manual Only</option>
 
 <?php foreach( wp_get_schedules() as $cron_schedule => $cron_details ) : ?>
 
