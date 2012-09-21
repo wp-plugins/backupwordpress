@@ -13,16 +13,16 @@ class BackUpCommand extends WP_CLI_Command {
 
 		// Make sure it's possible to do a backup
 		if ( HM_Backup::is_safe_mode_active() ) {
-			WP_CLI::error( 'Backup not possible when php is running safe_mode on' );
+			WP_CLI::error( __( 'Backup not possible when php is running safe_mode on', 'hmbkp' ) );
 			return false;
 		}
 
 		add_action( 'hmbkp_mysqldump_started', function() {
-			WP_CLI::line( 'Backup: Dumping database...' );
+			WP_CLI::line( __( 'Backup: Dumping database...', 'hmbkp' ) );
 		} );
 
 		add_action( 'hmbkp_archive_started', function() {
-			WP_CLI::line( 'Backup: Zipping everything up...' );
+			WP_CLI::line( __( 'Backup: Zipping everything up...', 'hmbkp' ) );
 		} );
 
 		// Clean up any mess left by a previous backup
@@ -31,53 +31,46 @@ class BackUpCommand extends WP_CLI_Command {
 		$hm_backup = new HM_Backup();
 
 		if ( ! empty( $assoc_args['path'] ) )
-			$hm_backup->path = $assoc_args['path'];
+			$hm_backup->set_path( $assoc_args['path'] );
 
 		if ( ! empty( $assoc_args['root'] ) )
-			$hm_backup->root = $assoc_args['root'];
+			$hm_backup->set_root( $assoc_args['root'] );
 
-		if ( ( ! is_dir( $hm_backup->path() ) && ( ! is_writable( dirname( $hm_backup->path() ) ) || ! mkdir( $hm_backup->path() ) ) ) || ! is_writable( $hm_backup->path() ) ) {
-			WP_CLI::error( 'Invalid backup path' );
+		if ( ( ! is_dir( $hm_backup->get_path() ) && ( ! is_writable( dirname( $hm_backup->get_path() ) ) || ! mkdir( $hm_backup->get_path() ) ) ) || ! is_writable( $hm_backup->get_path() ) ) {
+			WP_CLI::error( __( 'Invalid backup path', 'hmbkp' ) );
 			return false;
 		}
 
-
-		if ( ! is_dir( $hm_backup->root() ) || ! is_readable( $hm_backup->root() ) ) {
-			WP_CLI::error( 'Invalid root path' );
+		if ( ! is_dir( $hm_backup->get_root() ) || ! is_readable( $hm_backup->get_root() ) ) {
+			WP_CLI::error( __( 'Invalid root path', 'hmbkp' ) );
 			return false;
 		}
-
-		// Default to both
-		$hm_backup->files_only = false;
-		$hm_backup->database_only = false;
 
 		if ( ! empty( $assoc_args['files_only'] ) )
-			$hm_backup->files_only = true;
+			$hm_backup->set_type( 'file' );
 
 		if ( ! empty( $assoc_args['database_only'] ) )
-			$hm_backup->database_only = true;
+			$hm_backup->set_type( 'database' );
 
-		if ( ! empty( $assoc_args['mysqldump_command_path'] ) )
-			$hm_backup->mysqldump_command_path = empty( $assoc_args['mysqldump_command_path'] ) || $assoc_args['mysqldump_command_path'] === 'false' ? false : true;
+		if ( isset( $assoc_args['mysqldump_command_path'] ) )
+			$hm_backup->set_mysqldump_command_path( $assoc_args['mysqldump_command_path'] );
 
-		if ( ! empty( $assoc_args['zip_command_path'] ) )
-			$hm_backup->zip_command_path = empty( $assoc_args['zip_command_path'] ) || $assoc_args['zip_command_path'] === 'false' ? false : true;
+		if ( isset( $assoc_args['zip_command_path'] ) )
+			$hm_backup->set_zip_command_path( $assoc_args['zip_command_path'] );
 
 		if ( ! empty( $assoc_args['excludes'] ) )
-			$hm_backup->excludes = 	$valid_rules = array_filter( array_map( 'trim', explode( ',', $assoc_args['excludes'] ) ) );
+			$hm_backup->set_excludes( $assoc_args['excludes'] );
 
 		$hm_backup->backup();
-
-	    WP_CLI::line( 'Backup: Deleting old backups...' );
 
 		// Delete any old backup files
 	    //hmbkp_delete_old_backups();
 
-    	if ( file_exists( $hm_backup->archive_filepath() ) )
-			WP_CLI::success( 'Backup Complete: ' . HM_Backup::get_instance()->archive_filepath() );
+    	if ( file_exists( $hm_backup->get_archive_filepath() ) )
+			WP_CLI::success( __( 'Backup Complete: ', 'hmbkp' ) . $hm_backup->get_archive_filepath() );
 
 		else
-			WP_CLI::error( 'Backup Failed' );
+			WP_CLI::error( __( 'Backup Failed', 'hmbkp' ) );
 
 	}
 
