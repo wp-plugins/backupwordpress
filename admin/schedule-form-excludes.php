@@ -1,10 +1,10 @@
 <form method="post" class="hmbkp-form">
 
-    <input type="hidden" name="hmbkp_schedule_id" value="<?php echo $schedule->get_id(); ?>" />
+    <input type="hidden" name="hmbkp_schedule_id" value="<?php echo esc_attr( $schedule->get_id() ); ?>" />
 
     <fieldset class="hmbkp-edit-schedule-excludes-form">
 
-        <legend><?php _e( 'Manage Exclude', 'hmbkp' ); ?></legend>
+        <legend><?php _e( 'Manage Excludes', 'hmbkp' ); ?></legend>
 
         <div class="hmbkp_add_exclude_rule">
 
@@ -33,15 +33,23 @@
     <?php foreach( $schedule->get_excludes() as $key => $exclude ) : ?>
 
     			<tr>
-    			    <td data-hmbkp-exclude-rule="<?php echo $exclude; ?>">
+    			    <td data-hmbkp-exclude-rule="<?php echo esc_attr( $exclude ); ?>">
 
-    			    	<span class="code"><?php echo str_ireplace( untrailingslashit( $schedule->get_root() ), '', $exclude ); ?></span>
+    			    	<span class="code"><?php echo esc_attr( str_ireplace( untrailingslashit( $schedule->get_root() ), '', $exclude ) ); ?></span>
 
-    	<?php if ( strpos( $schedule->get_path(), $exclude ) === false && ( ! defined( 'HMBKP_EXCLUDE' ) || ( defined( 'HMBKP_EXCLUDE' ) && strpos( HMBKP_EXCLUDE, $exclude ) === false ) ) ) { ?>
+    	<?php if ( strpos( $schedule->get_path(), untrailingslashit( $exclude ) ) !== false ) : ?>
+
+    					<span class="reason"><?php _e( 'default', 'hmbkp' ); ?></span>
+
+    	<?php elseif ( defined( 'HMBKP_EXCLUDE' ) && strpos( HMBKP_EXCLUDE, $exclude ) !== false ) : ?>
+
+    					<span class="reason"><?php _e( 'defined', 'hmbkp' ); ?></span>
+
+    	<?php else : ?>
 
     					<a href="#" class="delete-action"><?php _e( 'Remove', 'hmbkp' ); ?></a>
 
-    	<?php } ?>
+    	<?php endif; ?>
 
     				</td>
     			</tr>

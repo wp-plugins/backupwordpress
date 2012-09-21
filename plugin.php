@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://hmn.md/backupwordpress/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 2.0 Beta 5
+Version: 2.0 RC 1
 Author URI: http://hmn.md/
 */
 
@@ -71,8 +71,6 @@ if ( version_compare( get_bloginfo( 'version' ), HMBKP_REQUIRED_WP_VERSION, '<' 
  */
 function hmbkp_init() {
 
-	hmbkp_setup_default_schedules();
-
 	$plugin_data = get_plugin_data( __FILE__ );
 
 	// define the plugin version
@@ -94,16 +92,18 @@ function hmbkp_init() {
 		wp_localize_script( 'hmbkp', 'objectL10n', array(
 			'update'				=> __( 'Update', 'hmbkp' ),
 			'cancel'				=> __( 'Cancel', 'hmbkp' ),
-			'delete_schedule'		=> __( "Are you sure you want to delete this schedule? All of it's backups will also be deleted.\n\n'Cancel' to go back, 'OK' to delete.\n", 'hmbkp' ),
-			'delete_backup'			=> __( "Are you sure you want to delete this backup?\n\n'Cancel' to go back, 'OK' to delete.\n", 'hmbkp' ),
-			'remove_exclude_rule'	=> __( "Are you sure you want to remove this exclude rule?\n\n'Cancel' to go back, 'OK' to delete.\n", 'hmbkp' ),
-			'remove_old_backups'	=> __( "Reducing the number of backups that are stored on this server will cause some of your existing backups to be deleted, are you sure that's what you want?\n\n'Cancel' to go back, 'OK' to delete.\n", 'hmbkp' )
+			'delete_schedule'		=> __( 'Are you sure you want to delete this schedule? All of it\'s backups will also be deleted.' ) . "\n\n" . __( '\'Cancel\' to go back, \'OK\' to delete.', 'hmbkp' ) . "\n",
+			'delete_backup'			=> __( 'Are you sure you want to delete this backup?', 'hmbkp' ) . "\n\n" . __( '\'Cancel\' to go back, \'OK\' to delete.', 'hmbkp' ) . "\n",
+			'remove_exclude_rule'	=> __( 'Are you sure you want to remove this exclude rule?', 'hmbkp' ) . "\n\n" . __( '\'Cancel\' to go back, \'OK\' to delete.', 'hmbkp' ) . "\n",
+			'remove_old_backups'	=> __( 'Reducing the number of backups that are stored on this server will cause some of your existing backups to be deleted, are you sure that\'s what you want?', 'hmbkp' ) . "\n\n" . __( '\'Cancel\' to go back, \'OK\' to delete.', 'hmbkp' ) . "\n"
 		) );
 
 		wp_enqueue_style( 'hmbkp_fancybox', HMBKP_PLUGIN_URL . '/assets/fancyBox/source/jquery.fancybox.css', false, HMBKP_VERSION );
 		wp_enqueue_style( 'hmbkp', HMBKP_PLUGIN_URL . '/assets/hmbkp.css', false, HMBKP_VERSION );
 
 	}
+
+	hmbkp_setup_default_schedules();
 
 	// Handle any advanced option changes
 	// TODO
@@ -127,7 +127,6 @@ require_once( HMBKP_PLUGIN_PATH . '/classes/schedules.php' );
 // Load the core functions
 require_once( HMBKP_PLUGIN_PATH . '/functions/core.php' );
 require_once( HMBKP_PLUGIN_PATH . '/functions/interface.php' );
-require_once( HMBKP_PLUGIN_PATH . '/functions/backup.php' );
 
 // Load Services
 require_once( HMBKP_PLUGIN_PATH . '/classes/services.php' );

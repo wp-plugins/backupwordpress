@@ -135,7 +135,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 			$this->set_path( HMBKP_PATH );
 
 		if ( defined( 'HMBKP_EXCLUDE' ) && HMBKP_EXCLUDE )
-			$this->set_excludes( HMBKP_EXCLUDE, true );
+			parent::set_excludes( HMBKP_EXCLUDE, true );
 
 		if ( defined( 'HMBKP_MYSQLDUMP_PATH' ) )
 			$this->set_mysqldump_command_path( HMBKP_MYSQLDUMP_PATH );
@@ -145,10 +145,6 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 		if ( defined( 'HMBKP_ZIP_PATH' ) && HMBKP_ZIP_PATH === 'PclZip' && $this->skip_zip_archive = true )
 			$this->set_zip_command_path( false );
-
-		// Pass type and excludes up to HM Backup
-		parent::set_type( $this->get_type() );
-		parent::set_excludes( $this->get_excludes() );
 
 		// Set the path - TODO remove external function dependancy
 		$this->set_path( hmbkp_path() );
@@ -205,7 +201,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		if ( empty( $this->options['type'] ) )
 			$this->set_type( 'complete' );
 
-		return esc_attr( $this->options['type'] );
+		return $this->options['type'];
 
 	}
 
@@ -217,13 +213,11 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 */
 	public function set_type( $type ) {
 
-		if ( parent::set_type( $type ) !== false ) {
+		parent::set_type( $type );
 
-			$this->options['type'] = $type;
+		$this->options['type'] = $type;
 
-			$this->clear_filesize_cache();
-
-		}
+		$this->clear_filesize_cache();
 
 	}
 
@@ -252,11 +246,15 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 */
 	public function set_excludes( $excludes, $append = false ) {
 
+		// Use the validation from HM_Backup::set_excludes
 		parent::set_excludes( $excludes, $append );
 
-		if ( ! parent::get_excludes() ) {
+		// If these are valid excludes and they are different save them
+		if ( parent::get_excludes() && ( empty( $this->options['excludes'] ) || $this->options['excludes'] !== parent::get_excludes() ) ) {
 
-			$this->options['excludes'] = parent::get_excludes();
+			$this->options['excludes'] = $append && ! empty( $this->options['excludes'] ) ? array_merge( (array) $this->options['excludes'], parent::get_excludes() ) : parent::get_excludes();;
+
+			parent::set_excludes( $this->options['excludes'] );
 
 			$this->clear_filesize_cache();
 
