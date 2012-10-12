@@ -89,7 +89,7 @@ function hmbkp_request_cancel_backup() {
 	$schedule = new HMBKP_Scheduled_Backup( urldecode( $_GET['hmbkp_schedule_id'] ) );
 
 	// Delete the running backup
-	if ( file_exists( trailingslashit( hmbkp_path() ) . $schedule->get_running_backup_filename() ) )
+	if ( $schedule->get_running_backup_filename() && file_exists( trailingslashit( hmbkp_path() ) . $schedule->get_running_backup_filename() ) )
 		unlink( trailingslashit( hmbkp_path() ) . $schedule->get_running_backup_filename() );
 
 	hmbkp_cleanup();
@@ -166,7 +166,7 @@ function hmbkp_ajax_cron_test() {
 
 	$response = wp_remote_get( site_url( 'wp-cron.php' ) );
 
-	if ( ! is_wp_error( $response ) && $response['response']['code'] != '200' )
+	if ( is_wp_error( $response ) || $response['response']['code'] !== 200 )
     	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( '%1$s is returning a %2$s response which could mean cron jobs aren\'t getting fired properly. BackUpWordPress relies on wp-cron to run scheduled back ups. See the %3$s for more details.', 'hmbkp' ), '<code>wp-cron.php</code>', '<code>' . $response['response']['code'] . '</code>', '<a href="http://wordpress.org/extend/plugins/backupwordpress/faq/">FAQ</a>' ) . '</p></div>';
 
 	else
