@@ -2,8 +2,8 @@
 Contributors: humanmade, joehoyle, mattheu, tcrsavage, willmot, cuvelier
 Tags: back up, backup, backups, database, zip, db, files, archive, wp-cli, humanmade
 Requires at least: 3.3.3
-Tested up to: 3.4.2
-Stable tag: 2.0.1
+Tested up to: 3.5
+Stable tag: 2.0.3
 
 Simple automated back ups of your WordPress powered website.
 
@@ -102,6 +102,21 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 3. Easily manage exclude rules and see exactly which files are included and excluded from your backup.
 
 == Changelog ==
+
+#### 2.0.3
+
+* Fix issues with scheduled backups not firing in some cases.
+* Better compatibility when the WP Remote plugin is active alongside BackUpWordPress.
+* Catch and display more WP Cron errors.
+* BackUpWordPress now fails to activate on WordPress 3.3.2 and below.
+* Other minor fixes and improvements.
+
+#### 2.0.2
+
+* Only send backup failed emails if the backup actually failed.
+* Turn off the generic "memory limit probably hit" message as it was showing for too many people.
+* Fix a possible notice when the backup running filename is blank.
+* Include the `wp_error` response in the cron check.
 
 #### 2.0.1
 
