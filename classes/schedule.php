@@ -49,51 +49,6 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	private $schedule_start_time = 0;
 
 	/**
-	 * Take a file size and return a human readable
-	 * version
-	 *
-	 * @access public
-	 * @static
-	 * @param int $size
-	 * @param string $unit. (default: null)
-	 * @param string $format. (default: '%01.2f %s')
-	 * @param bool $si. (default: true)
-	 * @return int
-	 */
-	public static function human_filesize( $size, $unit = null, $format = '%01.2f %s', $si = true ) {
-
-		// Units
-		if ( $si === true ) :
-			$sizes = array( 'B', 'kB', 'MB', 'GB', 'TB', 'PB' );
-			$mod   = 1000;
-
-		else :
-			$sizes = array('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB');
-			$mod   = 1024;
-
-		endif;
-
-		$ii = count( $sizes ) - 1;
-
-		// Max unit
-		$unit = array_search( (string) $unit, $sizes );
-
-		if ( is_null( $unit ) || $unit === false )
-			$unit = $ii;
-
-		// Loop
-		$i = 0;
-
-		while ( $unit != $i && $size >= 1024 && $i < $ii ) {
-			$size /= $mod;
-			$i++;
-		}
-
-		return sprintf( $format, $size, $sizes[$i] );
-
-	}
-
-	/**
 	 * Setup the schedule object
 	 *
 	 * Loads the options from the database and populates properties
@@ -140,6 +95,10 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 		// Set the archive filename to site name + schedule slug + date
 		$this->set_archive_filename( implode( '-', array( get_bloginfo( 'name' ), $this->get_id(), $this->get_type(), date( 'Y-m-d-H-i-s', current_time( 'timestamp' ) ) ) ) . '.zip' );
+
+		// Setup the schedule if it isn't set or TODO if it's changed
+		if ( ( ! $this->get_next_occurrence() && in_array( $this->get_reoccurrence(), array_keys( wp_get_schedules() ) ) ) || ( date( get_option( 'time_format' ), strtotime( HMBKP_SCHEDULE_TIME ) - ( get_option( 'gmt_offset' ) * 3600 ) ) !== date( get_option( 'time_format' ), $this->get_next_occurrence() ) ) )
+			$this->schedule();
 
 	}
 
@@ -365,7 +324,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 		}
 
-	    return self::human_filesize( $filesize, null, '%01u %s' );
+	    return size_format( $filesize );
 
 	}
 
@@ -403,15 +362,18 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 		if ( ! $this->schedule_start_time ) {
 
-			if ( strtotime( '11pm' ) < strtotime( 'now' ) )
-				$date = strtotime( 'tomorrow 11pm' );
-			else
-				$date = strtotime( '11pm' );
+			$date = strtotime( HMBKP_SCHEDULE_TIME );
 
-			$date -= ( get_option( 'gmt_offset' ) * 3600 );
-			
+			// Convert to UTC
+			$date -= get_option( 'gmt_offset' ) * 3600;
+
+			// if the scheduled time already passed today then start at the next interval instead
+			if ( $date <= strtotime( 'now' ) )
+				$date += $this->get_interval();
+
 			$this->set_schedule_start_time( $date );
 		}
+
 		return $this->schedule_start_time;
 
 	}
@@ -420,7 +382,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 * Set the schedule start time.
 	 *
 	 * @access public
-	 * @param int $timestamp
+	 * @param int $timestamp in UTC
 	 * @return void
 	 */
 	public function set_schedule_start_time( $timestamp ) {
@@ -494,18 +456,33 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 *
 	 * @access public
 	 */
-	public function get_next_occurrence() {
+	public function get_next_occurrence( $gmt = true ) {
 
-		return wp_next_scheduled( 'hmbkp_schedule_hook', array( 'id' => $this->get_id() ) );
+		$time = wp_next_scheduled( 'hmbkp_schedule_hook', array( 'id' => $this->get_id() ) );
+
+		if ( ! $time )
+			$time = 0;
+
+		if ( ! $gmt )
+			$time += get_option( 'gmt_offset' ) * 3600;
+
+		return $time;
 
 	}
 
+
+	/**
+	 * Get the path to the backup running file that stores the running backup status
+	 *
+	 * @access private
+	 * @return string
+	 */
 	private function get_schedule_running_path() {
 		return $this->get_path() . '/.schedule-' . $this->get_id() . '-running';
 	}
 
 	/**
-	 * Schedule the cron
+	 * Schedule the backup cron
 	 *
 	 * @access public
 	 */
@@ -515,8 +492,16 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		$this->unschedule();
 
 		wp_schedule_event( $this->get_schedule_start_time(), $this->get_reoccurrence(), 'hmbkp_schedule_hook', array( 'id' => $this->get_id() ) );
+
 	}
 
+
+	/**
+	 * Unschedule the backup cron.
+	 *
+	 * @access public
+	 * @return void
+	 */
 	public function unschedule() {
 		wp_clear_scheduled_hook( 'hmbkp_schedule_hook', array( 'id' => $this->get_id() ) );
 	}
