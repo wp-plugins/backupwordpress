@@ -33,9 +33,11 @@ function hmbkp_deactivate() {
 	delete_transient( 'hmbkp_running' );
 	delete_transient( 'hmbkp_estimated_filesize' );
 
-	// Clear cron
-	wp_clear_scheduled_hook( 'hmbkp_schedule_backup_hook' );
-	wp_clear_scheduled_hook( 'hmbkp_schedule_single_backup_hook' );
+	// Clear hmbkp crons
+	foreach( get_option( 'cron' ) as $cron )
+		foreach( (array) $cron as $key => $value )
+			if ( strpos( $key, 'hmbkp' ) !== false )
+				wp_clear_scheduled_hook( $key );
 
 	hmbkp_cleanup();
 
@@ -87,7 +89,7 @@ function hmbkp_update() {
 	}
 
 	// Version 1 to 2
-	if ( version_compare ( '2.0' , get_option( 'hmbkp_plugin_version' ) ) ) {
+	if ( get_option( 'hmbkp_plugin_version' ) && version_compare( '2.0' , get_option( 'hmbkp_plugin_version' ), '>' ) ) {
 
 		/**
 		 * Setup a backwards compatible schedule
@@ -139,20 +141,24 @@ function hmbkp_update() {
 		$legacy_schedule->save();
 
 		// Remove the legacy options
-		foreach ( array( 'hmbkp_email', 'hmbkp_database_only', 'hmbkp_files_only', 'hmbkp_max_backups', 'hmbkp_email_address', 'hmbkp_email', 'hmbkp_schedule_frequency', 'hmbkp_disable_automatic_backup' ) as $option_name )
+		foreach ( array( 'hmbkp_database_only', 'hmbkp_files_only', 'hmbkp_max_backups', 'hmbkp_email_address', 'hmbkp_email', 'hmbkp_schedule_frequency', 'hmbkp_disable_automatic_backup' ) as $option_name )
 			delete_option( $option_name );
 
 
 	}
 
 	// Every update
-	if ( version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) {
+	if ( get_option( 'hmbkp_plugin_version' ) && version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) {
 
 		hmbkp_deactivate();
 
 		// Force .htaccess to be re-written
 		if ( file_exists( hmbkp_path() . '/.htaccess' ) )
 			unlink( hmbkp_path() . '/.htaccess' );
+
+		// Force index.html to be re-written
+		if ( file_exists( hmbkp_path() . '/index.html' ) )
+			unlink( hmbkp_path() . '/index.html' );
 
 	}
 
@@ -198,6 +204,7 @@ function hmbkp_setup_default_schedules() {
 	add_action( 'admin_notices', 'hmbkp_default_schedules_setup_warning' );
 
 }
+add_action( 'admin_init', 'hmbkp_setup_default_schedules' );
 
 /**
  * Add weekly, fortnightly and monthly as a cron schedule choices
@@ -260,14 +267,15 @@ function hmbkp_path() {
 	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH )
 		$path = HMBKP_PATH;
 
-	// If the dir doesn't exist or isn't writable then use wp-content/backups instead
-	if ( ( ! $path || ! is_writable( $path ) ) && HM_Backup::conform_dir( $path ) !== hmbkp_path_default() )
+	// If the dir doesn't exist or isn't writable then use the default path instead instead
+	if ( ( ! $path || ( is_dir( $path ) && ! is_writable( $path ) ) || ( ! is_dir( $path ) && ! is_writable( dirname( $path ) ) ) ) && get_option( 'hmbkp_path' ) !== get_option( 'hmbkp_default_path' ) )
     	$path = hmbkp_path_default();
 
 	// Create the backups directory if it doesn't exist
-	if ( is_writable( dirname( $path ) ) && ! is_dir( $path ) )
+	if ( ! is_dir( $path ) && is_writable( dirname( $path ) ) )
 		mkdir( $path, 0755 );
 
+	// If the path has changed then cache it
 	if ( get_option( 'hmbkp_path' ) !== $path )
 		update_option( 'hmbkp_path', $path );
 
@@ -276,6 +284,25 @@ function hmbkp_path() {
 
 	if ( ! file_exists( $index ) && is_writable( $path ) )
 		file_put_contents( $index, '' );
+
+	// Protect the directory with a .htaccess file on Apache servers
+	if ( ( require_once( ABSPATH . '/wp-admin/includes/misc.php' ) ) && got_mod_rewrite() ) {
+
+		$htaccess = $path . '/.htaccess';
+
+		$contents[]	= '# ' . sprintf( __( 'This %s file ensures that other people cannot download your backup files.', 'hmbkp' ), '.htaccess' );
+		$contents[] = '';
+		$contents[] = '<IfModule mod_rewrite.c>';
+		$contents[] = 'RewriteEngine On';
+		$contents[] = 'RewriteCond %{QUERY_STRING} !key=' . HMBKP_SECURE_KEY;
+		$contents[] = 'RewriteRule (.*) - [F]';
+		$contents[] = '</IfModule>';
+		$contents[] = '';
+
+		if ( ! file_exists( $htaccess ) && is_writable( $path ) )
+			insert_with_markers( $htaccess, 'BackUpWordPress', $contents );
+
+	}
 
     return HM_Backup::conform_dir( $path );
 
@@ -287,7 +314,29 @@ function hmbkp_path() {
  * @return string path
  */
 function hmbkp_path_default() {
-	return HM_Backup::conform_dir( WP_CONTENT_DIR . '/backups' );
+
+	$path = get_option( 'hmbkp_default_path' );
+
+	if ( empty( $path ) ) {
+
+		$path = HM_Backup::conform_dir( trailingslashit( WP_CONTENT_DIR ) . substr( md5( time() ), 0, 10 ) . '-backups' );
+
+		update_option( 'hmbkp_default_path', $path );
+
+	}
+
+	$upload_dir = wp_upload_dir();
+
+	// If the backups dir can't be created in WP_CONTENT_DIR then fallback to uploads
+	if ( ( ! is_dir( $path ) && ! is_writable( dirname( $path ) ) ) || ( is_dir( $path ) && ! is_writable( $path ) ) && strpos( $path, $upload_dir['basedir'] ) === false ) {
+
+		hmbkp_path_move( $path, $path = HM_Backup::conform_dir( trailingslashit( $upload_dir['basedir'] ) . substr( md5( time() ), 0, 10 ) . '-backups' ) );
+
+		update_option( 'hmbkp_default_path', $path );
+
+	}
+
+	return $path;
 }
 
 /**
@@ -300,20 +349,29 @@ function hmbkp_path_default() {
  */
 function hmbkp_path_move( $from, $to ) {
 
+	if ( ! untrailingslashit( $from ) || ! untrailingslashit( $to ) )
+		return;
+
 	// Create the custom backups directory if it doesn't exist
 	if ( is_writable( dirname( $to ) ) && ! is_dir( $to ) )
 	    mkdir( $to, 0755 );
 
-	if ( ! is_dir( $to ) || ! is_writable( $to ) || ! is_dir( $from ) )
+	if ( ! is_dir( $to ) || ! is_writable( $to ) )
 	    return false;
 
+	update_option( 'hmbkp_path', $to );
+
 	hmbkp_cleanup();
+
+	if ( ! is_dir( $from ) )
+		return false;
 
 	if ( $handle = opendir( $from ) ) :
 
 	    while ( false !== ( $file = readdir( $handle ) ) )
 	    	if ( $file !== '.' && $file !== '..' )
-	    		rename( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file );
+	    		if ( ! @rename( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file ) )
+	    			copy( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file );
 
 	    closedir( $handle );
 
@@ -331,7 +389,7 @@ function hmbkp_path_move( $from, $to ) {
  */
 function hmbkp_possible() {
 
-	if ( ! is_writable( hmbkp_path() ) || ! is_dir( hmbkp_path() ) || HM_Backup::is_safe_mode_active() )
+	if ( ! is_writable( hmbkp_path() ) || ! is_dir( hmbkp_path() ) )
 		return false;
 
 	return true;
@@ -358,5 +416,26 @@ function hmbkp_cleanup() {
     	closedir( $handle );
 
     endif;
+
+}
+
+/**
+ * Handles changes in the defined Constants
+ * that users can define to control advanced
+ * settings
+ */
+function hmbkp_constant_changes() {
+
+	// If a custom backup path has been set or changed
+	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && HM_Backup::conform_dir( HMBKP_PATH ) !== ( $from = HM_Backup::conform_dir( get_option( 'hmbkp_path' ) ) ) )
+	  hmbkp_path_move( $from, HMBKP_PATH );
+
+	// If a custom backup path has been removed
+	if ( ( ( defined( 'HMBKP_PATH' ) && ! HMBKP_PATH ) || ! defined( 'HMBKP_PATH' ) && hmbkp_path_default() !== ( $from = HM_Backup::conform_dir( get_option( 'hmbkp_path' ) ) ) ) )
+	  hmbkp_path_move( $from, hmbkp_path_default() );
+
+	// If the custom path has changed and the new directory isn't writable
+	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && ! is_writable( HMBKP_PATH ) && get_option( 'hmbkp_path' ) === HMBKP_PATH && is_dir( HMBKP_PATH ) )
+		hmbkp_path_move( HMBKP_PATH, hmbkp_path_default() );
 
 }
