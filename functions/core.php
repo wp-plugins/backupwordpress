@@ -261,6 +261,8 @@ function hmbkp_rmdirtree( $dir ) {
  */
 function hmbkp_path() {
 
+	global $is_apache;
+
 	$path = get_option( 'hmbkp_path' );
 
 	// Allow the backups path to be defined
@@ -286,7 +288,7 @@ function hmbkp_path() {
 		file_put_contents( $index, '' );
 
 	// Protect the directory with a .htaccess file on Apache servers
-	if ( ( require_once( ABSPATH . '/wp-admin/includes/misc.php' ) ) && got_mod_rewrite() ) {
+	if ( $is_apache && function_exists( 'insert_with_markers' ) && ! file_exists( $htaccess ) && is_writable( $path ) ) {
 
 		$htaccess = $path . '/.htaccess';
 
@@ -299,8 +301,7 @@ function hmbkp_path() {
 		$contents[] = '</IfModule>';
 		$contents[] = '';
 
-		if ( ! file_exists( $htaccess ) && is_writable( $path ) )
-			insert_with_markers( $htaccess, 'BackUpWordPress', $contents );
+		insert_with_markers( $htaccess, 'BackUpWordPress', $contents );
 
 	}
 
