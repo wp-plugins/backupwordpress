@@ -76,6 +76,8 @@ jQuery( document ).ready( function( $ ) {
 			{ 'action'	: 'hmbkp_file_list', 'hmbkp_schedule_excludes' : $( '.hmbkp_add_exclude_rule input' ).val(), 'hmbkp_schedule_id' : $( '[name="hmbkp_schedule_id"]' ).val() },
 			function( data ) {
 
+				console.log( data );
+
 				$( '.hmbkp_add_exclude_rule ul' ).remove();
 				$( '.hmbkp_add_exclude_rule p' ).remove();
 
