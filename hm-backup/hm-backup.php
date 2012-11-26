@@ -195,7 +195,8 @@ class HM_Backup {
 
 		$home_path = ABSPATH;
 
-		if ( $home_url !== $site_url )
+		// If site_url contains home_url and they differ then assume WordPress is installed in a sub directory
+		if ( $home_url !== $site_url && strpos( $site_url, $home_url ) === 0 )
 			$home_path = trailingslashit( substr( ABSPATH, 0, strrpos( ABSPATH, str_replace( $home_url, '', $site_url ) ) ) );
 
 		return self::conform_dir( $home_path );
@@ -907,7 +908,8 @@ class HM_Backup {
 		if ( ! empty( $this->mysqldump_verified ) )
 			return true;
 
-		if ( ! file_exists( $this->get_database_dump_filepath() ) )
+		// mysqldump can create empty dump files on error so we need to check the filesize
+		if ( ! file_exists( $this->get_database_dump_filepath() ) || filesize( $this->get_database_dump_filepath() ) === 0 )
 			$this->error( $this->get_mysqldump_method(), __( 'The mysqldump file was not created', 'hmbkp' ) );
 
 		if ( $this->get_errors( $this->get_mysqldump_method() ) )
