@@ -1,12 +1,12 @@
-# Translation of 2.x in Serbian
+# Translation of 2.x in Hebrew
 # This file is distributed under the same license as the 2.x package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2013-02-12 21:42:57+0000\n"
+"PO-Revision-Date: 2013-02-12 21:42:56+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: GlotPress/0.1\n"
 "Project-Id-Version: 2.x\n"
 
@@ -288,55 +288,55 @@ msgstr ""
 
 #: ../functions/core.php:189
 msgid "BackUpWordPress has setup your default schedules."
-msgstr ""
+msgstr "BackUpWordPress הגדיר את תזמוני ברירת-המחדל שלך."
 
 #: ../classes/email.php:127
 msgid "Backup of %s Failed"
-msgstr ""
+msgstr "גיבוי של %s נכשל"
 
 #: ../classes/email.php:50
 msgid "Send an email notification to %s"
-msgstr ""
+msgstr "שלח התראה בדוא\"ל אל %s"
 
 #: ../classes/email.php:72
 msgid "%s isn't a valid email"
-msgstr ""
+msgstr "%s אינו דוא\"ל חוקי"
 
 #: ../admin/schedule.php:4
 msgid "Backups will be compressed and should be smaller than this."
-msgstr ""
+msgstr "גיבויים ידחסו וצריכים להיות קטנים יותר מזה."
 
 #: ../classes/email.php:19
 msgid "Email notification"
-msgstr ""
+msgstr "התראה בדוא\"ל"
 
 #: ../admin/schedule.php:19
 msgid "hourly on the hour"
-msgstr ""
+msgstr "פעם בשעה על השעה"
 
 #: ../admin/schedule.php:25
 msgid "daily at %s"
-msgstr ""
+msgstr "פעם ביום ב-%s"
 
 #: ../admin/schedule-form.php:41
 msgid "Number of backups to store on this server"
-msgstr ""
+msgstr "מספר גיבויים לאחסון על שרת זה"
 
 #: ../admin/schedule-form.php:7
 msgid "Schedule Settings"
-msgstr ""
+msgstr "הגדרות תזמון"
 
 #: ../admin/actions.php:441 ../admin/schedule-form-excludes.php:119
 msgid "Close"
-msgstr ""
+msgstr "סגור"
 
 #: ../admin/menu.php:69
 msgid "The information below is for version %1$s. View the %2$s file for help specific to version %3$s."
-msgstr ""
+msgstr "המידע שלהלן הוא לגרסה %1$s. צפה בקובץ %2$s לעזרה ספציפית לגרסה %3$s."
 
 #: ../admin/constants.php:26
 msgid "The root directory that is backed up. Defaults to %s."
-msgstr ""
+msgstr "הספריה הראשית שמגובית. ברירת-מחדל היא %s."
 
 #: ../admin/constants.php:23
 msgid "The capability to use when calling %1$s. Defaults to %2$s."
@@ -348,11 +348,11 @@ msgstr ""
 
 #: ../plugin.php:77
 msgid "BackUpWordPress requires WordPress version %s or greater."
-msgstr ""
+msgstr "BackUpWordPress דורש וורדפרס גרסה %s או יותר."
 
 #: ../plugin.php:143 ../admin/actions.php:419
 msgid "Cancel"
-msgstr ""
+msgstr "ביטול"
 
 #: ../admin/constants.php:11
 msgid "The path to your %1$s executable. Will be used for the %2$s part of the back up if available."
@@ -363,7 +363,7 @@ msgstr ""
 #: ../admin/constants.php:23 ../admin/constants.php:26
 #: ../admin/constants.php:29
 msgid "e.g."
-msgstr ""
+msgstr "למשל"
 
 #: ../admin/constants.php:3
 msgid "You can %1$s any of the following %2$s in your %3$s to control advanced settings. %4$s. Defined %5$s will be highlighted."
@@ -379,121 +379,121 @@ msgstr ""
 
 #: ../functions/interface.php:72
 msgid "Safe Mode"
-msgstr ""
+msgstr "מצב בטוח"
 
 #: ../functions/interface.php:82
 msgid "Your custom backups directory %1$s doesn't exist and can't be created, your backups will be saved to %2$s instead."
-msgstr ""
+msgstr "ספריית הגיבויים המותאמת אישית שלך %1$s לא קיימת ולא יכולה להיוצר, הגיבויים שלך ישמרו ב-%2$s במקום."
 
 #: ../functions/interface.php:92
 msgid "Your custom backups directory %1$s isn't writable, new backups will be saved to %2$s instead."
-msgstr ""
+msgstr "ספריית הגיבויים המותאמת אישית שלך %1$s לא ניתנת לכתיבה, גיבויים חדשים ישמרו ב-%2$s במקום."
 
 #: ../functions/interface.php:243
 msgid "cancel"
-msgstr ""
+msgstr "ביטול"
 
 #: ../functions/interface.php:247
 msgid "Settings"
-msgstr ""
+msgstr "הגדרות"
 
 #: ../functions/interface.php:250
 msgid "Excludes"
-msgstr ""
+msgstr "לא כלולים"
 
 #: ../functions/interface.php:27
 msgid "Download"
-msgstr ""
+msgstr "הורד"
 
 #: ../functions/interface.php:50 ../functions/interface.php:62
 msgid "BackUpWordPress is almost ready."
-msgstr ""
+msgstr "BackUpWordPress כמעט מוכן."
 
 #: ../functions/interface.php:102
 msgid "BackUpWordPress detected issues with your last backup."
-msgstr ""
+msgstr "BackUpWordPress זיהה בעיות עם הגיבוי האחרון שלך."
 
 #: ../functions/interface.php:218
 msgid "Database and Files"
-msgstr ""
+msgstr "מסד נתונים וקבצים"
 
 #: ../functions/interface.php:224
 msgid "Database"
-msgstr ""
+msgstr "מסד נתונים"
 
 #: ../hm-backup/hm-backup.php:958
 msgid "The following files are unreadable and couldn't be backed up: "
-msgstr ""
+msgstr "הקבצים הבאים אינם קריאים ולא היה ניתן לגבות אותם:"
 
 #: ../admin/actions.php:194 ../admin/actions.php:197
 #: ../functions/interface.php:72 ../functions/interface.php:82
 #: ../functions/interface.php:92
 msgid "BackUpWordPress has detected a problem."
-msgstr ""
+msgstr "BackUpWordPress זיהה בעיה."
 
 #: ../admin/actions.php:277
 msgid "Backup type cannot be empty"
-msgstr ""
+msgstr "סוג הגיבוי אינו יכול להיות ריק"
 
 #: ../admin/actions.php:280
 msgid "Invalid backup type"
-msgstr ""
+msgstr "סוג גיבוי לא חוקי"
 
 #: ../admin/actions.php:292
 msgid "Schedule cannot be empty"
-msgstr ""
+msgstr "תזמון אינו יכול להיות ריק"
 
 #: ../admin/actions.php:295
 msgid "Invalid schedule"
-msgstr ""
+msgstr "תזמון לא חוקי"
 
 #: ../admin/actions.php:310
 msgid "Max backups must be a number"
-msgstr ""
+msgstr "מספר גיבויים מקסימלי חייב להיות מספר"
 
 #: ../admin/actions.php:415
 msgid "%s didn't match any files."
-msgstr ""
+msgstr "%s לא תאם אף קובץ."
 
 #: ../admin/backups.php:13
 msgid "add schedule"
-msgstr ""
+msgstr "הוסף תזמון"
 
 #: ../admin/backups.php:37
 msgid "Size"
-msgstr ""
+msgstr "גודל"
 
 #: ../admin/backups.php:38
 msgid "Type"
-msgstr ""
+msgstr "סוג"
 
 #: ../admin/backups.php:39
 msgid "Actions"
-msgstr ""
+msgstr "פעולות"
 
 #: ../admin/backups.php:64
 msgid "This is where your backups will appear once you have one."
-msgstr ""
+msgstr "זהו המקום בו הגיבויים שלך יופיעו ברגע שיהיה לך אחד."
 
 #: ../admin/constants.php:3
 msgid "The Codex can help"
-msgstr ""
+msgstr "הקודקס יכול לעזור"
 
 #: ../admin/constants.php:8
 msgid "The path to folder you would like to store your backup files in, defaults to %s."
-msgstr ""
+msgstr "הנתיב לתיקיה שבה תרצה לאחסן את קבצי הגיבוי שלך, ברירת-מחדל היא %s."
 
 #: ../admin/constants.php:11 ../admin/constants.php:14
 msgid "database"
-msgstr ""
+msgstr "מסד נתונים"
 
 #: ../admin/constants.php:14
 msgid "files"
-msgstr ""
+msgstr "קבצים"
 
 #: ../admin/constants.php:17
 msgid "Attempt to email a copy of your backups. Value should be email address to send backups to. Defaults to %s."
-msgstr ""
+msgstr "נסה לשלוח העתק של הגיבויים שלך בדוא\"ל. ערך צריך להיות כתובת דוא\"ל אליה ישלחו גיבויים. ברירת-מחדל היא %s."
 
 #: ../admin/constants.php:20
 msgid "Comma separated list of files or directories to exclude, the backups directory is automatically excluded."
@@ -501,19 +501,19 @@ msgstr ""
 
 #: ../admin/menu.php:10 ../admin/page.php:5
 msgid "Manage Backups"
-msgstr ""
+msgstr "ניהול גיבויים"
 
 #: ../admin/menu.php:10 ../admin/menu.php:34
 msgid "Backups"
-msgstr ""
+msgstr "גיבויים"
 
 #: ../admin/menu.php:69
 msgid "You are not using the latest stable version of BackUpWordPress"
-msgstr ""
+msgstr "אינך משתמש בגרסה האחרונה היציבה של BackUpWordPress"
 
 #: ../admin/menu.php:75
 msgid "FAQ"
-msgstr ""
+msgstr "שאלות נפוצות"
 
 #: ../admin/constants.php:3 ../admin/menu.php:76
 msgid "Constants"
@@ -521,23 +521,23 @@ msgstr ""
 
 #: ../admin/menu.php:79
 msgid "For more information:"
-msgstr ""
+msgstr "למידע נוסף:"
 
 #: ../admin/menu.php:81
 msgid "Support Forums"
-msgstr ""
+msgstr "פורומי תמיכה"
 
 #: ../admin/menu.php:82
 msgid "Help with translation"
-msgstr ""
+msgstr "עזרה עם תרגום"
 
 #: ../admin/page.php:13
 msgid "You need to fix the issues detailed above before BackUpWordPress can start."
-msgstr ""
+msgstr "עליך לתקן את הבעיות המפורטות לעיל לפני ש-BackUpWordPress יוכל להתחיל."
 
 #: ../admin/schedule-form-excludes.php:19
 msgid "Preview"
-msgstr ""
+msgstr "הצג"
 
 #: ../admin/schedule-form-excludes.php:29
 msgid "Exclude Rules"
@@ -545,47 +545,47 @@ msgstr ""
 
 #: ../admin/schedule-form-excludes.php:52
 msgid "Remove"
-msgstr ""
+msgstr "הסר"
 
 #: ../admin/schedule-form-excludes.php:71
 msgid "Excluded"
-msgstr ""
+msgstr "לא כלול"
 
 #: ../admin/schedule-form-excludes.php:75
 msgid "Included"
-msgstr ""
+msgstr "כלול"
 
 #: ../admin/schedule-form-excludes.php:79
 msgid "Unreadable"
-msgstr ""
+msgstr "לא קריא"
 
 #: ../admin/schedule-form-excludes.php:107
 msgid "Unreadable files can't be backed up"
-msgstr ""
+msgstr "קבצים לא קריאים אינם יכולים להיות מגובים"
 
 #: ../admin/schedule-form-excludes.php:113
 msgid "Your site is %s. Backups will be compressed and so will be smaller."
-msgstr ""
+msgstr "האתר שלך הוא %s. גיבויים ידחסו ולכן יהיו קטנים יותר."
 
 #: ../admin/schedule-form.php:11
 msgid "Backup"
-msgstr ""
+msgstr "גיבוי"
 
 #: ../admin/schedule-form.php:14
 msgid "Both Database &amp; files"
-msgstr ""
+msgstr "גם מסד נתונים וגם קבצים"
 
 #: ../admin/schedule-form.php:15
 msgid "Files only"
-msgstr ""
+msgstr "קבצים בלבד"
 
 #: ../admin/schedule-form.php:16
 msgid "Database only"
-msgstr ""
+msgstr "מסד נתונים בלבד"
 
 #: ../functions/interface.php:221
 msgid "Files"
-msgstr ""
+msgstr "קבצים"
 
 #: ../admin/schedule-form-excludes.php:7
 msgid "Manage Excludes"
@@ -593,32 +593,32 @@ msgstr ""
 
 #: ../admin/schedule-form.php:23
 msgid "Schedule"
-msgstr ""
+msgstr "תזמון"
 
 #: ../plugin.php:142 ../admin/schedule-form.php:54
 msgid "Update"
-msgstr ""
+msgstr "עדכן"
 
 #: ../admin/schedule.php:19
 msgid "hourly at %s minutes past the hour"
-msgstr ""
+msgstr "פעם בשעה %s דקות לאחר תחילת השעה"
 
 #: ../functions/interface.php:253
 msgid "Run now"
-msgstr ""
+msgstr "גבה עכשיו"
 
 #: ../functions/interface.php:28 ../functions/interface.php:255
 msgid "Delete"
-msgstr ""
+msgstr "מחק"
 
 #: ../plugin.php:66
 msgid "BackUpWordPress requires PHP version 5.2.4 or greater."
-msgstr ""
+msgstr "BackUpWordPress דורש PHP גרסה 5.2.4 או יותר."
 
 #: ../classes/email.php:137
 msgid "Backup of %s"
-msgstr ""
+msgstr "גיבוי של %s"
 
 #: ../functions/core.php:288
 msgid "This %s file ensures that other people cannot download your backup files."
-msgstr ""
+msgstr "קובץ ה-%s מבטיח שאנשים אחרים לא יכולים להוריד את קבצי הגיבוי שלך."

@@ -86,11 +86,11 @@ abstract class HMBKP_Service {
 
 		$old_data = $this->schedule->get_service_options( $classname );
 
-		$new_data = isset( $_GET[$classname] ) ? $_GET[$classname] : $old_data;
+		$new_data = isset( $_GET[$classname] ) ? $_GET[$classname] : array();
 
 		$errors = $this->update( $new_data, $old_data );
 
-		if ( $errors = array_flip( $errors ) ) {
+		if ( $errors && $errors = array_flip( $errors ) ) {
 
 			foreach( $errors as $error => &$field )
 				$field = get_class( $this ) . '[' . $field . ']';
