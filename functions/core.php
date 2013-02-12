@@ -5,6 +5,7 @@
  */
 function hmbkp_activate() {
 
+	// Run deactivate on activation in-case it was deactivated manually
 	hmbkp_deactivate();
 
 }
@@ -16,30 +17,17 @@ function hmbkp_activate() {
  */
 function hmbkp_deactivate() {
 
-	// Options to delete
-	$options = array(
-		'hmbkp_zip_path',
-		'hmbkp_mysqldump_path',
-		'hmbkp_path',
-		'hmbkp_running',
-		'hmbkp_status',
-		'hmbkp_complete',
-		'hmbkp_email_error'
-	);
-
-	foreach ( $options as $option )
-		delete_option( $option );
-
-	delete_transient( 'hmbkp_running' );
-	delete_transient( 'hmbkp_estimated_filesize' );
-
-	// Clear hmbkp crons
-	foreach( get_option( 'cron' ) as $cron )
-		foreach( (array) $cron as $key => $value )
-			if ( strpos( $key, 'hmbkp' ) !== false )
-				wp_clear_scheduled_hook( $key );
-
+	// Clean up the backups directory
 	hmbkp_cleanup();
+
+	// Remove the plugin data cache
+	delete_transient( 'hmbkp_plugin_data' );
+
+	$schedules = new HMBKP_Schedules;
+
+	// Clear schedule crons
+	foreach ( $schedules->get_schedules() as $schedule )
+		$schedule->unschedule();
 
 }
 
@@ -144,7 +132,6 @@ function hmbkp_update() {
 		foreach ( array( 'hmbkp_database_only', 'hmbkp_files_only', 'hmbkp_max_backups', 'hmbkp_email_address', 'hmbkp_email', 'hmbkp_schedule_frequency', 'hmbkp_disable_automatic_backup' ) as $option_name )
 			delete_option( $option_name );
 
-
 	}
 
 	// Every update
@@ -207,20 +194,23 @@ function hmbkp_setup_default_schedules() {
 add_action( 'admin_init', 'hmbkp_setup_default_schedules' );
 
 /**
- * Add weekly, fortnightly and monthly as a cron schedule choices
+ * Return an array of cron schedules
  *
- * @param array $reccurrences
  * @return array $reccurrences
  */
-function hmbkp_more_reccurences( $reccurrences ) {
+function hmbkp_cron_schedules() {
 
-	return array_merge( $reccurrences, array(
-	    'weekly' 		=> array( 'interval' => 604800, 'display' => 'Once Weekly' ),
-	    'fortnightly'	=> array( 'interval' => 1209600, 'display' => 'Once Fortnightly' ),
-	    'monthly'		=> array( 'interval' => 2629743.83 , 'display' => 'Once Monthly' )
-	) );
+	return array(
+		'hourly'     	=> array( 'interval' => 3600, 		 'display' => __( 'Once Hourly' ) ),
+		'twicedaily' 	=> array( 'interval' => 43200,		 'display' => __( 'Twice Daily' ) ),
+		'daily'      	=> array( 'interval' => 86400,		 'display' => __( 'Once Daily' ) ),
+	    'weekly' 		=> array( 'interval' => 604800,		 'display' => __( 'Once Weekly', 'hmbkp' ) ),
+	    'fortnightly'	=> array( 'interval' => 1209600,	 'display' => __( 'Once Fortnightly', 'hmbkp' ) ),
+	    'monthly'		=> array( 'interval' => 2629743.83,  'display' => __( 'Once Monthly', 'hmbkp' ) )
+	);
+
 }
-add_filter( 'cron_schedules', 'hmbkp_more_reccurences' );
+add_filter( 'cron_schedules', 'hmbkp_cron_schedules' );
 
 /**
  * Recursively delete a directory including
@@ -229,6 +219,9 @@ add_filter( 'cron_schedules', 'hmbkp_more_reccurences' );
  * @param string $dir
  */
 function hmbkp_rmdirtree( $dir ) {
+
+	if ( strpos( HM_Backup::get_home_path(), $dir ) !== false )
+		throw new Exception( 'You can only delete directories inside your WordPress installation' );
 
 	if ( is_file( $dir ) )
 		@unlink( $dir );
@@ -320,7 +313,7 @@ function hmbkp_path_default() {
 
 	if ( empty( $path ) ) {
 
-		$path = HM_Backup::conform_dir( trailingslashit( WP_CONTENT_DIR ) . substr( md5( time() ), 0, 10 ) . '-backups' );
+		$path = HM_Backup::conform_dir( trailingslashit( WP_CONTENT_DIR ) . substr( HMBKP_SECURE_KEY, 0, 10 ) . '-backups' );
 
 		update_option( 'hmbkp_default_path', $path );
 
@@ -329,9 +322,9 @@ function hmbkp_path_default() {
 	$upload_dir = wp_upload_dir();
 
 	// If the backups dir can't be created in WP_CONTENT_DIR then fallback to uploads
-	if ( ( ! is_dir( $path ) && ! is_writable( dirname( $path ) ) ) || ( is_dir( $path ) && ! is_writable( $path ) ) && strpos( $path, $upload_dir['basedir'] ) === false ) {
+	if ( ( ( ! is_dir( $path ) && ! is_writable( dirname( $path ) ) ) || ( is_dir( $path ) && ! is_writable( $path ) ) ) && strpos( $path, $upload_dir['basedir'] ) === false ) {
 
-		hmbkp_path_move( $path, $path = HM_Backup::conform_dir( trailingslashit( $upload_dir['basedir'] ) . substr( md5( time() ), 0, 10 ) . '-backups' ) );
+		hmbkp_path_move( $path, $path = HM_Backup::conform_dir( trailingslashit( $upload_dir['basedir'] ) . substr( HMBKP_SECURE_KEY, 0, 10 ) . '-backups' ) );
 
 		update_option( 'hmbkp_default_path', $path );
 
@@ -350,24 +343,28 @@ function hmbkp_path_default() {
  */
 function hmbkp_path_move( $from, $to ) {
 
-	if ( ! untrailingslashit( $from ) || ! untrailingslashit( $to ) )
+	if ( ! trim( untrailingslashit( trim( $from ) ) ) || ! trim( untrailingslashit( trim( $to ) ) ) )
 		return;
 
-	// Create the custom backups directory if it doesn't exist
+	// Create the new directory if it doesn't exist
 	if ( is_writable( dirname( $to ) ) && ! is_dir( $to ) )
 	    mkdir( $to, 0755 );
 
+	// Bail if we couldn't
 	if ( ! is_dir( $to ) || ! is_writable( $to ) )
 	    return false;
 
 	update_option( 'hmbkp_path', $to );
 
-	hmbkp_cleanup();
-
+	// Bail if the old directory doesn't exist
 	if ( ! is_dir( $from ) )
 		return false;
 
-	if ( $handle = opendir( $from ) ) :
+	// Cleanup before we start moving things
+	hmbkp_cleanup();
+
+	// Move any existing backups
+	if ( $handle = opendir( $from ) ) {
 
 	    while ( false !== ( $file = readdir( $handle ) ) )
 	    	if ( $file !== '.' && $file !== '..' )
@@ -376,7 +373,7 @@ function hmbkp_path_move( $from, $to ) {
 
 	    closedir( $handle );
 
-	endif;
+	}
 
 	hmbkp_rmdirtree( $from );
 

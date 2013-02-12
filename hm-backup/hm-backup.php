@@ -683,8 +683,8 @@ class HM_Backup {
 		// Pipe STDERR to STDOUT
 		$cmd .= ' 2>&1';
 
-		// Store any returned data in warning
-		$this->warning( $this->get_mysqldump_method(), shell_exec( $cmd ) );
+		// Store any returned data in an error
+		$this->error( $this->get_mysqldump_method(), shell_exec( $cmd ) );
 
 		$this->verify_mysqldump();
 
@@ -777,15 +777,15 @@ class HM_Backup {
 
 		// Zip up $this->root with excludes
 		if ( $this->get_type() !== 'database' && $this->exclude_string( 'zip' ) )
-		    $this->warning( $this->archive_method, shell_exec( 'cd ' . escapeshellarg( $this->get_root() ) . ' && ' . escapeshellcmd( $this->get_zip_command_path() ) . ' -rq ' . escapeshellarg( $this->get_archive_filepath() ) . ' ./' . ' -x ' . $this->exclude_string( 'zip' ) . ' 2>&1' ) );
+		    $this->warning( $this->get_archive_method(), shell_exec( 'cd ' . escapeshellarg( $this->get_root() ) . ' && ' . escapeshellcmd( $this->get_zip_command_path() ) . ' -rq ' . escapeshellarg( $this->get_archive_filepath() ) . ' ./' . ' -x ' . $this->exclude_string( 'zip' ) . ' 2>&1' ) );
 
 		// Zip up $this->root without excludes
 		elseif ( $this->get_type() !== 'database' )
-		    $this->warning( $this->archive_method, shell_exec( 'cd ' . escapeshellarg( $this->get_root() ) . ' && ' . escapeshellcmd( $this->get_zip_command_path() ) . ' -rq ' . escapeshellarg( $this->get_archive_filepath() ) . ' ./' . ' 2>&1' ) );
+		    $this->warning( $this->get_archive_method(), shell_exec( 'cd ' . escapeshellarg( $this->get_root() ) . ' && ' . escapeshellcmd( $this->get_zip_command_path() ) . ' -rq ' . escapeshellarg( $this->get_archive_filepath() ) . ' ./' . ' 2>&1' ) );
 
 		// Add the database dump to the archive
 		if ( $this->get_type() !== 'file' )
-		    $this->warning( $this->archive_method, shell_exec( 'cd ' . escapeshellarg( $this->get_path() ) . ' && ' . escapeshellcmd( $this->get_zip_command_path() ) . ' -uq ' . escapeshellarg( $this->get_archive_filepath() ) . ' ' . escapeshellarg( $this->get_database_dump_filename() ) . ' 2>&1' ) );
+		    $this->warning( $this->get_archive_method(), shell_exec( 'cd ' . escapeshellarg( $this->get_path() ) . ' && ' . escapeshellcmd( $this->get_zip_command_path() ) . ' -uq ' . escapeshellarg( $this->get_archive_filepath() ) . ' ' . escapeshellarg( $this->get_database_dump_filename() ) . ' 2>&1' ) );
 
 		$this->verify_archive();
 
@@ -800,7 +800,7 @@ class HM_Backup {
 	 */
 	public function zip_archive() {
 
-		$this->errors_to_warnings( $this->archive_method );
+		$this->errors_to_warnings( $this->get_archive_method() );
 		$this->archive_method = 'ziparchive';
 
 		$this->do_action( 'hmbkp_archive_started' );
@@ -823,7 +823,7 @@ class HM_Backup {
 					continue;
 
 				// Skip unreadable files
-				if ( ! $file->isReadable() )
+				if ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() )
 					continue;
 
 			    // Excludes
@@ -849,10 +849,10 @@ class HM_Backup {
 			$zip->addFile( $this->get_database_dump_filepath(), $this->get_database_dump_filename() );
 
 		if ( $zip->status )
-			$this->warning( $this->archive_method, $zip->status );
+			$this->warning( $this->get_archive_method(), $zip->status );
 
 		if ( $zip->statusSys )
-			$this->warning( $this->archive_method, $zip->statusSys );
+			$this->warning( $this->get_archive_method(), $zip->statusSys );
 
 		$zip->close();
 
@@ -871,7 +871,7 @@ class HM_Backup {
 	 */
 	public function pcl_zip() {
 
-		$this->errors_to_warnings( $this->archive_method );
+		$this->errors_to_warnings( $this->get_archive_method() );
 		$this->archive_method = 'pclzip';
 
 		$this->do_action( 'hmbkp_archive_started' );
@@ -887,12 +887,12 @@ class HM_Backup {
 		// Zip up everything
 		if ( $this->get_type() !== 'database' )
 			if ( ! $archive->add( $this->get_root(), PCLZIP_OPT_REMOVE_PATH, $this->get_root(), PCLZIP_CB_PRE_ADD, 'hmbkp_pclzip_callback' ) )
-				$this->warning( $this->archive_method, $archive->errorInfo( true ) );
+				$this->warning( $this->get_archive_method(), $archive->errorInfo( true ) );
 
 		// Add the database
 		if ( $this->get_type() !== 'file' )
 			if ( ! $archive->add( $this->get_database_dump_filepath(), PCLZIP_OPT_REMOVE_PATH, $this->get_path() ) )
-				$this->warning( $this->archive_method, $archive->errorInfo( true ) );
+				$this->warning( $this->get_archive_method(), $archive->errorInfo( true ) );
 
 		unset( $GLOBALS['_hmbkp_exclude_string'] );
 
@@ -908,14 +908,19 @@ class HM_Backup {
 		if ( ! empty( $this->mysqldump_verified ) )
 			return true;
 
-		// mysqldump can create empty dump files on error so we need to check the filesize
-		if ( ! file_exists( $this->get_database_dump_filepath() ) || filesize( $this->get_database_dump_filepath() ) === 0 )
-			$this->error( $this->get_mysqldump_method(), __( 'The mysqldump file was not created', 'hmbkp' ) );
+		// If there are mysqldump errors delete the database dump file as mysqldump will still have written one
+		if ( $this->get_errors( $this->get_mysqldump_method() ) && file_exists( $this->get_database_dump_filepath() ) )
+			unlink( $this->get_database_dump_filepath() );
 
-		if ( $this->get_errors( $this->get_mysqldump_method() ) )
-			return false;
+		// If we have an empty file delete it
+		if ( @filesize( $this->get_database_dump_filepath() ) === 0 )
+			unlink( $this->get_database_dump_filepath() );
 
-		return $this->mysqldump_verified = true;
+		// If the file still exists then it must be good
+		if ( file_exists( $this->get_database_dump_filepath() ) )
+			return $this->mysqldump_verified = true;
+
+		return false;
 
 
 	}
@@ -934,9 +939,6 @@ class HM_Backup {
 		if ( ! empty( $this->archive_verified ) )
 			return true;
 
-		if ( ! file_exists( $this->get_archive_filepath() ) )
-			$this->error( $this->get_archive_method(), __( 'The backup file was not created', 'hmbkp' ) );
-
 		// Verify using the zip command if possible
 		if ( $this->get_zip_command_path() && $this->get_archive_method() === 'zip' ) {
 
@@ -951,13 +953,15 @@ class HM_Backup {
 		if ( $this->get_errors( $this->get_archive_method() ) && file_exists( $this->get_archive_filepath() ) )
 			unlink( $this->get_archive_filepath() );
 
-		if ( $this->get_errors( $this->get_archive_method() ) )
-			return false;
-
+		// Warn about unreadable files
 		if ( $this->get_unreadable_file_count() )
 			$this->warning( $this->get_archive_method(), __( 'The following files are unreadable and couldn\'t be backed up: ', 'hmbkp' ) . implode( ', ', $this->get_unreadable_files() ) );
 
-		return $this->archive_verified = true;
+		// If the archive file still exists assume it's good
+		if ( file_exists( $this->get_archive_filepath() ) )
+			return $this->archive_verified = true;
+
+		return false;
 
 	}
 
@@ -975,7 +979,7 @@ class HM_Backup {
 		$this->files = array();
 
 		if ( defined( 'RecursiveDirectoryIterator::FOLLOW_SYMLINKS' ) )
-			$this->files = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $this->get_root(), RecursiveDirectoryIterator::FOLLOW_SYMLINKS ), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
+			$this->files = new RecursiveIteratorIterator( new HMBKPRecursiveDirectoryIterator( $this->get_root(), RecursiveDirectoryIterator::FOLLOW_SYMLINKS ), RecursiveIteratorIterator::SELF_FIRST, RecursiveIteratorIterator::CATCH_GET_CHILD );
 
 		else
 			$this->files = $this->get_files_fallback( $this->get_root() );
@@ -1043,7 +1047,7 @@ class HM_Backup {
 				continue;
 
 			// Skip unreadable files
-			if ( ! $file->isReadable() )
+			if ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() )
 				continue;
 
 		    // Excludes
@@ -1080,7 +1084,7 @@ class HM_Backup {
 				continue;
 
 			// Skip unreadable files
-			if ( ! $file->isReadable() )
+			if ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() )
 				continue;
 
 		    // Excludes
@@ -1117,7 +1121,7 @@ class HM_Backup {
 				continue;
 
 			// Skip unreadable files
-			if ( ! $file->isReadable() )
+			if ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() )
 				continue;
 
 		    // Excludes
@@ -1152,7 +1156,7 @@ class HM_Backup {
 				continue;
 
 			// Skip unreadable files
-			if ( ! $file->isReadable() )
+			if ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() )
 				continue;
 
 		    // Excludes
@@ -1184,8 +1188,8 @@ class HM_Backup {
 			if ( method_exists( $file, 'isDot' ) && $file->isDot() )
 				continue;
 
-		    if ( ! $file->isReadable() )
-		    	$this->unreadable_files[] = $file;
+			if ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() )
+			  	$this->unreadable_files[] = $file;
 
 		}
 
@@ -1212,8 +1216,8 @@ class HM_Backup {
 			if ( method_exists( $file, 'isDot' ) && $file->isDot() )
 				continue;
 
-		    if ( ! $file->isReadable() )
-		    	$this->get_unreadable_file_count++;
+			if ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() )
+			  	$this->get_unreadable_file_count++;
 
 		}
 
@@ -1716,5 +1720,36 @@ function hmbkp_pclzip_callback( $event, &$file ) {
     	return false;
 
     return true;
+
+}
+
+
+/**
+ * Custom RecursiveDirectoryIterator that catches exceptions in hasChildren
+ *
+ * @extends RecursiveDirectoryIterator
+ */
+class HMBKPRecursiveDirectoryIterator extends RecursiveDirectoryIterator {
+
+
+	/**
+	 * Replace hasChildren with a version which.
+	 *
+	 * @access public
+	 * @return void
+	 */
+	function hasChildren() {
+
+		try {
+
+			return new HMBKPRecursiveDirectoryIterator( $this->getPathname() );
+
+		} catch( UnexpectedValueException $e ) {
+
+			return new RecursiveArrayIterator( array() );
+
+		}
+
+	}
 
 }

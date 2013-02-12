@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://hmn.md/backupwordpress/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 2.1.3
+Version: 2.2
 Author URI: http://hmn.md/
 */
 
@@ -38,7 +38,13 @@ if ( ! defined( 'HMBKP_PLUGIN_URL' ) )
 if ( ! defined( 'HMBKP_ADMIN_URL' ) )
 	define( 'HMBKP_ADMIN_URL', add_query_arg( 'page', HMBKP_PLUGIN_SLUG, admin_url( 'tools.php' ) ) );
 
-define( 'HMBKP_SECURE_KEY', md5( ABSPATH . time() ) );
+$key = array( ABSPATH, time() );
+
+foreach ( array( 'AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT', 'SECRET_KEY' ) as $constant )
+	if ( defined( $constant ) )
+		$key[] = $constant;
+
+define( 'HMBKP_SECURE_KEY', md5( shuffle( $key ) ) );
 
 if ( ! defined( 'HMBKP_REQUIRED_WP_VERSION' ) )
 	define( 'HMBKP_REQUIRED_WP_VERSION', '3.3.3' );
@@ -98,16 +104,12 @@ require_once( HMBKP_PLUGIN_PATH . '/classes/email.php' );
 if ( defined( 'WP_CLI' ) && WP_CLI )
 	include( HMBKP_PLUGIN_PATH . '/classes/wp-cli.php' );
 
+// Hook in the activation and deactivation actions
+register_activation_hook( HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_activate' );
+register_deactivation_hook( HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_deactivate' );
+
 // Handle any advanced option changes
 hmbkp_constant_changes();
-
-// Set the tmp directory to the backup path
-if ( ! defined( 'PCLZIP_TEMPORARY_DIR' ) )
-	define( 'PCLZIP_TEMPORARY_DIR', trailingslashit( hmbkp_path() ) );
-
-// Hook in the activation and deactivation actions
-add_action( 'activate_' . HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_activate' );
-add_action( 'deactivate_' . HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_deactivate' );
 
 if ( ! function_exists( 'hmbkp_init' ) ) :
 
@@ -136,7 +138,7 @@ function hmbkp_init() {
 		wp_enqueue_script( 'hmbkp-fancybox', HMBKP_PLUGIN_URL . '/assets/fancyBox/source/jquery.fancybox.js', array( 'jquery' ), sanitize_title( HMBKP_VERSION ) );
 		wp_enqueue_script( 'hmbkp', HMBKP_PLUGIN_URL . '/assets/hmbkp.js', array( 'jquery-ui-tabs', 'jquery-ui-widget', 'hmbkp-fancybox' ), sanitize_title( HMBKP_VERSION ) );
 
-		wp_localize_script( 'hmbkp', 'objectL10n', array(
+		wp_localize_script( 'hmbkp', 'hmbkp', array(
 			'update'				=> __( 'Update', 'hmbkp' ),
 			'cancel'				=> __( 'Cancel', 'hmbkp' ),
 			'delete_schedule'		=> __( 'Are you sure you want to delete this schedule? All of it\'s backups will also be deleted.' ) . "\n\n" . __( '\'Cancel\' to go back, \'OK\' to delete.', 'hmbkp' ) . "\n",

@@ -13,14 +13,14 @@ function hmbkp_get_backup_row( $file, HMBKP_Scheduled_Backup $schedule ) {
 	<tr class="hmbkp_manage_backups_row<?php if ( file_exists( hmbkp_path() . '/.backup_complete' ) ) : ?> completed<?php unlink( hmbkp_path() . '/.backup_complete' ); endif; ?>">
 
 		<th scope="row">
-			<?php echo esc_attr( date_i18n( get_option( 'date_format' ) . ' - ' . get_option( 'time_format' ), @filemtime( $file ) + $offset ) ); ?>
+			<?php esc_html_e( date_i18n( get_option( 'date_format' ) . ' - ' . get_option( 'time_format' ), @filemtime( $file ) + $offset ) ); ?>
 		</th>
 
 		<td class="code">
-			<?php echo esc_attr( size_format( @filesize( $file ) ) ); ?>
+			<?php esc_html_e( size_format( @filesize( $file ) ) ); ?>
 		</td>
 
-		<td><?php echo esc_attr( hmbkp_human_get_type( $file, $schedule ) ); ?></td>
+		<td><?php esc_html_e( hmbkp_human_get_type( $file, $schedule ) ); ?></td>
 
 		<td>
 
@@ -44,34 +44,34 @@ function hmbkp_admin_notices() {
 	// If the backups directory doesn't exist and can't be automatically created
 	if ( ! is_dir( hmbkp_path() ) ) :
 
-		 function hmbkp_path_exists_warning() {
-			  $php_user = exec( 'whoami' );
+		function hmbkp_path_exists_warning() {
+			$php_user = exec( 'whoami' );
 			$php_group = reset( explode( ' ', exec( 'groups' ) ) );
-		 	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress is almost ready.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'The backups directory can\'t be created because your %1$s directory isn\'t writable, run %2$s or %3$s or create the folder yourself.', 'hmbkp' ), '<code>wp-content</code>', '<code>chown ' . $php_user . ':' . $php_group . ' ' . WP_CONTENT_DIR . '</code>', '<code>chmod 777 ' . WP_CONTENT_DIR . '</code>' ) . '</p></div>';
-		 }
-		 add_action( 'admin_notices', 'hmbkp_path_exists_warning' );
+			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress is almost ready.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'The backups directory can\'t be created because your %1$s directory isn\'t writable, run %2$s or %3$s or create the folder yourself.', 'hmbkp' ), '<code>wp-content</code>', '<code>chown ' . esc_html( $php_user ) . ':' . esc_html( $php_group ) . ' ' . esc_html( dirname( hmbkp_path() ) ) . '</code>', '<code>chmod 777 ' . esc_html( dirname( hmbkp_path() ) ) . '</code>' ) . '</p></div>';
+		}
+		add_action( 'admin_notices', 'hmbkp_path_exists_warning' );
 
 	endif;
 
 	// If the backups directory exists but isn't writable
 	if ( is_dir( hmbkp_path() ) && ! is_writable( hmbkp_path() ) ) :
 
-		 function hmbkp_writable_path_warning() {
+		function hmbkp_writable_path_warning() {
 			$php_user = exec( 'whoami' );
 			$php_group = reset( explode( ' ', exec( 'groups' ) ) );
-		 	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress is almost ready.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'Your backups directory isn\'t writable, run %1$s or %2$s or set the permissions yourself.', 'hmbkp' ), '<code>chown -R ' . esc_attr( $php_user ) . ':' . esc_attr( $php_group ) . ' ' . esc_attr( hmbkp_path() ) . '</code>', '<code>chmod -R 777 ' . esc_attr( hmbkp_path() ) . '</code>' ) . '</p></div>';
-		 }
-		 add_action( 'admin_notices', 'hmbkp_writable_path_warning' );
+			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress is almost ready.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'Your backups directory isn\'t writable, run %1$s or %2$s or set the permissions yourself.', 'hmbkp' ), '<code>chown -R ' . esc_html( $php_user ) . ':' . esc_html( $php_group ) . ' ' . esc_html( hmbkp_path() ) . '</code>', '<code>chmod -R 777 ' . esc_html( hmbkp_path() ) . '</code>' ) . '</p></div>';
+		}
+		add_action( 'admin_notices', 'hmbkp_writable_path_warning' );
 
 	endif;
 
 	// If safe mode is active
 	if ( HM_Backup::is_safe_mode_active() ) :
 
-		 function hmbkp_safe_mode_warning() {
-		 	echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( '%1$s is running in %2$s, please contact your host and ask them to disable it. BackUpWordPress may not work correctly whilst %3$s is on.', 'hmbkp' ), '<code>PHP</code>', sprintf( '<a href="%1$s">%2$s</a>', __( 'http://php.net/manual/en/features.safe-mode.php', 'hmbkp' ), __( 'Safe Mode', 'hmbkp' ) ), '<code>' . __( 'Safe Mode', 'hmbkp' ) . '</code>' ) . '</p></div>';
-		 }
-		 add_action( 'admin_notices', 'hmbkp_safe_mode_warning' );
+		function hmbkp_safe_mode_warning() {
+			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( '%1$s is running in %2$s, please contact your host and ask them to disable it. BackUpWordPress may not work correctly whilst %3$s is on.', 'hmbkp' ), '<code>PHP</code>', sprintf( '<a href="%1$s">%2$s</a>', __( 'http://php.net/manual/en/features.safe-mode.php', 'hmbkp' ), __( 'Safe Mode', 'hmbkp' ) ), '<code>' . __( 'Safe Mode', 'hmbkp' ) . '</code>' ) . '</p></div>';
+		}
+		add_action( 'admin_notices', 'hmbkp_safe_mode_warning' );
 
 	endif;
 
@@ -79,7 +79,7 @@ function hmbkp_admin_notices() {
 	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && ! is_dir( HMBKP_PATH ) ) :
 
 		function hmbkp_custom_path_exists_warning() {
-			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'Your custom backups directory %1$s doesn\'t exist and can\'t be created, your backups will be saved to %2$s instead.', 'hmbkp' ), '<code>' . esc_attr( HMBKP_PATH ) . '</code>', '<code>' . esc_attr( hmbkp_path() ) . '</code>' ) . '</p></div>';
+			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'Your custom backups directory %1$s doesn\'t exist and can\'t be created, your backups will be saved to %2$s instead.', 'hmbkp' ), '<code>' . esc_html( HMBKP_PATH ) . '</code>', '<code>' . esc_html( hmbkp_path() ) . '</code>' ) . '</p></div>';
 		}
 		add_action( 'admin_notices', 'hmbkp_custom_path_exists_warning' );
 
@@ -89,7 +89,7 @@ function hmbkp_admin_notices() {
 	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH && is_dir( HMBKP_PATH ) && ! is_writable( HMBKP_PATH ) ) :
 
 		function hmbkp_custom_path_writable_notice() {
-			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'Your custom backups directory %1$s isn\'t writable, new backups will be saved to %2$s instead.', 'hmbkp' ), '<code>' . esc_attr( HMBKP_PATH ) . '</code>', '<code>' . esc_attr( hmbkp_path() ) . '</code>' ) . '</p></div>';
+			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress has detected a problem.', 'hmbkp' ) . '</strong> ' . sprintf( __( 'Your custom backups directory %1$s isn\'t writable, new backups will be saved to %2$s instead.', 'hmbkp' ), '<code>' . esc_html( HMBKP_PATH ) . '</code>', '<code>' . esc_html( hmbkp_path() ) . '</code>' ) . '</p></div>';
 		}
 		add_action( 'admin_notices', 'hmbkp_custom_path_writable_notice' );
 
@@ -102,15 +102,6 @@ function hmbkp_admin_notices() {
 			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress detected issues with your last backup.', 'hmbkp' ) . '</strong><a href="' . add_query_arg( 'action', 'hmbkp_dismiss_error' ) . '" style="float: right;" class="button">Dismiss</a></p>' . hmbkp_backup_errors_message() . '</div>';
 		}
 		add_action( 'admin_notices', 'hmbkp_backup_errors_notice' );
-
-	endif;
-
-	if ( ! empty( $_GET['reason'] ) ) :
-
-		function hmbkp_backup_failed_notice() {
-			echo '<div id="hmbkp-warning" class="updated fade"><p><strong>' . __( 'BackUpWordPress failed to perform the backup.', 'hmbkp' ) . '</strong> ' . __( 'You have likely hit a memory limit.', 'hmbkp' ) . '<a href="' . add_query_arg( 'action', 'hmbkp_dismiss_error' ) . '" style="float: right;" class="button">Dismiss</a></p></div>';
-		}
-		//add_action( 'admin_notices', 'hmbkp_backup_failed_notice' );
 
 	endif;
 
@@ -146,7 +137,7 @@ function hmbkp_backup_errors_message() {
 
 	foreach ( (array) json_decode( hmbkp_backup_errors() ) as $key => $errors )
 		foreach ( $errors as $error )
-			$message .= '<p><strong>' . $key . '</strong>: <code>' . implode( ':', (array) $error ) . '</code></p>';
+			$message .= '<p><strong>' . esc_html( $key ) . '</strong>: <code>' . implode( ':', array_map( 'esc_html', (array) $error ) ) . '</code></p>';
 
 	return $message;
 
@@ -179,11 +170,11 @@ function hmbkp_file_list( HMBKP_Scheduled_Backup $schedule, $excludes = null, $f
 				continue;
 
 			// Show only unreadable files
-			if ( $file_method === 'get_unreadable_files' && $file->isReadable() )
+			if ( $file_method === 'get_unreadable_files' && @realpath( $file->getPathname() ) && $file->isReadable() )
 			   	continue;
 
 			// Skip unreadable files
-			elseif ( $file_method !== 'get_unreadable_files' && ! $file->isReadable() )
+			elseif ( $file_method !== 'get_unreadable_files' && ( ! @realpath( $file->getPathname() ) || ! $file->isReadable() ) )
 				continue;
 
 			// Show only included files
@@ -196,7 +187,7 @@ function hmbkp_file_list( HMBKP_Scheduled_Backup $schedule, $excludes = null, $f
 			    if ( ! $exclude_string || ! preg_match( '(' .  $exclude_string . ')', str_ireplace( trailingslashit( $schedule->get_root() ), '', HM_Backup::conform_dir( $file->getPathname() ) ) ) )
 			    	continue;
 
-			if ( $file->isDir() ) { ?>
+			if ( @realpath( $file->getPathname() ) && ! $file->isReadable() && $file->isDir() ) { ?>
 
 		<li title="<?php echo esc_attr( HM_Backup::conform_dir( trailingslashit( $file->getPathName() ) ) ); ?>"><?php echo esc_html( ltrim( trailingslashit( str_ireplace( HM_Backup::conform_dir( trailingslashit( $schedule->get_root() ) ), '', HM_Backup::conform_dir( $file->getPathName() ) ) ), '/' ) ); ?></li>
 
