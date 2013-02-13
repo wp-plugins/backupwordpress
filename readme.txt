@@ -2,8 +2,8 @@
 Contributors: humanmade, joehoyle, mattheu, tcrsavage, willmot, cuvelier
 Tags: back up, backup, backups, database, zip, db, files, archive, wp-cli, humanmade
 Requires at least: 3.3.3
-Tested up to: 3.4.2
-Stable tag: 2.0.1
+Tested up to: 3.5
+Stable tag: 2.2.1
 
 Simple automated back ups of your WordPress powered website.
 
@@ -51,7 +51,7 @@ Backups are stored on your server in `/wp-content/backups`, you can change the d
 
 You need to download the latest backup file either by clicking download on the backups page or via `FTP`. `Unzip` the files and upload all the files to your server overwriting your site. You can then import the database using your hosts database management tool (likely `phpMyAdmin`).
 
-See this post for more details http://hmn.md/backupwordpress/
+See this post for more details http://hmn.md/backupwordpress-how-to-restore-from-backup-files/.
 
 **Does BackUpWordPress back up the backups directory?**
 
@@ -102,6 +102,115 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 3. Easily manage exclude rules and see exactly which files are included and excluded from your backup.
 
 == Changelog ==
+
+#### 2.2.1
+
+* Stop storing a list of unreadable files in the backup warnings as it's too memory intensive.
+* Revert the custom `RecursiveDirectoryIterator` as it caused an infinite loop on some servers.
+* Show all errors and warnings in the popup shown when a manual backup completes.
+* Write the .backup_error and .backup_warning files everytime an error or warning happens instead of waiting until the end of the backups process.
+* Fix a couple of `PHP E_STRICT` notices.
+* Catch more errors during the manual backup process and expose them to the user.
+
+#### 2.2
+
+* Don't repeatedly try to create the backups directory in the `uploads` if `uploads` isn't writable.
+* Show the correct path in the warning message when the backups path can't be created.
+* Include any user defined auth keys and salts when generating the HMBKP_SECRET_KEY.
+* Stop relying on the built in WordPress schedules as other plugins can mess with them.
+* Delete old backups everytime the backups page is viewed in an attempt to ensure old backups are always cleaned up.
+* Improve modals on small screens and mobile devices.
+* Use the retina spinner on retina screens.
+* Update buttons to the new 3.5 style.
+* Fix a possible fatal error caused when a symlink points to a location that is outside an `open_basedir` restriction.
+* Fix an issue that could cause backups using PclZip with a custom backups path to fail.
+* Security hardening by improving escaping, sanitizitation and validation.
+* Increase the timeout on the ajax cron check, should fix issues with cron errors showing on slow sites.
+* Only clear the cached backup filesize if the backup type changes.
+* Add unit tests for all the schedule recurrences.
+* Fix an issue which could cause weekly and monthly schedules to fail.
+* Add an `uninstall.php` file which removes all BackUpWordPress data and options.
+* Catch a possible fatal error in `RecursiveDirectoryIterator::hasChildren`.
+* Fix an issue that could cause mysqldump errors to be ignored thus causing the backup process to use an incomplete mysqldump file.
+
+#### 2.1.3
+
+* Fix a regression in `2.1.2` that broke previewing and adding new exclude rules.
+
+#### 2.1.2
+
+* Fix an issue that could stop the settings panel from closing on save on servers which return `'0'` for ajax requests.
+* Fix an issue that could cause the backup root to be set to `/` on sites with `site_url` and `home` set to different domains.
+* The mysqldump fallback function will now be used if `mysqldump` produces an empty file.
+* Fix a possible PHP `NOTICE` on Apache servers.
+
+#### 2.1.1
+
+* Fix a possible fatal error when a backup schedule is instantiated outside of wp-admin.
+* Don't use functions from misc.php as loading it too early can cause fatal errors.
+* Don't hardcode an English string in the JS, use the translated string instead.
+* Properly skip dot files, should fix fatal errors on systems with `open_basedir` restrictions.
+* Don't call `apache_mod_loaded` as it caused wierd DNS issue on some sites, use `global $is_apache` instead.
+* Fix a possible double full stop at the end of the schedule sentence.
+* Minor code cleanup.
+
+#### 2.1
+
+* Stop blocking people with `safe_mode = On` from using the plugin, instead just show a warning.
+* Fix possible fatal error when setting schedule to monthly.
+* Fix issues with download backup not working on some shared hosts.
+* Fix issuses with download backup not working on sites with strange characters in the site name.
+* Fix a bug could cause the update actions to fire on initial activation.
+* Improved reliability when changing backup paths, now with Unit Tests.
+* Generate the lists of excluded, included and unreadable files in a more memory efficient way, no more fatal errors on sites with lots of files.
+* Bring back .htaccess protection of the backups directory on `Apache` servers with `mod_rewrite` enabled.
+* Prepend a random string to the backups directory to make it harder to brute force guess.
+* Fall back to storing the backups directoy in `uploads` if `WP_CONTENT_DIR` isn't writable.
+* Attempt to catch `E_ERROR` level errors (Fatal errors) that happen during the backup process and offer to email them to support.
+* Provide more granular status messages during the backup process.
+* Show a spinner next to the schedule link when a backup is running on a schedule which you are not currently viewing.
+* Improve the feedback when removing an exclude rule.
+* Fix an issue that could cause an exclude rule to be marked as default when it in-fact isn't, thus not letting it be deleted.
+* Add a line encouraging people to rate the plugin if they like it.
+* Change the support line to point to the FAQ before recommending they contact support.
+* Fix the link to the "How to Restore" post in the FAQ.
+* Some string changes for translators, 18 changed strings.
+
+
+#### 2.0.6
+
+* Fix possible warning on plugin activation if the sites cron option is empty.
+* Don't show the version warning in the help for Constants as that comes from the current version.
+
+#### 2.0.5
+
+* Re-setup the cron schedules if they get deleted somehow.
+* Delete all BackUpWordPress cron entries when the plugin is deactivated.
+* Introduce the `HMBKP_SCHEDULE_TIME` constant to allow control over the time schedules run.
+* Make sure the schedule times and times of previous backups are shown in local time.
+* Fix a bug that could cause the legacy backup schedule to be created on every update, not just when going from 1.x to 2.x.
+* Improve the usefulness of the `wp-cron.php` response code check.
+* Use the built in `site_format` function for human readable filesizes instead of defining our own function.
+
+
+#### 2.0.4
+
+* Revert the change to the way the plugin url and path were calculated as it caused regressions on some systems.
+
+#### 2.0.3
+
+* Fix issues with scheduled backups not firing in some cases.
+* Better compatibility when the WP Remote plugin is active alongside BackUpWordPress.
+* Catch and display more WP Cron errors.
+* BackUpWordPress now fails to activate on WordPress 3.3.2 and below.
+* Other minor fixes and improvements.
+
+#### 2.0.2
+
+* Only send backup failed emails if the backup actually failed.
+* Turn off the generic "memory limit probably hit" message as it was showing for too many people.
+* Fix a possible notice when the backup running filename is blank.
+* Include the `wp_error` response in the cron check.
 
 #### 2.0.1
 
