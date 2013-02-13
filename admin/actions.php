@@ -47,8 +47,10 @@ function hmbkp_ajax_request_do_backup() {
 	if ( empty( $_POST['hmbkp_schedule_id'] ) )
 		exit;
 
+	//header( 'HTTP/1.1 500 Internal Server Error' );
+
 	// We want to display any fatal errors in this ajax request so we can catch them on the other side.
-	error_reporting( E_ERROR );
+	error_reporting( E_ERROR | E_USER_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR );
 	@ini_set( 'display_errors', 'On' );
 	@ini_set( 'html_errors', 'Off' );
 
@@ -63,6 +65,19 @@ function hmbkp_ajax_request_do_backup() {
 	$schedule = new HMBKP_Scheduled_Backup( sanitize_text_field( urldecode( $_POST['hmbkp_schedule_id'] ) ) );
 
 	$schedule->run();
+
+	$errors = array_merge( $schedule->get_errors(), $schedule->get_warnings() );
+
+	$error_message = '';
+
+	foreach ( $errors as $error_set )
+		$error_message .= implode( "\n\r", $error_set );
+
+	if ( $error_message && file_exists( $schedule->get_archive_filepath() ) )
+		$error_message .= 'HMBKP_SUCCESS';
+
+	if ( trim( $error_message ) )
+		echo $error_message;
 
 	exit;
 
@@ -428,9 +443,19 @@ function hmbkp_display_error_and_offer_to_email_it() {
 	if ( empty( $_POST['hmbkp_error'] ) )
 		exit;
 
-	$error = str_replace( HM_Backup::get_home_path(), '', sanitize_text_field( $_POST['hmbkp_error'] ) ); ?>
+	$error = wp_strip_all_tags( stripslashes( $_POST['hmbkp_error'] ) ); 
 
-	<h3><?php _e( 'Your BackUp Failed', 'hmbkp' ); ?></h3>
+	$error = str_replace( 'HMBKP_SUCCESS', '', $error, $succeeded ); 
+
+	if ( $succeeded ) { ?>
+
+		<h3><?php _e( 'Your backup completed but with the following errors / warnings', 'hmbkp' ); ?></h3>
+
+	<?php } else { ?>
+
+		<h3><?php _e( 'Your backUp failed', 'hmbkp' ); ?></h3>
+
+	<?php } ?>
 
 	<p><?php _e( 'Here\'s the response from the server:', 'hmbkp' ); ?></p>
 
@@ -450,7 +475,7 @@ function hmbkp_send_error_via_email() {
 	if ( empty( $_POST['hmbkp_error'] ) )
 		exit;
 
-	$error = sanitize_text_field( $_POST['hmbkp_error'] );
+	$error = wp_strip_all_tags( $_POST['hmbkp_error'] );
 
 	wp_mail( 'support@humanmade.co.uk', 'BackUpWordPress Fatal error on ' . parse_url( home_url(), PHP_URL_HOST ), $error, 'From: BackUpWordPress <' . get_bloginfo( 'admin_email' ) . '>' . "\r\n" );
 

@@ -546,7 +546,9 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		if ( ! file_exists( $this->get_schedule_running_path() ) )
 			return '';
 
-		return end( explode( '::', file_get_contents( $this->get_schedule_running_path() ) ) );
+		$status = explode( '::', file_get_contents( $this->get_schedule_running_path() ) );
+
+		return end( $status );
 
 	}
 
@@ -561,7 +563,9 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		if ( ! file_exists( $this->get_schedule_running_path() ) )
 			return '';
 
-		return reset( explode( '::', file_get_contents( $this->get_schedule_running_path() ) ) );
+		$backup_running_file = explode( '::', file_get_contents( $this->get_schedule_running_path() ) );
+
+		return reset( $backup_running_file );
 	}
 
 	/**
@@ -619,6 +623,10 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 	    		$this->set_status( __( 'Finishing Backup', 'hmbkp' ) );
 
+	    	break;
+
+	    	case 'hmbkp_error' :
+
 				if ( $this->get_errors() ) {
 
 			    	$file = $this->get_path() . '/.backup_errors';
@@ -634,6 +642,10 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 			    	fclose( $handle );
 
 			    }
+
+			break;
+
+			case 'hmbkp_warning' : 
 
 			    if ( $this->get_warnings() ) {
 
