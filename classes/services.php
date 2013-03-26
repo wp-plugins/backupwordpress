@@ -7,6 +7,12 @@
 abstract class HMBKP_Service {
 
 	/**
+	 * Human readable name for this service
+	 * @var string
+	 */
+	public $name;
+
+	/**
 	 * The instance HMBKP_Backup_Schedule that this service is
 	 * is currently working with
 	 */
@@ -25,6 +31,11 @@ abstract class HMBKP_Service {
 	 * If you don't want a field return ''; here and use @field instead
 	 */
 	abstract protected function field();
+
+	/**
+	 * Help text that should be output in the Constants help tab
+	 */
+	public static function constant() {}
 
 	/**
 	 * Validate and sanitize data before it's saved.
