@@ -14,15 +14,15 @@
 
                 <input id="hmbkp-new-exclude-rule" type="text" class="code" placeholder="" />
 
-                <span class="howto">Enter new exclude rules as a comma separated list, e.g. <code>.git/, *.mp3, wp-content/uploads/</code></span>
-
                 <button type="button" class="button-secondary hmbkp_preview_exclude_rule"><?php _e( 'Preview', 'hmbkp' ); ?></button>
+
+                <span class="howto"><?php printf( __( 'Enter new exclude rules as a comma separated list, e.g. %s', 'hmbkp' ), '<code>.git/, *.mp3, wp-content/uploads/</code>' ); ?></span>
 
             </label>
 
         </div>
 
-        <table class="widefat fixed">
+        <table class="widefat">
 
         	<thead>
         		<tr>
@@ -110,7 +110,7 @@
 
     <?php endif; ?>
 
-        <p><?php printf( __( 'Your site is %s. Backups will be compressed and so will be smaller.', 'hmbkp' ), '<code>' . esc_html( $schedule->get_filesize( false ) ) . '</code>' ); ?></p>
+        <p><?php printf( __( 'Your site is %s. Backups will be compressed and so will be smaller.', 'hmbkp' ), '<code>' . esc_html( $schedule->get_formatted_file_size( false ) ) . '</code>' ); ?></p>
 
         </div>
 

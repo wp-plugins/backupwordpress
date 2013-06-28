@@ -1,10 +1,11 @@
 <?php
 
-/**
- * Displays a row in the manage backups table
- *
- * @param string $file
- */
+	/**
+	 * Displays a row in the manage backups table
+	 *
+	 * @param string $file
+	 * @param HMBKP_Scheduled_Backup $schedule
+	 */
 function hmbkp_get_backup_row( $file, HMBKP_Scheduled_Backup $schedule ) {
 
 	$encoded_file = urlencode( base64_encode( $file ) );
@@ -13,14 +14,14 @@ function hmbkp_get_backup_row( $file, HMBKP_Scheduled_Backup $schedule ) {
 	<tr class="hmbkp_manage_backups_row<?php if ( file_exists( hmbkp_path() . '/.backup_complete' ) ) : ?> completed<?php unlink( hmbkp_path() . '/.backup_complete' ); endif; ?>">
 
 		<th scope="row">
-			<?php esc_html_e( date_i18n( get_option( 'date_format' ) . ' - ' . get_option( 'time_format' ), @filemtime( $file ) + $offset ) ); ?>
+			<?php echo esc_html( date_i18n( get_option( 'date_format' ) . ' - ' . get_option( 'time_format' ), @filemtime( $file ) + $offset ) ); ?>
 		</th>
 
 		<td class="code">
-			<?php esc_html_e( size_format( @filesize( $file ) ) ); ?>
+			<?php echo esc_html( size_format( @filesize( $file ) ) ); ?>
 		</td>
 
-		<td><?php esc_html_e( hmbkp_human_get_type( $file, $schedule ) ); ?></td>
+		<td><?php echo esc_html( hmbkp_human_get_type( $file, $schedule ) ); ?></td>
 
 		<td>
 
@@ -108,12 +109,12 @@ function hmbkp_admin_notices() {
 }
 add_action( 'admin_head', 'hmbkp_admin_notices' );
 
-/**
- * Hook in an change the plugin description when BackUpWordPress is activated
- *
- * @param array $plugins
- * @return $plugins
- */
+	/**
+	 * Hook in an change the plugin description when BackUpWordPress is activated
+	 *
+	 * @param array $plugins
+	 * @return array $plugins
+	 */
 function hmbkp_plugin_row( $plugins ) {
 
 	if ( isset( $plugins[HMBKP_PLUGIN_SLUG . '/plugin.php'] ) )
@@ -238,31 +239,32 @@ function hmbkp_human_get_type( $type, HMBKP_Scheduled_Backup $schedule = null ) 
  * @return void
  */
 function hmbkp_schedule_actions( HMBKP_Scheduled_Backup $schedule ) {
-	
+
 	// Start output buffering
 	ob_start(); ?>
-	
+
 	<span class="hmbkp-status"><?php echo $schedule->get_status() ? $schedule->get_status() : __( 'Starting Backup', 'hmbkp' ); ?> <a href="<?php echo add_query_arg( array( 'action' => 'hmbkp_cancel', 'hmbkp_schedule_id' => $schedule->get_id() ), HMBKP_ADMIN_URL ); ?>"><?php _e( 'cancel', 'hmbkp' ); ?></a></span>
 
 	<div class="hmbkp-schedule-actions row-actions">
 
-		<a class="fancybox" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_edit_schedule_load', 'hmbkp_schedule_id' => $schedule->get_id() ), admin_url( 'admin-ajax.php' ) ); ?>"><?php _e( 'Settings', 'hmbkp' ); ?></a> |
+		<a class="colorbox" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_edit_schedule_load', 'hmbkp_schedule_id' => $schedule->get_id() ), admin_url( 'admin-ajax.php' ) ); ?>"><?php _e( 'Settings', 'hmbkp' ); ?></a> |
 
 	<?php if ( $schedule->get_type() !== 'database' ) { ?>
-		<a class="fancybox" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_edit_schedule_excludes_load', 'hmbkp_schedule_id' => $schedule->get_id() ), admin_url( 'admin-ajax.php' ) ); ?>"><?php _e( 'Excludes', 'hmbkp' ); ?></a>  |
+		<a class="colorbox" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_edit_schedule_excludes_load', 'hmbkp_schedule_id' => $schedule->get_id() ), admin_url( 'admin-ajax.php' ) ); ?>"><?php _e( 'Excludes', 'hmbkp' ); ?></a>  |
 	<?php } ?>
+
+		<?php // capture output
+		$output = ob_get_clean();
+		echo apply_filters( 'hmbkp_schedule_actions_menu', $output, $schedule ); ?>
 
 		<a class="hmbkp-run" href="<?php echo add_query_arg( array( 'action' => 'hmbkp_run_schedule', 'hmbkp_schedule_id' => $schedule->get_id() ), admin_url( 'admin-ajax.php' ) ); ?>"><?php _e( 'Run now', 'hmbkp' ); ?></a>  |
 
 		<a class="delete-action" href="<?php echo wp_nonce_url( add_query_arg( array( 'action' => 'hmbkp_delete_schedule', 'hmbkp_schedule_id' => $schedule->get_id() ), HMBKP_ADMIN_URL ), 'hmbkp-delete_schedule' ); ?>"><?php _e( 'Delete', 'hmbkp' ); ?></a>
 
-		<?php // capture output
-		$output = ob_get_clean();
-		echo apply_filters( 'hmbkp_schedule_actions_menu', $output, $schedule ); ?> 
-
 	</div>
 
 <?php }
+
 
 /**
  * Load the backup errors file

@@ -5,6 +5,9 @@
  */
 function hmbkp_activate() {
 
+	// loads the translation files
+	hmbkp_plugin_textdomain();
+
 	// Run deactivate on activation in-case it was deactivated manually
 	hmbkp_deactivate();
 
@@ -99,7 +102,7 @@ function hmbkp_update() {
 			$legacy_schedule->set_schedule_start_time( strtotime( HMBKP_DAILY_SCHEDULE_TIME ) );
 
 		// Backup schedule
-		$legacy_schedule->set_reoccurrence( str_replace( 'hmbkp_', '', get_option( 'hmbkp_schedule_frequency', 'daily' ) ) );
+		$legacy_schedule->set_reoccurrence( get_option( 'hmbkp_schedule_frequency', 'hmbkp_daily' ) );
 
 		// Automatic backups disabled?
 		if ( ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) && HMBKP_DISABLE_AUTOMATIC_BACKUP ) || get_option( 'hmbkp_disable_automatic_backup' ) )
@@ -134,10 +137,41 @@ function hmbkp_update() {
 
 	}
 
+	// Update from 2.2.4
+	if ( get_option( 'hmbkp_plugin_version' ) && version_compare( '2.2.5' , get_option( 'hmbkp_plugin_version' ), '>' ) ) {
+
+		$schedules = new HMBKP_Schedules;
+
+		// Loop through all schedules and re-set the reccurrence to include hmbkp_
+		foreach ( $schedules->get_schedules() as $schedule ) {
+
+			$reoccurrence = $schedule->get_reoccurrence();
+
+			if ( $reoccurrence !== 'manually' && strpos( $reoccurrence, 'hmbkp_' ) === false )
+				$schedule->set_reoccurrence( 'hmbkp_' . $schedule->get_reoccurrence() );
+
+			$schedule->save();
+
+		}
+
+	}
+
 	// Every update
 	if ( get_option( 'hmbkp_plugin_version' ) && version_compare( HMBKP_VERSION, get_option( 'hmbkp_plugin_version' ), '>' ) ) {
 
 		hmbkp_deactivate();
+
+		// re-calcuate the backups directory and move to it.
+		if ( ! defined( 'HMBKP_PATH' ) ) {
+
+			$old_path = hmbkp_path();
+
+			delete_option( 'hmbkp_path' );
+			delete_option( 'hmbkp_default_path' );
+
+			hmbkp_path_move( $old_path, hmbkp_path() );
+
+		}
 
 		// Force .htaccess to be re-written
 		if ( file_exists( hmbkp_path() . '/.htaccess' ) )
@@ -171,7 +205,7 @@ function hmbkp_setup_default_schedules() {
 	 */
 	$database_daily = new HMBKP_Scheduled_Backup( 'default-1' );
 	$database_daily->set_type( 'database' );
-	$database_daily->set_reoccurrence( 'daily' );
+	$database_daily->set_reoccurrence( 'hmbkp_daily' );
 	$database_daily->set_max_backups( 14 );
 	$database_daily->save();
 
@@ -181,7 +215,7 @@ function hmbkp_setup_default_schedules() {
 	 */
 	$complete_weekly = new HMBKP_Scheduled_Backup( 'default-2' );
 	$complete_weekly->set_type( 'complete' );
-	$complete_weekly->set_reoccurrence( 'weekly' );
+	$complete_weekly->set_reoccurrence( 'hmbkp_weekly' );
 	$complete_weekly->set_max_backups( 12 );
 	$complete_weekly->save();
 
@@ -196,19 +230,19 @@ add_action( 'admin_init', 'hmbkp_setup_default_schedules' );
 /**
  * Return an array of cron schedules
  *
+ * @param $schedules
  * @return array $reccurrences
  */
-function hmbkp_cron_schedules() {
+function hmbkp_cron_schedules( $schedules ) {
 
-	return array(
-		'hourly'     	=> array( 'interval' => 3600, 		 'display' => __( 'Once Hourly' ) ),
-		'twicedaily' 	=> array( 'interval' => 43200,		 'display' => __( 'Twice Daily' ) ),
-		'daily'      	=> array( 'interval' => 86400,		 'display' => __( 'Once Daily' ) ),
-	    'weekly' 		=> array( 'interval' => 604800,		 'display' => __( 'Once Weekly', 'hmbkp' ) ),
-	    'fortnightly'	=> array( 'interval' => 1209600,	 'display' => __( 'Once Fortnightly', 'hmbkp' ) ),
-	    'monthly'		=> array( 'interval' => 2629743.83,  'display' => __( 'Once Monthly', 'hmbkp' ) )
-	);
+	$schedules['hmbkp_hourly']      = array( 'interval' => HOUR_IN_SECONDS, 'display'      => __( 'Once Hourly', 'hmbkp' ) );
+	$schedules['hmbkp_twicedaily'] 	= array( 'interval' => 12 * HOUR_IN_SECONDS, 'display' => __( 'Twice Daily', 'hmbkp' ) );
+	$schedules['hmbkp_daily']      	= array( 'interval' => DAY_IN_SECONDS, 'display'       => __( 'Once Daily', 'hmbkp' ) );
+	$schedules['hmbkp_weekly'] 		= array( 'interval' => WEEK_IN_SECONDS, 'display'      => __( 'Once Weekly', 'hmbkp' ) );
+	$schedules['hmbkp_fortnightly']	= array( 'interval' => 2 * WEEK_IN_SECONDS , 'display' => __( 'Once Fortnightly', 'hmbkp' ) );
+	$schedules['hmbkp_monthly']		= array( 'interval' => 30 * DAY_IN_SECONDS, 'display'  => __( 'Once Monthly', 'hmbkp' ) );
 
+	return $schedules;
 }
 add_filter( 'cron_schedules', 'hmbkp_cron_schedules' );
 
@@ -217,6 +251,8 @@ add_filter( 'cron_schedules', 'hmbkp_cron_schedules' );
  * all the files and sub-directories.
  *
  * @param string $dir
+ * @return bool
+ * @throws Exception
  */
 function hmbkp_rmdirtree( $dir ) {
 
@@ -256,15 +292,15 @@ function hmbkp_path() {
 
 	global $is_apache;
 
-	$path = get_option( 'hmbkp_path' );
+	$path = untrailingslashit( get_option( 'hmbkp_path' ) );
 
 	// Allow the backups path to be defined
 	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH )
-		$path = HMBKP_PATH;
+		$path = untrailingslashit( HMBKP_PATH );
 
 	// If the dir doesn't exist or isn't writable then use the default path instead instead
-	if ( ( ! $path || ( is_dir( $path ) && ! is_writable( $path ) ) || ( ! is_dir( $path ) && ! is_writable( dirname( $path ) ) ) ) && get_option( 'hmbkp_path' ) !== get_option( 'hmbkp_default_path' ) )
-    	$path = hmbkp_path_default();
+	if ( ( ! $path || ( is_dir( $path ) && ! is_writable( $path ) ) || ( ! is_dir( $path ) && ! is_writable( dirname( $path ) ) ) ) && $path !== hmbkp_path_default() )
+		$path = hmbkp_path_default();
 
 	// Create the backups directory if it doesn't exist
 	if ( ! is_dir( $path ) && is_writable( dirname( $path ) ) )
@@ -309,11 +345,11 @@ function hmbkp_path() {
  */
 function hmbkp_path_default() {
 
-	$path = get_option( 'hmbkp_default_path' );
+	$path = untrailingslashit( get_option( 'hmbkp_default_path' ) );
 
 	if ( empty( $path ) ) {
 
-		$path = HM_Backup::conform_dir( trailingslashit( WP_CONTENT_DIR ) . substr( HMBKP_SECURE_KEY, 0, 10 ) . '-backups' );
+		$path = HM_Backup::conform_dir( trailingslashit( WP_CONTENT_DIR ) . 'backupwordpress-' . substr( HMBKP_SECURE_KEY, 0, 10 ) . '-backups' );
 
 		update_option( 'hmbkp_default_path', $path );
 
@@ -324,13 +360,14 @@ function hmbkp_path_default() {
 	// If the backups dir can't be created in WP_CONTENT_DIR then fallback to uploads
 	if ( ( ( ! is_dir( $path ) && ! is_writable( dirname( $path ) ) ) || ( is_dir( $path ) && ! is_writable( $path ) ) ) && strpos( $path, $upload_dir['basedir'] ) === false ) {
 
-		hmbkp_path_move( $path, $path = HM_Backup::conform_dir( trailingslashit( $upload_dir['basedir'] ) . substr( HMBKP_SECURE_KEY, 0, 10 ) . '-backups' ) );
+		hmbkp_path_move( $path, $path = HM_Backup::conform_dir( trailingslashit( $upload_dir['basedir'] ) . 'backupwordpress-' . substr( HMBKP_SECURE_KEY, 0, 10 ) . '-backups' ) );
 
 		update_option( 'hmbkp_default_path', $path );
 
 	}
 
 	return $path;
+
 }
 
 /**
@@ -367,7 +404,7 @@ function hmbkp_path_move( $from, $to ) {
 	if ( $handle = opendir( $from ) ) {
 
 	    while ( false !== ( $file = readdir( $handle ) ) )
-	    	if ( $file !== '.' && $file !== '..' )
+	    	if ( pathinfo( $file, PATHINFO_EXTENSION ) === 'zip' )
 	    		if ( ! @rename( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file ) )
 	    			copy( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file );
 
@@ -375,7 +412,9 @@ function hmbkp_path_move( $from, $to ) {
 
 	}
 
-	hmbkp_rmdirtree( $from );
+	// Only delete the old directory if it's inside WP_CONTENT_DIR
+	if ( strpos( $from, WP_CONTENT_DIR ) !== false )
+		hmbkp_rmdirtree( $from );
 
 }
 
@@ -400,12 +439,15 @@ function hmbkp_possible() {
  */
 function hmbkp_cleanup() {
 
+	if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH )
+		return;
+
 	$hmbkp_path = hmbkp_path();
 
 	if ( ! is_dir( $hmbkp_path ) )
 		return;
 
-	if ( $handle = opendir( $hmbkp_path ) ) :
+	if ( $handle = opendir( $hmbkp_path ) ) {
 
     	while ( false !== ( $file = readdir( $handle ) ) )
     		if ( ! in_array( $file, array( '.', '..', 'index.html' ) ) && pathinfo( $file, PATHINFO_EXTENSION ) !== 'zip' )
@@ -413,7 +455,7 @@ function hmbkp_cleanup() {
 
     	closedir( $handle );
 
-    endif;
+    }
 
 }
 
@@ -453,5 +495,29 @@ function hmbkp_get_max_attachment_size() {
 		$max_size = HMBKP_ATTACHMENT_MAX_FILESIZE;
 
 	return wp_convert_hr_to_bytes( $max_size );
+
+}
+
+/**
+ * Loads the plugin text domain for translation
+ * This setup allows a user to just drop his custom translation files into the WordPress language directory
+ * Files will need to be in a subdirectory with the name of the textdomain 'backupwordpress-do'
+ */
+function hmbkp_plugin_textdomain() {
+
+	// Set unique textdomain string
+	$textdomain = 'hmbkp';
+
+	// The 'plugin_locale' filter is also used by default in load_plugin_textdomain()
+	$locale = apply_filters( 'plugin_locale', get_locale(), $textdomain );
+
+	// Set filter for WordPress languages directory
+	$hmbkp_wp_lang_dir = apply_filters( 'hmbkp_do_filter_wp_lang_dir', trailingslashit( WP_LANG_DIR ) . trailingslashit( $textdomain )  . $textdomain . '-' . $locale . '.mo' );
+
+	// Translations: First, look in WordPress' "languages" folder = custom & update-secure!
+	load_textdomain( $textdomain, $hmbkp_wp_lang_dir );
+
+	// Translations: Secondly, look in plugin's "languages" folder = default
+	load_plugin_textdomain( $textdomain, FALSE, HMBKP_PLUGIN_SLUG . '/languages/' );
 
 }

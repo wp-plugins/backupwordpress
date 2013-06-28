@@ -13,24 +13,37 @@ abstract class HMBKP_Service {
 	public $name;
 
 	/**
+	 * Determines whether to show or hide the service tab in destinations form
+	 * @var boolean
+	 */
+	public $is_tab_visible;
+
+	/**
 	 * The instance HMBKP_Backup_Schedule that this service is
 	 * is currently working with
+     *
+     * @var HMBKP_Scheduled_Backup
 	 */
 	protected $schedule;
+
+	/**
+	 * Used to determine if the service is in use or not
+	 */
+	abstract public function is_service_active();
 
 	/**
 	 * The form to output as part of the schedule settings
 	 *
 	 * If you don't want a whole form return ''; here and use @field instead
 	 */
-	abstract protected function form();
+	abstract public function form();
 
 	/**
 	 * The field to output as part of the schedule settings
 	 *
-	 * If you don't want a field return ''; here and use @field instead
+	 * If you don't want a field return ''; here and use @form instead
 	 */
-	abstract protected function field();
+	abstract public function field();
 
 	/**
 	 * Help text that should be output in the Constants help tab
@@ -44,14 +57,14 @@ abstract class HMBKP_Service {
 	 * @param  array $old_data  The old data thats going to be overwritten
 	 * @return array $error     Array of validation errors e.g. return array( 'email' => 'not valid' );
 	 */
-	abstract protected function update( &$new_data, $old_data );
+	abstract public function update( &$new_data, $old_data );
 
 	/**
 	 * The string to be output as part of the schedule sentence
 	 *
 	 * @return string
 	 */
-	abstract protected function display();
+	abstract public function display();
 
 	/**
 	 * Receives actions from the backup
@@ -60,7 +73,7 @@ abstract class HMBKP_Service {
 	 *
 	 * @see  HM_Backup::do_action for a list of the actions
 	 */
-	abstract protected function action( $action );
+	abstract public function action( $action );
 
 	/**
 	 * Utility for getting a formated html input name attribute
@@ -74,8 +87,10 @@ abstract class HMBKP_Service {
 
 	/**
 	 * Get the value of a field
-	 * @param  string $name The name of the field
-	 * @return string       The field value
+	 *
+	 * @param string $name The name of the field
+	 * @param string $esc  The field value
+	 * @return string
 	 */
 	protected function get_field_value( $name, $esc = 'esc_attr' ) {
 
@@ -110,7 +125,9 @@ abstract class HMBKP_Service {
 
 		}
 
-		$this->schedule->set_service_options( $classname, $new_data );
+		// Only overwrite settings if they changed
+		if ( ! empty( $new_data ) )
+		    $this->schedule->set_service_options( $classname, $new_data );
 
 		return array();
 
@@ -125,10 +142,37 @@ abstract class HMBKP_Service {
 		$this->schedule = $schedule;
 	}
 
+	/**
+	 * Gets the settings for a similar destination from the existing schedules
+	 * so that we can copy them into the form to avoid having to type them again
+	 */
+	protected function fetch_destination_settings() {
+
+		$service = get_class( $this );
+
+		$schedules_obj = new HMBKP_Schedules();
+
+		$schedules = $schedules_obj->get_schedules();
+
+		foreach ( $schedules as $schedule ) {
+
+			if( $schedule->get_id() != $this->schedule->get_id() ) {
+
+				$options = $schedule->get_service_options( $service );
+				if ( ! empty( $options ) ) {
+					return $options;
+				}
+			}
+
+		}
+
+		return array();
+	}
+
 }
 
 /**
- * A singleton to handle the registering, unregistering
+ * A singleton to handle the registering, de-registering
  * and storage of services
  */
 class HMBKP_Services {
@@ -179,9 +223,10 @@ class HMBKP_Services {
 	/**
 	 * Get the array of registered services
 	 *
-	 * @access public
+	 * @param HMBKP_Scheduled_Backup $schedule
+	 * @return HMBKP_SERVICE[]
 	 */
-    public static function get_services( HMBKP_Scheduled_Backup $schedule = null ) {
+		public static function get_services( HMBKP_Scheduled_Backup $schedule = null ) {
 
     	if ( is_null( $schedule ) )
     		return self::instance()->services;
@@ -207,7 +252,7 @@ class HMBKP_Services {
     }
 
 	/**
-	 * Unregister an existing service
+	 * De-register an existing service
 	 *
 	 * @access public
 	 */
@@ -223,21 +268,25 @@ class HMBKP_Services {
 	/**
 	 * Instantiate the individual service classes
 	 *
-	 * @access private
-	 * @param string $class
+	 * @param string $classname
+	 *
 	 * @return array An array of instantiated classes
+	 * @throws Exception
 	 */
-	private static function instantiate( $class ) {
+	private static function instantiate( $classname ) {
 
-		if ( ! class_exists( $class ) )
+		if ( ! class_exists( $classname ) )
 			throw new Exception( 'Argument 1 for ' . __METHOD__ . ' must be a valid class' );
 
-		$$class = new $class;
+        /**
+         * @var HMBKP_Service
+         */
+        $class = new $classname;
 
 		if ( self::instance()->schedule )
-			$$class->set_schedule( self::instance()->schedule );
+			$class->set_schedule( self::instance()->schedule );
 
-		return $$class;
+		return $class;
 
 	}
 

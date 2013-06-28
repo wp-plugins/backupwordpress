@@ -1,8 +1,8 @@
 === BackUpWordPress ===
-Contributors: humanmade, joehoyle, mattheu, tcrsavage, willmot, cuvelier
+Contributors: humanmade, willmot, pauldewouters, joehoyle, mattheu, tcrsavage, cuvelier
 Tags: back up, backup, backups, database, zip, db, files, archive, wp-cli, humanmade
 Requires at least: 3.3.3
-Tested up to: 3.5
+Tested up to: 3.6
 Stable tag: 2.2.4
 
 Simple automated back ups of your WordPress powered website.
@@ -103,6 +103,37 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 
 == Changelog ==
 
+#### 2.3
+
+* Replace Fancybox with Colorbox as Fancybox 2 isn't GPL compatible.
+* Use the correct `HMBKP_ATTACHMENT_MAX_FILESIZE` constant consistently in the help section.
+* Correct filename for some mis-named translation files.
+* Show the total estimated disk space a schedule could take up (max backups * estimated site size).
+* Fix a typo (your -> you're).
+* Use the new time Constants and define backwords compatible ones for > than 3.5.
+* Play nice with custom cron intervals.
+* Main plugin file is now `backupwordpress.php` for consistency.
+* Add Paul De Wouters (`pauldewouters`) as a contributor, welcome Paul!
+* Don't remove non-backup files from custom backup paths.
+* Fix a regression where setting a custom path which didn't exist could cause you to lose existing backups.
+* When moving paths only move backup files.
+* Make some untranslatable strings translatable.
+* Don't allow a single schedule to run in multiple threads at once, should finally fix edge case issues where some load balancer / proxies were causing multiple backups per run.
+* Only highlight the `HMBKP_SCHEDULE_TIME` constant in help if it's not the default value.
+* Remove help text for deprecated `HMBKP_EMAIL`.
+* Default to allways specificing `--single-transaction` when using `mysqldump` to backup the database, can be disabled by setting the `HMBKP_MYSQLDUMP_SINGLE_TRANSACTION` to `false`.
+* Silence a `PHP Warning` if `mysql_pconnect` has been disabled.
+* Ensure dot directories `.` & `..` are always skipped when looping the filesystem.
+* Work around a warning in the latest version of MySQL when using the `-p` flag with `mysqldunmp`.
+* Fix issues on IIS that could cause the root directory to be incorrectly calculated.
+* Fix an issue on IIS that could cause the download backup url to be incorrect.
+* Fix an issue on IIS that could mean your existing backups are lost when moving backup directory.
+* Avoid a `PHP FATAL ERROR` if the `mysql_set_charset` doesn't exist.
+* All unit tests now pass under IIS on Windows.
+* Prefix the backup directory with `backupwordpress-` so that it's easier to identify.
+* Re-calculate the backup directory name on plugin update and move backups.
+* Fix some issues with how `HMBKP_SECURE_KEY` was generated.
+
 #### 2.2.4
 
 * Fix a fatal error on PHP 5.2, sorry! (again.)
@@ -117,12 +148,12 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 * Updated translations for Brazilian, French, Danish, Spanish, Czech, Slovakian, Polish, Italian, German, Latvian, Hebrew, Chinese & Dutch.
 * Fix a possible notice when using the plugin on a server without internet access.
 * Don't show the wp-cron error message when `WP_USE_ALTERNATE_CRON` is defined as true.
-* Ability to override the max attachment size for email notifications using the new `HMBKP_MAX_ATTACHMENT_SIZE` constant.
+* Ability to override the max attachment size for email notifications using the new `HMBKP_ATTACHMENT_MAX_FILESIZE` constant.
 * Nonce some ajax request.
 * Silence warnings created if `is_executable`, `escapeshellcmd` or `escapeshellarg` are disabled.
 * Handle situations where the mysql port is set to something wierd.
 * Fallback to `mysql_connect` on system that disable `mysql_pconnect`.
-* You can now force the `--single-transaction` param when using `mysqldump` by defining `HMBKP_MYSQLDUMP_SINGLE_TRANSACTION`. 
+* You can now force the `--single-transaction` param when using `mysqldump` by defining `HMBKP_MYSQLDUMP_SINGLE_TRANSACTION`.
 * Unit tests for `HM_Backup::is_safe_mode_available()`.
 * Silence possible PHP Warnings when unlinking files.
 
@@ -139,7 +170,7 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 
 * Don't repeatedly try to create the backups directory in the `uploads` if `uploads` isn't writable.
 * Show the correct path in the warning message when the backups path can't be created.
-* Include any user defined auth keys and salts when generating the HMBKP_SECRET_KEY.
+* Include any user defined auth keys and salts when generating the HMBKP_SECURE_KEY.
 * Stop relying on the built in WordPress schedules as other plugins can mess with them.
 * Delete old backups everytime the backups page is viewed in an attempt to ensure old backups are always cleaned up.
 * Improve modals on small screens and mobile devices.
