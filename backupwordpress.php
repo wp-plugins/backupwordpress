@@ -5,7 +5,7 @@ Plugin Name: BackUpWordPress
 Plugin URI: http://hmn.md/backupwordpress/
 Description: Simple automated backups of your WordPress powered website. Once activated you'll find me under <strong>Tools &rarr; Backups</strong>.
 Author: Human Made Limited
-Version: 2.3
+Version: 2.3.1 RC1
 Author URI: http://hmn.md/
 */
 
@@ -35,6 +35,9 @@ if ( ! defined( 'HMBKP_PLUGIN_PATH' ) )
 
 if ( ! defined( 'HMBKP_PLUGIN_URL' ) )
 	define( 'HMBKP_PLUGIN_URL', plugin_dir_url(  __FILE__  ) );
+
+
+define( 'HMBKP_PLUGIN_LANG_DIR', apply_filters( 'hmbkp_filter_lang_dir', HMBKP_PLUGIN_SLUG . '/languages/' ) );
 
 if ( ! defined( 'HMBKP_ADMIN_URL' ) )
 	define( 'HMBKP_ADMIN_URL', add_query_arg( 'page', HMBKP_PLUGIN_SLUG, admin_url( 'tools.php' ) ) );
@@ -107,7 +110,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI )
 register_activation_hook( HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_activate' );
 register_deactivation_hook( HMBKP_PLUGIN_SLUG . '/plugin.php', 'hmbkp_deactivate' );
 
-
 // Don't activate on anything less than PHP 5.2.4
 if ( version_compare( phpversion(), HMBKP_REQUIRED_PHP_VERSION, '<' ) ) {
 
@@ -120,7 +122,6 @@ if ( version_compare( phpversion(), HMBKP_REQUIRED_PHP_VERSION, '<' ) ) {
 }
 
 // Don't activate on old versions of WordPress
-
 global $wp_version;
 
 if ( version_compare( $wp_version, HMBKP_REQUIRED_WP_VERSION, '<' ) ) {
@@ -147,9 +148,6 @@ function hmbkp_init() {
 
 	// define the plugin version
 	define( 'HMBKP_VERSION', $plugin_data['Version'] );
-
-	// Load translations
-	//load_plugin_textdomain( 'hmbkp', false, HMBKP_PLUGIN_SLUG . '/languages/' );
 
 	// Fire the update action
 	if ( HMBKP_VERSION != get_option( 'hmbkp_plugin_version' ) )
@@ -185,7 +183,7 @@ add_action( 'admin_init', 'hmbkp_init' );
  */
 function hmbkp_schedule_hook_run( $schedule_id ) {
 
-	$schedules = new HMBKP_Schedules();
+	$schedules = HMBKP_Schedules::get_instance();
 	$schedule = $schedules->get_schedule( $schedule_id );
 
 	if ( ! $schedule )
@@ -195,3 +193,29 @@ function hmbkp_schedule_hook_run( $schedule_id ) {
 
 }
 add_action( 'hmbkp_schedule_hook', 'hmbkp_schedule_hook_run' );
+
+
+/**
+ * Loads the plugin text domain for translation
+ * This setup allows a user to just drop his custom translation files into the WordPress language directory
+ * Files will need to be in a subdirectory with the name of the textdomain 'backupwordpress-do'
+ */
+function hmbkp_plugin_textdomain() {
+
+	// Set unique textdomain string
+	$textdomain = 'hmbkp';
+
+	// The 'plugin_locale' filter is also used by default in load_plugin_textdomain()
+	$locale = apply_filters( 'plugin_locale', get_locale(), $textdomain );
+
+	// Set filter for WordPress languages directory
+	$hmbkp_wp_lang_dir = apply_filters( 'hmbkp_do_filter_wp_lang_dir', trailingslashit( WP_LANG_DIR ) . trailingslashit( $textdomain )  . $textdomain . '-' . $locale . '.mo' );
+
+	// Translations: First, look in WordPress' "languages" folder = custom & update-secure!
+	load_textdomain( $textdomain, $hmbkp_wp_lang_dir );
+
+	// Translations: Secondly, look in plugin's "languages" folder = default
+	load_plugin_textdomain( $textdomain, FALSE, HMBKP_PLUGIN_SLUG . '/languages/' );
+
+}
+add_action( 'init', 'hmbkp_plugin_textdomain', 1);

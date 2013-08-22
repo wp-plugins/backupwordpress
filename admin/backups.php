@@ -1,4 +1,4 @@
-<?php $schedules = new HMBKP_Schedules; ?>
+<?php $schedules = HMBKP_Schedules::get_instance(); ?>
 
 <div>
 
@@ -14,11 +14,18 @@
 
 	</ul>
 
-<?php if ( ! empty( $_GET['hmbkp_schedule_id'] ) )
+<?php
+
+if ( ! empty( $_GET['hmbkp_schedule_id'] ) )
 	$schedule = new HMBKP_Scheduled_Backup( sanitize_text_field( $_GET['hmbkp_schedule_id'] ) );
 
-else
-	$schedule = reset( $schedules->get_schedules() );
+else {
+
+	$schedules = $schedules->get_schedules();
+
+	$schedule = reset( $schedules );
+
+}
 
 	if ( ! $schedule )
 		return; ?>
