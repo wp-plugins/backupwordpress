@@ -103,6 +103,10 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 
 == Changelog ==
 
+#### 2.4.3
+
+* Fix a JS error that prevented errors during the backup process from displaying.
+
 #### 2.4.2
 
 * In WordPress Multisite the backups admin page is now located in Network admin instead of the wp-admin of the main site.
@@ -110,6 +114,7 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 * Fixed 3 stray PHP warnings.
 * BackUpWordPress will now always be loaded before any BackUpWordPress Extensions.
 * Fixed an issue that could cause a long modal (excludes) to show underneath the WP admin bar.
+
 
 #### 2.4.1
 
