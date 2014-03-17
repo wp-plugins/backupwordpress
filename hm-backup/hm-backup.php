@@ -181,7 +181,7 @@ class HM_Backup {
 		// Is shell_exec or escapeshellcmd or escapeshellarg disabled?
 		if ( array_intersect( array( 'shell_exec', 'escapeshellarg', 'escapeshellcmd' ), array_map( 'trim', explode( ',', @ini_get( 'disable_functions' ) ) ) ) )
 			return false;
-		
+
 		// Functions can also be disabled via suhosin
 		if ( array_intersect( array( 'shell_exec', 'escapeshellarg', 'escapeshellcmd' ), array_map( 'trim', explode( ',', @ini_get( 'suhosin.executor.func.blacklist' ) ) ) ) )
 			return false;
@@ -207,6 +207,11 @@ class HM_Backup {
 		$site_url = site_url();
 
 		$home_path = ABSPATH;
+
+		// Attempt to guess the home path based on the location of wp-config.php
+		if ( ! file_exists( ABSPATH . 'wp-config.php' ) ) {
+    		$home_path = trailingslashit( dirname( ABSPATH ) );
+		}
 
 		// If site_url contains home_url and they differ then assume WordPress is installed in a sub directory
 		if ( $home_url !== $site_url && strpos( $site_url, $home_url ) === 0 )
@@ -509,10 +514,12 @@ class HM_Backup {
 			'/opt/local/bin/mysqldump'
 		);
 
-		// Find the one which works
+		// Find the first one which works
 		foreach ( $mysqldump_locations as $location ) {
-			if ( @is_executable( self::conform_dir( $location ) ) )
+			if ( @is_executable( self::conform_dir( $location ) ) ) {
 				$this->set_mysqldump_command_path( $location );
+				break;  // Found one
+			}
 		}
 
 		return $this->mysqldump_command_path;
@@ -570,10 +577,12 @@ class HM_Backup {
 			'/opt/local/bin/zip'
 		);
 
-		// Find the one which works
+		// Find the first one which works
 		foreach ( $zip_locations as $location ) {
-			if ( @is_executable( self::conform_dir( $location ) ) )
+			if ( @is_executable( self::conform_dir( $location ) ) ) {
 				$this->set_zip_command_path( $location );
+				break;  // Found one
+			}
 		}
 
 		return $this->zip_command_path;
