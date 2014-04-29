@@ -45,7 +45,10 @@
 		</div>
 
 		<?php if ( ! $start_time = $schedule->get_schedule_start_time() )
-			$start_time = time(); ?>
+			$start_time = time();
+
+		$start_time += get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
+		?>
 
 		<div id="start-day" class="recurring-setting">
 
@@ -123,7 +126,7 @@
 			$service->field(); ?>
 
 		<p class="submit">
-
+			<?php wp_nonce_field( 'hmbkp_schedule_submit_action', 'hmbkp_schedule_submit_nonce' ); ?>
 			<button type="submit" class="button-primary"><?php _e( 'Update', 'hmbkp' ); ?></button>
 
 		</p>
