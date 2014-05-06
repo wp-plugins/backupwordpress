@@ -208,11 +208,6 @@ class HM_Backup {
 
 		$home_path = ABSPATH;
 
-		// Attempt to guess the home path based on the location of wp-config.php
-		if ( ! file_exists( ABSPATH . 'wp-config.php' ) ) {
-    		$home_path = trailingslashit( dirname( ABSPATH ) );
-		}
-
 		// If site_url contains home_url and they differ then assume WordPress is installed in a sub directory
 		if ( $home_url !== $site_url && strpos( $site_url, $home_url ) === 0 )
 			$home_path = trailingslashit( substr( self::conform_dir( ABSPATH ), 0, strrpos( self::conform_dir( ABSPATH ), str_replace( $home_url, '', $site_url ) ) ) );
