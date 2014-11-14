@@ -1,9 +1,9 @@
 === BackUpWordPress ===
 Contributors: humanmade, willmot, pauldewouters, joehoyle, mattheu, tcrsavage, cuvelier
 Tags: back up, backup, backups, database, zip, db, files, archive, wp-cli, humanmade
-Requires at least: 3.7.3
-Tested up to: 3.9.1
-Stable tag: 2.6.2
+Requires at least: 3.8.4
+Tested up to: 4.1
+Stable tag: 3.0
 
 Simple automated backups of your WordPress powered website.
 
@@ -41,27 +41,28 @@ The plugin will try to use the `mysqldump` and `zip` commands via shell if they 
 
 == Frequently Asked Questions ==
 
+
 **Where does BackUpWordPress store the backup files?**
 
 Backups are stored on your server in `/wp-content/backups`, you can change the directory.
 
-**Important:** By default BackUpWordPress backs up everything in your site root as well as your database, this includes any non WordPress folders that happen to be in your site root. This does means that your backup directory can get quite large.
+Important: By default BackUpWordPress backs up everything in your site root as well as your database, this includes any non WordPress folders that happen to be in your site root. This does mean that your backup directory can get quite large.
 
-**What if I want I want to back up my site to another destination?**
+**What if I want to back up my site to another destination?**
 
-BackUpWordPress Pro supports Dropbox, Google Drive, Amazon S3, Rackspace, Azure, DreamObjects and FTP/SFTP. Check it out here: [https://bwp.hmn.md](http://bwp.hmn.md/?utm_source=wordpress-org&utm_medium=plugin-page&utm_campaign=freeplugin)
+BackUpWordPress Pro supports Dropbox, Google Drive, Amazon S3, Rackspace, Azure, DreamObjects and FTP/SFTP. Check it out here: [https://bwp.hmn.md](http://bwp.hmn.md/?utm_source=wordpress-org&utm_medium=plugin-page&utm_campaign=freeplugin "BackUpWordPress Homepage")
 
 **How do I restore my site from a backup?**
 
 You need to download the latest backup file either by clicking download on the backups page or via `FTP`. `Unzip` the files and upload all the files to your server overwriting your site. You can then import the database using your hosts database management tool (likely `phpMyAdmin`).
 
-See this post for more details http://hmn.md/backupwordpress-how-to-restore-from-backup-files/.
+See this guide for more details - [How to restore from backup](https://bwp.hmn.md/support-center/restore-backup/ "Go to support center").
 
 **Does BackUpWordPress back up the backups directory?**
 
 No.
 
-**I'm not receiving my backups by email**
+**I'm not receiving my backups by email?**
 
 Most servers have a filesize limit on email attachments, it's generally about 10mb. If your backup file is over that limit it won't be sent attached to the email, instead you should receive an email with a link to download the backup, if you aren't even receiving that then you likely have a mail issue on your server that you'll need to contact your host about.
 
@@ -73,23 +74,31 @@ BackUpWordPress stores the last 10 backups by default.
 
 Unless your site is very large (many gigabytes) it should only take a few minutes to perform a back up, if your back up has been running for longer than an hour it's safe to assume that something has gone wrong, try de-activating and re-activating the plugin, if it keeps happening, contact support.
 
-**What do I do if I get the wp-cron error message**
+**What do I do if I get the wp-cron error message?**
 
-The issue is that your `wp-cron.php` is not returning a `200` response when hit with a http request originating from your own server, it could be several things, most of the time it's an issue with the server / site and not with BackUpWordPress.
+The issue is that your `wp-cron.php` is not returning a `200` response when hit with a HTTP request originating from your own server, it could be several things, in most cases, it's an issue with the server / site.
 
-Some things you can test are.
+There are some things you can test to confirm this is the issue.
 
-* Are scheduled posts working? (They use wp-cron too).
-* Are you hosted on Heart Internet? (wp-cron is known not to work with them).
-* If you click manual backup does it work?
-* Try adding `define( 'ALTERNATE_WP_CRON', true ); to your `wp-config.php`, do automatic backups work?
-* Is your site private (I.E. is it behind some kind of authentication, maintenance plugin, .htaccess) if so wp-cron won't work until you remove it, if you are and you temporarily remove the authentication, do backups start working?
+     * Are scheduled posts working? (They use wp-cron as well ). 
 
-If you have tried all these then feel free to contact support.
+     * Are you hosted on Heart Internet? (wp-cron may not be supported by Heart Internet, see below for work-around).
+
+     * If you click manual backup does it work?
+
+     * Try adding `define( 'ALTERNATE_WP_CRON', true );` to your `wp-config.php`, do automatic backups work?
+
+     * Is your site private (I.E. is it behind some kind of authentication, maintenance plugin, .htaccess) if so wp-cron won't work until you remove it, if you are and you temporarily remove the authentication, do backups start working?
+
+Report the results to our support team for further help. To do this, either enable suport from your Admin Dashboard (recommended), or email support@hmn.md
 
 **How to get BackUpWordPress working in Heart Internet**
 
 The script to be entered into the Heart Internet cPanel is: `/usr/bin/php5 /home/sites/yourdomain.com/public_html/wp-cron.php` (note the space between php5 and the location of the file). The file `wp-cron.php` `chmod` must be set to `711`.
+
+**My backups seem to be failing?**
+
+If your backups are failing - it's commonly caused by lack of available resources on your server. The easiest way to establish this to exclude some [of] or your entire uploades folder, running a backup an if that succeeds. If so, we know it's probably a server issue. If not, report the results to our support team for further help. To do this, either enable suport from your Admin Dashboard (recommended), or email support@hmn.md
 
 **Further Support & Feedback**
 
@@ -106,6 +115,139 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 3. Easily manage exclude rules and see exactly which files are included and excluded from your backup.
 
 == Changelog ==
+
+#### 3.0 / 2014-11-14
+
+  * Refactor the recursive filesize scanner
+  * correct text domain
+  * Remove unneede statements
+  * reload the excludes filelist in the correct place when someone excludes a file
+  * Latest backdrop
+  * Regenerate minified CSS
+  * Regenerate minified JS
+  * Fix cancel backup action
+  * WordPress Coding Standards
+  * Exit early if incompatible version of WordPress
+  * Update translations
+  * Update changelog
+
+#### 3.0.0-beta / 2014-09-08
+
+  * Load minified CSS
+  * Formatting
+  * Biweekly wording
+  * Add missing period
+  * use nonce_url instead of manually adding the nonce query param
+  * close the settings form when done
+  * Design changes as per ticket
+  * Start tracking langauge in server info
+  * Right align the primary button in the enable support modal
+  * Re-factor the directory filesize code to use a single array instead of thoussands of transients
+  * Remove the warning that would show if you were using anything other than the latest stable, it's no longer needed now that the FAQ is local
+  * switch to using a single transient to store directory filesize data
+  * Add an anchor link
+  * Add error message
+  * Rename function
+  * Prefix GET params
+  * Update exclude rule action
+  * Adds function for building admin action urls
+  * fix vertical scroll
+  * Adds some functions to manage settings form submission errors
+  * Rename nonce and action
+  * fetch errors to display
+  * Form submission handling for BWP and add-ons settings
+  * Use a new function that persists form submission errors to  a transient
+  * None check
+  * Pass the nonce around in the ajax request
+  * Enable support action links
+  * Check nonces
+  * Modify action URLs to use the admin_post hook
+  * Remove unneeded code
+  * New line at end
+  * Use admin_post hook
+  * Merge pull request #502 from humanmade/stream-integration
+  * Merge pull request #554 from humanmade/fix-display-schedule-time
+  * Display schedule start time in local timezone
+  * Add an action hook that gives access to consumers to the backup progress
+ * Update translatable strings POT file
+ * Bump version
+ * Update min WP version and tested up to
+ * accidently used dash instead of underscore
+ * namespaced option and added option to uninstall.php
+ * basic show/hide of premium upsell
+ * Fix incorrect transient expiry
+ * Show the spinner in the tab if a schedule other than the current is running
+ * Snip snip
+ * Bring back the some javascript enhancements
+ * Switch to the PHP 5.2 compatible version of Backdrop
+ * Finish up support
+ * Brace up single line if's and foreach's
+ * Only load minified scripts and styles if WP_DEBUG isn't on
+ * Load the minified css and js files by default
+ * Remove the combined css files as we only have one now. Stop loading colorbox.
+ * Remove colorbox
+ * Improvements
+ * More improvements
+ * Don't die when directly running a backup on page load
+ * Re-factor the backup filesize calculation
+ * make capability filterable
+ * use core capabilities instead of custom
+ * Switch to Backdrop
+ * Fix typo in prefix
+ * Hook function onto admin_post
+ * Update delete link
+ * Bookmark current admin page for redirect
+ * Add custom capabilities and role
+ * Exclude BackUpWP by default
+ * Ignore the build folder
+ * Add more build excludes
+ * minify JS
+ * generate markdown readme
+ * minify css
+ * combine css
+ * regenerate readme
+ * Make links consistent for the grunt task
+ * Convert URLS to markdown
+ * Update lang files
+ * Add colorbox as bower dependency
+ * remove colorbox folder
+ * Remove colorbox submodule
+ * Change how we include FAQ
+ * Add readme partials
+ * Add package.json
+ * Add Gruntfile
+ * Add bower.json
+ * JSHint rules
+ * remove from ignore
+ * Update ignore list
+ * Add bower config
+ * Add FAQ strings
+ * Return the cached directory size early if we have it
+ * Re-factor the file browser scanner
+ * correct sprintf usage
+ * Handle saving service forms
+ * Codeing standards
+ * Move the error check outside of the foreach
+ * Remove uneeded $is_tab_visible
+ * Only show excludes for backups which include files
+ * Show destinations in the list of schedule links
+ * WordPress standard modal for enabling support
+ * Remove extra slash in include path
+ * Add a heading to the settings form
+ * More work on excludes
+ * Another todo
+ * Add some todos
+ * Don't include the parent directory in a browsable list
+ * More work on Excludes
+ * Switch to only storing 3 backups by default
+ * More work on redesign
+ * commented out enable support button till we figure out what to do with it
+ * made tabs responsive below 639px
+ * More work on redesign
+ * Add more default excludes
+ * Correctly highlight the tab for the first schedule
+ * Switch to tabs instead of subsubsub
+ * First bash at a redesign settings UX
 
 #### 2.6.2
 
