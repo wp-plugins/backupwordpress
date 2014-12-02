@@ -20,6 +20,11 @@ abstract class HMBKP_Service {
 	 */
 	protected $schedule;
 
+	public function __construct( $schedule ) {
+
+		$this->set_schedule( $schedule );
+	}
+
 	/**
 	 * Used to determine if the service is in use or not
 	 */
@@ -272,7 +277,7 @@ class HMBKP_Services {
 		if ( ! file_exists( $filepath ) )
 			return new WP_Error( 'hmbkp_invalid_path_error', sprintf( __( 'Argument 1 for %s must be a valid filepath', ' hmbkp' ), __METHOD__ ) );
 
-		self::instance()->services[$filepath] = $classname;
+		self::instance()->services[ $filepath ] = $classname;
 
 		return true;
 	}
@@ -284,10 +289,10 @@ class HMBKP_Services {
 	 */
 	public static function unregister( $filepath ) {
 
-		if ( ! isset( self::instance()->services[$filepath] ) )
+		if ( ! isset( self::instance()->services[ $filepath ] ) )
 			return new WP_Error( 'hmbkp_unrecognized_service_error', sprintf( __( 'Argument 1 for %s must be a registered service', ' hmbkp' ), __METHOD__ ) );
 
-		unset( self::instance()->services[$filepath] );
+		unset( self::instance()->services[ $filepath ] );
 
 		return true;
 	}
@@ -307,10 +312,7 @@ class HMBKP_Services {
 		/**
 		 * @var HMBKP_Service
 		 */
-		$class = new $classname;
-
-		if ( self::instance()->schedule )
-			$class->set_schedule( self::instance()->schedule );
+		$class = new $classname( self::instance()->schedule );
 
 		return $class;
 

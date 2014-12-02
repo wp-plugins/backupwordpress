@@ -61,7 +61,7 @@ thead td { border-bottom: 1px solid #e1e1e1; }
 .server-info { overflow: auto; max-height: 50%; outline: black 1px solid; }
 .server-info pre { max-height: 100px; overflow-x:hidden; }
 
-#intercom-info { background: #0074a2; color:#fff;}
+#intercom-info { background: #0074a2; color:#fff; display: inline-block;}
 #intercom-info:hover { background: #2ea2cc; color:#fff;}
 #intercom-info span.dashicons-admin-users { position: relative; display:inline-block; vertical-align: middle; top:-2px; }
 
@@ -69,30 +69,30 @@ pre { background-color: #eee; padding: 10px; white-space: pre; max-height: 320px
 
 @media screen and (max-width: 768px) {
 
-	.wrap h2 {
-		padding: 10px 0 0 0;
-	}
+    .wrap h2 {
+        padding: 10px 0 0 0;
+    }
 
-	.hmbkp-schedule-sentence::before { height: 80px; }
+    .hmbkp-schedule-sentence::before { height: 80px; }
 
-	h2 .nav-tab {
-		display: block;
-		padding: 10px;
-		margin: 0;
-	}
+    h2 .nav-tab {
+        display: block;
+        padding: 10px;
+        margin: 0;
+    }
 
-	.hmbkp-schedule-sentence {
-		margin: 10px 0;
-		padding: 10px;
-	}
-	#intercom-info { display: none; }
-	.hmbkp-schedule-settings { padding: 0 10px 10px; }
-	.hmbkp-exclude-settings table { margin: 0 -10px; border-left: none; border-right: none; width: calc(100% + 20px) }
-	.hmbkp-exclude-settings tr > *:first-child { display: none; }
-	.hmbkp-schedule-settings tr *:nth-child(4), .hmbkp-schedule-settings tr *:nth-child(5) { display: none; }
-	.hmbkp-schedule-settings thead tr:nth-child(2) { display: none; }
-	.hmbkp-schedule-settings { margin-left: -10px; margin-right: -10px; margin-bottom: -10px; }
-	table.widefat tbody tr:nth-child(even) { background-color: #fff }
-	table.widefat tbody tr:nth-child(odd) { background-color: #f9f9f9 }
+    .hmbkp-schedule-sentence {
+        margin: 10px 0;
+        padding: 10px;
+    }
+    #intercom-info { display: none; }
+    .hmbkp-schedule-settings { padding: 0 10px 10px; }
+    .hmbkp-exclude-settings table { margin: 0 -10px; border-left: none; border-right: none; width: calc(100% + 20px) }
+    .hmbkp-exclude-settings tr > *:first-child { display: none; }
+    .hmbkp-schedule-settings tr *:nth-child(4), .hmbkp-schedule-settings tr *:nth-child(5) { display: none; }
+    .hmbkp-schedule-settings thead tr:nth-child(2) { display: none; }
+    .hmbkp-schedule-settings { margin-left: -10px; margin-right: -10px; margin-bottom: -10px; }
+    table.widefat tbody tr:nth-child(even) { background-color: #fff }
+    table.widefat tbody tr:nth-child(odd) { background-color: #f9f9f9 }
 
 }

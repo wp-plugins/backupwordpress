@@ -8,6 +8,19 @@ function hmbkp_activate() {
 	// loads the translation files
 	load_plugin_textdomain( 'hmbkp', false, HMBKP_PLUGIN_LANG_DIR );
 
+	// Don't activate on old versions of WordPress
+	global $wp_version;
+
+	if ( version_compare( $wp_version, HMBKP_REQUIRED_WP_VERSION, '<' ) ) {
+
+		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		deactivate_plugins( __FILE__ );
+
+		if ( isset( $_GET['action'] ) && ( 'activate' === $_GET['action'] || 'error_scrape' === $_GET['action'] ) ) {
+			wp_die( sprintf( __( 'BackUpWordPress requires WordPress version %s or greater.', 'hmbkp' ), HMBKP_REQUIRED_WP_VERSION ), __( 'BackUpWordPress', 'hmbkp' ), array( 'back_link' => true ) );
+		}
+	}
+
 	// Run deactivate on activation in-case it was deactivated manually
 	hmbkp_deactivate();
 
@@ -19,6 +32,8 @@ function hmbkp_activate() {
  * Removes options and clears all cron schedules
  */
 function hmbkp_deactivate() {
+
+	hmbkp_maybe_self_deactivate();
 
 	// Clean up the backups directory
 	hmbkp_cleanup();
@@ -48,8 +63,9 @@ function hmbkp_update() {
 	if ( get_option( 'bkpwp_max_backups' ) ) {
 
 		// Carry over the custom path
-		if ( $legacy_path = get_option( 'bkpwppath' ) )
+		if ( $legacy_path = get_option( 'bkpwppath' ) ) {
 			update_option( 'hmbkp_path', $legacy_path );
+		}
 
 		// Options to remove
 		$legacy_options = array(
@@ -93,43 +109,53 @@ function hmbkp_update() {
 		$legacy_schedule = new HMBKP_Scheduled_Backup( 'backup' );
 
 		// Backup type
-		if ( ( defined( 'HMBKP_FILES_ONLY' ) && HMBKP_FILES_ONLY ) || get_option( 'hmbkp_files_only' ) )
+		if ( ( defined( 'HMBKP_FILES_ONLY' ) && HMBKP_FILES_ONLY ) || get_option( 'hmbkp_files_only' ) ) {
 			$legacy_schedule->set_type( 'file' );
+		}
 
-		elseif ( ( defined( 'HMBKP_DATABASE_ONLY' ) && HMBKP_DATABASE_ONLY ) || get_option( 'hmbkp_database_only' ) )
+		elseif ( ( defined( 'HMBKP_DATABASE_ONLY' ) && HMBKP_DATABASE_ONLY ) || get_option( 'hmbkp_database_only' ) ) {
 			$legacy_schedule->set_type( 'database' );
+		}
 
-		else
+		else {
 			$legacy_schedule->set_type( 'complete' );
+		}
 
 		// Daily schedule time
-		if ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) && HMBKP_DAILY_SCHEDULE_TIME )
+		if ( defined( 'HMBKP_DAILY_SCHEDULE_TIME' ) && HMBKP_DAILY_SCHEDULE_TIME ) {
 			$legacy_schedule->set_schedule_start_time( strtotime( HMBKP_DAILY_SCHEDULE_TIME ) );
+		}
 
 		// Backup schedule
 		$legacy_schedule->set_reoccurrence( get_option( 'hmbkp_schedule_frequency', 'hmbkp_daily' ) );
 
 		// Automatic backups disabled?
-		if ( ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) && HMBKP_DISABLE_AUTOMATIC_BACKUP ) || get_option( 'hmbkp_disable_automatic_backup' ) )
+		if ( ( defined( 'HMBKP_DISABLE_AUTOMATIC_BACKUP' ) && HMBKP_DISABLE_AUTOMATIC_BACKUP ) || get_option( 'hmbkp_disable_automatic_backup' ) ) {
 			$legacy_schedule->set_reoccurrence( 'manually' );
+		}
 
 		// Max backups
-		if ( defined( 'HMBKP_MAX_BACKUPS' ) && is_numeric( HMBKP_MAX_BACKUPS ) )
+		if ( defined( 'HMBKP_MAX_BACKUPS' ) && is_numeric( HMBKP_MAX_BACKUPS ) ) {
 			$legacy_schedule->set_max_backups( (int) HMBKP_MAX_BACKUPS );
+		}
 
-		else
+		else {
 			$legacy_schedule->set_max_backups( (int) get_option( 'hmbkp_max_backups', 10 ) );
+		}
 
 		// Excludes
-		if ( get_option( 'hmbkp_excludes' ) )
+		if ( get_option( 'hmbkp_excludes' ) ) {
 			$legacy_schedule->set_excludes( get_option( 'hmbkp_excludes' ) );
+		}
 
 		// Backup email
-		if ( defined( 'HMBKP_EMAIL' ) && is_email( HMBKP_EMAIL ) )
+		if ( defined( 'HMBKP_EMAIL' ) && is_email( HMBKP_EMAIL ) ) {
 			$legacy_schedule->set_service_options( 'HMBKP_Email_Service', array( 'email' => HMBKP_EMAIL ) );
+		}
 
-		elseif ( is_email( get_option( 'hmbkp_email_address' ) ) )
+		elseif ( is_email( get_option( 'hmbkp_email_address' ) ) ) {
 			$legacy_schedule->set_service_options( 'HMBKP_Email_Service', array( 'email' => get_option( 'hmbkp_email_address' ) ) );
+		}
 
 		// Set the archive filename to what it used to be
 		$legacy_schedule->set_archive_filename( implode( '-', array( get_bloginfo( 'name' ), 'backup', date( 'Y-m-d-H-i-s', current_time( 'timestamp' ) ) ) ) . '.zip' );
@@ -283,7 +309,7 @@ add_filter( 'cron_schedules', 'hmbkp_cron_schedules' );
  */
 function hmbkp_rmdirtree( $dir ) {
 
-	if ( strpos( HM_Backup::get_home_path(), $dir ) !== false )
+	if ( false !== strpos( HM_Backup::get_home_path(), $dir ) )
 		return new WP_Error( 'hmbkp_invalid_action_error', sprintf( __( 'You can only delete directories inside your WordPress installation', 'hmbkp' ) ) );
 
 	if ( is_file( $dir ) )
@@ -391,7 +417,7 @@ function hmbkp_path_default() {
 	$upload_dir = wp_upload_dir();
 
 	// If the backups dir can't be created in WP_CONTENT_DIR then fallback to uploads
-	if ( ( ( ! is_dir( $path ) && ! wp_is_writable( dirname( $path ) ) ) || ( is_dir( $path ) && ! wp_is_writable( $path ) ) ) && strpos( $path, $upload_dir['basedir'] ) === false ) {
+	if ( ( ( ! is_dir( $path ) && ! wp_is_writable( dirname( $path ) ) ) || ( is_dir( $path ) && ! wp_is_writable( $path ) ) ) && false === strpos( $path, $upload_dir['basedir'] ) ) {
 
 		hmbkp_path_move( $path, $path = HM_Backup::conform_dir( trailingslashit( $upload_dir['basedir'] ) . 'backupwordpress-' . substr( HMBKP_SECURE_KEY, 0, 10 ) . '-backups' ) );
 
@@ -437,7 +463,7 @@ function hmbkp_path_move( $from, $to ) {
 	if ( $handle = opendir( $from ) ) {
 
 		while ( false !== ( $file = readdir( $handle ) ) ) {
-			if ( pathinfo( $file, PATHINFO_EXTENSION ) === 'zip' )
+			if ( 'zip' === pathinfo( $file, PATHINFO_EXTENSION ) )
 				if ( ! @rename( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file ) )
 					copy( trailingslashit( $from ) . $file, trailingslashit( $to ) . $file );
 		}
@@ -447,7 +473,7 @@ function hmbkp_path_move( $from, $to ) {
 	}
 
 	// Only delete the old directory if it's inside WP_CONTENT_DIR
-	if ( strpos( $from, WP_CONTENT_DIR ) !== false )
+	if ( false !==strpos( $from, WP_CONTENT_DIR ) )
 		hmbkp_rmdirtree( $from );
 
 }
@@ -460,8 +486,9 @@ function hmbkp_path_move( $from, $to ) {
  */
 function hmbkp_possible() {
 
-	if ( ! wp_is_writable( hmbkp_path() ) || ! is_dir( hmbkp_path() ) )
+	if ( ! wp_is_writable( hmbkp_path() ) || ! is_dir( hmbkp_path() ) ) {
 		return false;
+	}
 
 	$test_backup = new HMBKP_Scheduled_Backup( 'test_backup' );
 
@@ -489,7 +516,7 @@ function hmbkp_cleanup() {
 	if ( $handle = opendir( $hmbkp_path ) ) {
 
 		while ( false !== ( $file = readdir( $handle ) ) ) {
-			if ( ! in_array( $file, array( '.', '..', 'index.html' ) ) && pathinfo( $file, PATHINFO_EXTENSION ) !== 'zip' && strpos( $file, '-running' ) === false )
+			if ( ! in_array( $file, array( '.', '..', 'index.html' ) ) && 'zip' !== pathinfo( $file, PATHINFO_EXTENSION ) && false === strpos( $file, '-running' ) )
 				hmbkp_rmdirtree( trailingslashit( $hmbkp_path ) . $file );
 		}
 
@@ -540,8 +567,8 @@ function hmbkp_get_max_attachment_size() {
 
 function hmbkp_is_path_accessible( $dir ) {
 
+	// Path is inaccessible
 	if ( strpos( $dir, HM_Backup::get_home_path() ) === false ) {
-		// path is inaccessible
 		return false;
 	}
 

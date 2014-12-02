@@ -3,7 +3,7 @@
 // Calculated filesize
 $cached = $schedule->is_site_size_cached();
 
-if ( $schedule->get_type() === 'database' ) {
+if ( 'database' === $schedule->get_type() ) {
 	$cached = true;
 }
 
@@ -91,7 +91,7 @@ switch ( $schedule->get_max_backups() ) :
 
 	case 0 :
 
-		$backup_to_keep = sprintf( __( 'don\'t store any backups in on this server', 'hmbkp' ), $server );
+		$backup_to_keep = sprintf( __( 'don\'t store any backups in on this server', 'hmbkp' ), hmbkp_path() );
 
 	break;
 
@@ -125,7 +125,7 @@ if ( ! empty( $services ) && count( $services ) > 1 ) {
 
 <div class="hmbkp-schedule-sentence<?php if ( $schedule->get_status() ) { ?> hmbkp-running<?php } ?>">
 
-	<?php $sentence = sprintf( __( 'Backup my %1$s %2$s %3$s, %4$s. ', 'hmbkp' ), '<span>' . $type . '</span>', $filesize, $reoccurrence, $backup_to_keep );
+	<?php $sentence = sprintf( _x( 'Backup my %1$s %2$s %3$s, %4$s.', '1: Backup Type 2: Total size of backup 3: Schedule 4: Number of backups to store', 'hmbkp' ), '<span>' . $type . '</span>', $filesize, $reoccurrence, $backup_to_keep );
 
 	if ( $email_msg ) {
 		$sentence .= sprintf( __( '%s. ', 'hmbkp' ), $email_msg );
