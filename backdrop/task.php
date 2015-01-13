@@ -19,7 +19,7 @@ class HM_Backdrop_Task {
 	public function schedule() {
 
 		if ( $this->is_scheduled() ) {
-			return new WP_Error( 'hm_backdrop_scheduled', __( 'Task is already scheduled to run', 'backupwordpress' ) );
+			return new WP_Error( 'hm_backdrop_scheduled', __( 'Task is already scheduled to run', 'hm_backdrop' ) );
 		}
 
 		$data = array(
@@ -38,7 +38,7 @@ class HM_Backdrop_Task {
 
 	public function cancel() {
 		if ( ! $this->is_scheduled() ) {
-			return new WP_Error( 'hm_backdrop_not_scheduled', __( 'Task is not scheduled to run', 'backupwordpress' ) );
+			return new WP_Error( 'hm_backdrop_not_scheduled', __( 'Task is not scheduled to run', 'hm_backdrop' ) );
 		}
 
 		delete_transient( 'hm_backdrop-' . $this->key );

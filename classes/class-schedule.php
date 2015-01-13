@@ -61,10 +61,6 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 			$this->set_root( HMBKP_ROOT );
 		}
 
-		if ( defined( 'HMBKP_PATH' ) && HMBKP_PATH ) {
-			$this->set_path( HMBKP_PATH );
-		}
-
 		if ( defined( 'HMBKP_EXCLUDE' ) && HMBKP_EXCLUDE ) {
 			parent::set_excludes( HMBKP_EXCLUDE, true );
 		}
@@ -124,6 +120,22 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 		return $this->slug = sanitize_title( $this->get_name() );
 
+	}
+
+	/**
+	 * Returns the given option value or WP_Error if it doesn't exist
+	 *
+	 * @param $option_name
+	 *
+	 * @return WP_Error
+	 */
+	public function get_schedule_option( $option_name ) {
+
+		if ( isset( $this->options[ $option_name ] ) ) {
+			return $this->options[ $option_name ];
+		} else {
+			return new WP_Error( 'invalid_option_name', __( 'Invalid Option Name', 'backupwordpress' ) );
+		}
 	}
 
 	/**
@@ -343,16 +355,16 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 * @return int            The total of the file or directory
 	 */
 	function is_site_size_being_calculated() {
-		return get_transient( 'hmbkp_directory_filesizes_running' );
+		return false !== get_transient( 'hmbkp_directory_filesizes_running' );
 	}
 
 	/**
 	 * Whether the total filesize is being calculated
 	 *
-	 * @return int            The total of the file or directory
+	 * @return bool The total of the file or directory
 	 */
 	function is_site_size_cached() {
-		return get_transient( 'hmbkp_directory_filesizes' );
+		return false !== get_transient( 'hmbkp_directory_filesizes' );
 	}
 
 	/**
@@ -843,19 +855,15 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 	 */
 	public function set_status( $message ) {
 
-		if ( ! $handle = fopen( $this->get_schedule_running_path(), 'w' ) ) {
-			return;
-		}
-
 		$status = json_encode( (object) array(
 			'filename' => $this->get_archive_filename(),
 			'started'  => $this->get_schedule_running_start_time(),
 			'status'   => $message,
 		) );
 
-		fwrite( $handle, $status );
-
-		fclose( $handle );
+		if ( false === @file_put_contents( $this->get_schedule_running_path(), $status ) ) {
+			throw new RuntimeException( sprintf( __( 'Error writing to file. (%s)', 'backpwordpress' ), $this->get_schedule_running_path() ) );
+		}
 
 	}
 
@@ -921,6 +929,8 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 			case 'hmbkp_backup_complete' :
 
 				$this->set_status( __( 'Finishing Backup', 'backupwordpress' ) );
+				$this->update_average_schedule_run_time( $this->get_schedule_running_start_time(), time() );
+
 				break;
 
 			case 'hmbkp_error' :
@@ -970,6 +980,79 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		endswitch;
 
 		do_action( 'hmbkp_action_complete', $action, $this );
+	}
+
+	/**
+	 * Calculate schedule run time.
+	 *
+	 * @param int Timestamp $end
+	 */
+	public function update_average_schedule_run_time( $start, $end ) {
+
+		if ( $end <= $start ) {
+			// Something went wrong, ignore.
+			return;
+		}
+
+		$diff = (int) abs( $end - $start );
+
+		if ( isset( $this->options['duration_total'] ) && isset( $this->options['backup_run_count'] ) ) {
+
+			$this->options['duration_total'] += $diff;
+			$this->options['backup_run_count'] ++;
+
+		} else {
+
+			$this->options['duration_total'] = $diff;
+			$this->options['backup_run_count'] = 1;
+
+		}
+
+		$this->save();
+	}
+
+	/**
+	 * Calculates the average run time for this schedule.
+	 *
+	 * @return string
+	 */
+	public function get_schedule_average_duration() {
+
+		$duration = 'Unknown';
+
+		if ( ! isset( $this->options['duration_total'] ) || ! isset( $this->options['backup_run_count'] )  ) {
+			return $duration;
+		}
+
+		if ( 0 === (int) $this->options['backup_run_count'] ) {
+			return $duration;
+		}
+
+		$average_run_time = (int) $this->options['duration_total'] / (int) $this->options['backup_run_count'];
+
+		if ( $average_run_time < HOUR_IN_SECONDS ) {
+
+			$mins = round( $average_run_time / MINUTE_IN_SECONDS );
+
+			if ( $mins <= 1 ) {
+				$mins = 1;
+			}
+
+			/* translators: min=minute */
+			$duration = sprintf( _n( '%s min', '%s mins', $mins, 'backupwordpress' ), $mins );
+
+		} elseif ( $average_run_time < DAY_IN_SECONDS && $average_run_time >= HOUR_IN_SECONDS ) {
+
+			$hours = round( $average_run_time / HOUR_IN_SECONDS );
+
+			if ( $hours <= 1 ) {
+				$hours = 1;
+			}
+
+			$duration = sprintf( _n( '%s hour', '%s hours', $hours, 'backupwordpress' ), $hours );
+		}
+
+		return $duration;
 	}
 
 	/**
@@ -1107,17 +1190,6 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		// Leftover backup folders can be either under content dir, or under the uploads dir
 		$hmn_upload_dir = wp_upload_dir();
 
-		$hmbkp_folders = array_merge(
-			$this->find_backup_folders( 'backupwordpress-', WP_CONTENT_DIR ),
-			$this->find_backup_folders( 'backupwordpress-', $hmn_upload_dir['path'] )
-		);
-
-		if ( ! empty( $hmbkp_folders ) ) {
-			foreach ( $hmbkp_folders as $path ) {
-				$excluded[] = $path;
-			}
-		}
-
 		$backupwp_folders = $this->find_backup_folders( 'backwpup-', $hmn_upload_dir['path'] );
 
 		if ( ! empty( $backupwp_folders ) ) {
@@ -1143,6 +1215,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		}
 
 		// version control dirs
+		// @todo stop excluding these once they are skipped entirely
 		$excluded[] = '.svn/';
 		$excluded[] = '.git/';
 
@@ -1151,7 +1224,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 
 	/**
-	 * Returns an array with the BackUpWordPress backup folders in the specified directory
+	 * Returns an array of other backup folders in the specified directory
 	 *
 	 * @param $needle
 	 * @param $haystack
@@ -1162,6 +1235,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 		$found_folders = array();
 
+		// @todo can be simplified
 		$folders_to_search = glob( $haystack . '/*', GLOB_ONLYDIR | GLOB_NOSORT );
 
 		if ( ! empty( $folders_to_search ) ) {
@@ -1170,12 +1244,8 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 
 				$pos = strpos( $folder, $needle );
 
-				$default_path = get_option( 'hmbkp_default_path' );
-
-				if ( ( false !== $pos ) && ( $folder !== $default_path ) ) {
-
+				if ( false !== $pos ) {
 					$found_folders[] = trailingslashit( $folder );
-
 				}
 
 			}
@@ -1183,6 +1253,7 @@ class HMBKP_Scheduled_Backup extends HM_Backup {
 		}
 
 		return $found_folders;
+
 	}
 
 }
