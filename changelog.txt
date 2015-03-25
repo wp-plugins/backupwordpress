@@ -1,0 +1,5 @@
+* Check if shell_exec is available before running command
+* Only validate day of month if this is the schedule type
+* Make FS optional and fix the DB connect method
+* (issue-770) Exclude the folder, not the wildcard
+* (issue-751) Rename plugin
