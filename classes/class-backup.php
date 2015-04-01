@@ -156,20 +156,21 @@ namespace HM\BackUpWordPress {
 		 */
 		protected $action_callback = '';
 
+		/**
+		 * List of patterns we want to exclude by default.
+		 * @var array
+		 */
 		protected $default_excludes = array(
 			'.git/',
 			'.svn/',
 			'.DS_Store',
 			'.idea/',
-			'backup-*',
 			'backwpup-*',
 			'updraft',
-			'backups',
 			'wp-snapshots',
 			'backupbuddy_backups',
 			'pb_backupbuddy',
 			'backup-db',
-			'cache/',
 			'Envato-backups',
 			'managewp',
 		);
@@ -1173,7 +1174,6 @@ namespace HM\BackUpWordPress {
 
 			return false;
 
-
 		}
 
 		/**
@@ -1222,7 +1222,7 @@ namespace HM\BackUpWordPress {
 			$finder->ignoreDotFiles( false );
 			$finder->ignoreUnreadableDirs();
 
-			foreach ( $this->default_excludes as $exclude ) {
+			foreach ( $this->default_excludes() as $exclude ) {
 				$finder->notPath( $exclude );
 			}
 
@@ -1443,7 +1443,6 @@ namespace HM\BackUpWordPress {
 
 				// Strip $this->root and conform
 				$rule = str_ireplace( $this->get_root(), '', untrailingslashit( self::conform_dir( $rule ) ) );
-
 
 				// Strip the preceeding slash
 				if ( in_array( substr( $rule, 0, 1 ), array( '\\', '/' ) ) ) {
