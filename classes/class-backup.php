@@ -173,6 +173,7 @@ namespace HM\BackUpWordPress {
 			'backup-db',
 			'Envato-backups',
 			'managewp',
+			'backupwordpress-*-backups'
 		);
 
 		/**
@@ -255,6 +256,10 @@ namespace HM\BackUpWordPress {
 		 */
 		public static function get_home_path() {
 
+			if ( defined( 'HMBKP_ROOT' ) && HMBKP_ROOT ) {
+				return self::conform_dir( HMBKP_ROOT );
+			}
+
 			$home_url = home_url();
 			$site_url = site_url();
 
@@ -311,10 +316,6 @@ namespace HM\BackUpWordPress {
 			set_error_handler( array( $this, 'error_handler' ) );
 
 			// Some properties can be overridden with defines
-			if ( defined( 'HMBKP_ROOT' ) && HMBKP_ROOT ) {
-				$this->set_root( HMBKP_ROOT );
-			}
-
 			if ( defined( 'HMBKP_EXCLUDE' ) && HMBKP_EXCLUDE ) {
 				$this->set_excludes( HMBKP_EXCLUDE, true );
 			}
@@ -1205,11 +1206,13 @@ namespace HM\BackUpWordPress {
 		}
 
 		/**
-		 * Return an array of all files in the filesystem
+		 * Return an array of all files in the filesystem.
 		 *
-		 * @return \RecursiveIteratorIterator
+		 * @param bool $ignore_default_exclude_rules If true then will return all files under root. Otherwise returns all files except those matching default exclude rules.
+		 *
+		 * @return array
 		 */
-		public function get_files() {
+		public function get_files( $ignore_default_exclude_rules = false ) {
 
 			$found = array();
 
@@ -1222,8 +1225,11 @@ namespace HM\BackUpWordPress {
 			$finder->ignoreDotFiles( false );
 			$finder->ignoreUnreadableDirs();
 
-			foreach ( $this->default_excludes() as $exclude ) {
-				$finder->notPath( $exclude );
+			if ( ! $ignore_default_exclude_rules ) {
+				// Skips folders/files that match default exclude patterns
+				foreach ( $this->default_excludes() as $exclude ) {
+					$finder->notPath( $exclude );
+				}
 			}
 
 			foreach ( $finder->in( $this->get_root() ) as $entry ) {
@@ -1249,7 +1255,7 @@ namespace HM\BackUpWordPress {
 
 			$excludes = $this->exclude_string( 'regex' );
 
-			foreach ( $this->get_files() as $file ) {
+			foreach ( $this->get_files( true ) as $file ) {
 
 				// Skip dot files, they should only exist on versions of PHP between 5.2.11 -> 5.3
 				if ( method_exists( $file, 'isDot' ) && $file->isDot() ) {
@@ -1289,7 +1295,7 @@ namespace HM\BackUpWordPress {
 
 			$excludes = $this->exclude_string( 'regex' );
 
-			foreach ( $this->get_files() as $file ) {
+			foreach ( $this->get_files( true ) as $file ) {
 
 				// Skip dot files, they should only exist on versions of PHP between 5.2.11 -> 5.3
 				if ( method_exists( $file, 'isDot' ) && $file->isDot() ) {
@@ -1325,7 +1331,7 @@ namespace HM\BackUpWordPress {
 
 			$this->unreadable_files = array();
 
-			foreach ( $this->get_files() as $file ) {
+			foreach ( $this->get_files( true ) as $file ) {
 
 				// Skip dot files, they should only exist on versions of PHP between 5.2.11 -> 5.3
 				if ( method_exists( $file, 'isDot' ) && $file->isDot() ) {

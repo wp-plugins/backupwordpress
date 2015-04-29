@@ -2,16 +2,11 @@
 
 namespace HM\BackUpWordPress;
 
-require_once( HMBKP_PLUGIN_PATH . 'classes/class-setup.php' );
-
-register_activation_hook( __FILE__, array( 'HM\BackUpWordPress\Setup', 'activate' ) );
-register_deactivation_hook( __FILE__, array( 'HM\BackUpWordPress\Setup', 'deactivate' ) );
-
 /**
  * Class Plugin
  */
 final class Plugin {
-	const PLUGIN_VERSION = '3.2.4';
+	const PLUGIN_VERSION = '3.2.5';
 
 	/**
 	 * @var Plugin The singleton instance.
