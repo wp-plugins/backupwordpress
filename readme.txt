@@ -144,7 +144,7 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 
 == Changelog ==
 
-## 3.2.5 / 2015-04-29
+### 3.2.5 / 2015-04-29
 
 * Fixes an issue when evaluating expression with empty
 * Fixes a fatal error on PHP 5.3
