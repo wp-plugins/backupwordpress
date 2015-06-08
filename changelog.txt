@@ -1,0 +1,7 @@
+f170f82 (HEAD -> 3.2.5.1-beta) Merge branch 'cron-test' into 3.2.5.1-beta
+cfafb2e Merge branch 'mu-settings-page' into 3.2.5.1-beta
+3ce5701 (origin/cron-test, cron-test) Correctly set the `sslverify` argument
+d924e1e (origin/mu-settings-page, mu-settings-page) Fix settings URL
+297ab9c (origin/master, origin/HEAD, master) Merge pull request #820 from herrherrmann/master
+63d1ad0 Updated and extended German translation.
+29710f0 Fixes admin page slug for multisite
