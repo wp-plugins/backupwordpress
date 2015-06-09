@@ -118,10 +118,6 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 
 == Upgrade Notice ==
 
-= 3.2.6 =
-
-* Fixes admin page slug for multisite
-
 = 3.2.5 =
 
 * Security fixes related to add_query_arg
@@ -147,6 +143,10 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
   * This is a critical update. Fixes a bug in the core backup library. Please update immediately.
 
 == Changelog ==
+
+## 3.2.6 / 2015-06-09
+
+* Fixes admin page slug for multisite
 
 ## 3.2.5 / 2015-04-29
 
