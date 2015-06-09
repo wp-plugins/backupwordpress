@@ -45,7 +45,7 @@ Resources
 You can run the unit tests with the following command:
 
     $ cd path/to/Symfony/Component/Finder/
-    $ composer install
+    $ composer.phar install
     $ phpunit
 
 [1]: http://api.symfony.com/2.5/Symfony/Component/Finder/SplFileInfo.html

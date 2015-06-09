@@ -3,7 +3,7 @@ Contributors: humanmade, willmot, pauldewouters, joehoyle, mattheu, tcrsavage, c
 Tags: back up, backup, backups, database, zip, db, files, archive, wp-cli, humanmade
 Requires at least: 3.9
 Tested up to: 4.2
-Stable tag: 3.2.5
+Stable tag: 3.2.6
 
 Simple automated backups of your WordPress powered website.
 
@@ -113,10 +113,14 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 == Screenshots ==
 
 1. Manage multiple schedules.
-2. Choose your schedule, backup type, number of backups to keep and whether to recieve a notification email.
+2. Choose your schedule, backup type, number of backups to keep and whether to receive a notification email.
 3. Easily manage exclude rules and see exactly which files are included and excluded from your backup.
 
 == Upgrade Notice ==
+
+= 3.2.6 =
+
+* Fixes admin page slug for multisite
 
 = 3.2.5 =
 
@@ -144,7 +148,7 @@ You can also tweet <a href="http://twitter.com/humanmadeltd">@humanmadeltd</a> o
 
 == Changelog ==
 
-### 3.2.5 / 2015-04-29
+## 3.2.5 / 2015-04-29
 
 * Fixes an issue when evaluating expression with empty
 * Fixes a fatal error on PHP 5.3
